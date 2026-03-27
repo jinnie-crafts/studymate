@@ -1,0 +1,1103 @@
+import { auth, db } from "./firebase.js";
+import {
+  createUserWithEmailAndPassword,
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
+  signInWithPopup,
+  signOut,
+  updateProfile
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import {
+  Timestamp,
+  serverTimestamp,
+  orderBy,
+  addDoc,
+  collection,
+  deleteDoc,
+  doc,
+  getDoc,
+  getDocs,
+  onSnapshot,
+  query,
+  setDoc,
+  updateDoc,
+  where
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+// ---------------------------------------------------------------------------
+// Constants
+// ---------------------------------------------------------------------------
+
+const API_BASE_URL = window.location.hostname === "localhost"
+  ? "http://localhost:3001"
+  : "https://studymate-ai-backend.onrender.com";
+
+const page = document.body.dataset.page;
+const FLASH_TOAST_KEY = "studymate_flash_toast";
+const STORAGE_KEYS = { theme: "theme", defaultMode: "defaultMode", hinglishDefault: "hinglishDefault", defaultNotesMode: "defaultNotesMode" };
+const AVAILABLE_MODES = ["General", "UPSC", "JEE", "NEET"];
+const AVAILABLE_NOTES_MODES = ["normal", "bullet", "revision", "flashcards"];
+const AVAILABLE_THEMES = ["dark", "light", "blue", "purple"];
+
+// ---------------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------------
+
+const state = {
+  currentUser: null, chats: [], currentChatId: null, editingChatId: null,
+  renameDraft: "", isSending: false, showTypingIndicator: false,
+  editingMessageIndex: null, messageDraft: "", chatsUnsubscribe: null,
+  preferredChatId: null, streamingResponse: null,
+  trackerData: { questionsToday: 0, streakCount: 0 }
+};
+
+let ui = null;
+const feedbackUi = {
+  initialized: false, toastContainer: null, confirmModal: null,
+  confirmLabel: null, confirmTitle: null, confirmMessage: null,
+  confirmCancelBtn: null, confirmOkBtn: null, confirmResolver: null
+};
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function getCurrentUserId() {
+  const user = auth.currentUser;
+  if (!user) throw new Error("User not authenticated");
+  return user.uid;
+}
+
+// ---------------------------------------------------------------------------
+// Boot
+// ---------------------------------------------------------------------------
+
+applySavedTheme();
+initializeFeedbackUi();
+consumeFlashToast();
+window.goToSettings = goToSettings;
+bootstrap();
+
+function bootstrap() {
+  if (page === "login") return initLoginPage();
+  if (page === "signup") return initSignupPage();
+  if (page === "dashboard") return initDashboardPage();
+  if (page === "settings") return initSettingsPage();
+}
+
+// ---------------------------------------------------------------------------
+// Auth pages
+// ---------------------------------------------------------------------------
+
+function initLoginPage() {
+  const loginForm = document.getElementById("loginForm");
+  const authMessage = document.getElementById("authMessage");
+  const googleLoginBtn = document.getElementById("googleLoginBtn");
+  const forgotPasswordLink = document.getElementById("forgotPasswordLink");
+
+  onAuthStateChanged(auth, (user) => { if (user) window.location.replace("index.html"); });
+
+  loginForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value;
+    if (!email || !password) { setFormMessage(authMessage, "Please enter your email and password.", "error"); showToast("Please enter your email and password.", "error"); return; }
+    try {
+      setFormMessage(authMessage, "Logging in...", "success");
+      const cred = await signInWithEmailAndPassword(auth, email, password);
+      await ensureUserDocument(cred.user);
+      queueFlashToast("Logged in successfully.", "success");
+      window.location.replace("index.html");
+    } catch (err) { console.error("Login error:", err); setFormMessage(authMessage, err.message, "error"); showToast(err.message, "error"); }
+  });
+
+  if (forgotPasswordLink) {
+    forgotPasswordLink.addEventListener("click", async () => {
+      const email = document.getElementById("loginEmail").value.trim() || prompt("Enter your email address:");
+      if (!email) return;
+      try {
+        await sendPasswordResetEmail(auth, email);
+        showToast("Password reset email sent! Check your inbox.", "success");
+      } catch (err) {
+        console.error("Password reset error:", err);
+        showToast(err.message, "error");
+      }
+    });
+  }
+
+  googleLoginBtn.addEventListener("click", loginWithGoogle);
+}
+
+function initSignupPage() {
+  const signupForm = document.getElementById("signupForm");
+  const authMessage = document.getElementById("authMessage");
+  const googleLoginBtn = document.getElementById("googleLoginBtn");
+
+  onAuthStateChanged(auth, (user) => { if (user) window.location.replace("index.html"); });
+
+  signupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = document.getElementById("signupEmail").value.trim();
+    const password = document.getElementById("signupPassword").value;
+    if (!email || !password) { setFormMessage(authMessage, "Please enter your email and password.", "error"); showToast("Please enter your email and password.", "error"); return; }
+    try {
+      setFormMessage(authMessage, "Creating account...", "success");
+      const cred = await createUserWithEmailAndPassword(auth, email, password);
+      await ensureUserDocument(cred.user);
+      queueFlashToast("Account created successfully.", "success");
+      window.location.replace("index.html");
+    } catch (err) { console.error("Signup error:", err); setFormMessage(authMessage, err.message, "error"); showToast(err.message, "error"); }
+  });
+  googleLoginBtn.addEventListener("click", loginWithGoogle);
+}
+
+async function loginWithGoogle() {
+  try {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    await ensureUserDocument(result.user);
+    queueFlashToast("Signed in with Google.", "success");
+    window.location.replace("index.html");
+  } catch (err) { console.error("Google login error:", err); showToast(err.message, "error"); }
+}
+
+// ---------------------------------------------------------------------------
+// Firestore user document
+// ---------------------------------------------------------------------------
+
+async function ensureUserDocument(user) {
+  if (!user) return;
+  try {
+    const userRef = doc(db, "users", user.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) {
+      await setDoc(userRef, {
+        uid: user.uid,
+        name: user.displayName || "User",
+        email: user.email || "",
+        photoURL: user.photoURL || "",
+        createdAt: serverTimestamp()
+      });
+    } else {
+      await updateDoc(userRef, {
+        name: user.displayName || snap.data().name || "User",
+        email: user.email || snap.data().email || "",
+        photoURL: user.photoURL || snap.data().photoURL || ""
+      });
+    }
+  } catch (error) { 
+    console.error(error); 
+    if (error.code === "permission-denied") {
+      showToast("Access denied");
+    } else {
+      showToast("Something went wrong");
+    }
+  }
+}
+
+async function loadTrackerData() {
+  if (!state.currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, "users", state.currentUser.uid));
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const today = todayString();
+    if (data.lastActiveDate !== today) {
+      state.trackerData.questionsToday = 0;
+    } else {
+      state.trackerData.questionsToday = data.questionsToday || 0;
+    }
+    state.trackerData.streakCount = data.streakCount || 0;
+    renderTracker();
+  } catch (err) { console.error("loadTrackerData error:", err); }
+}
+
+async function incrementStudyTracker() {
+  if (!state.currentUser) return;
+  try {
+    const userRef = doc(db, "users", state.currentUser.uid);
+    const snap = await getDoc(userRef);
+    if (!snap.exists()) return;
+    const data = snap.data();
+    const today = todayString();
+    const yesterday = yesterdayString();
+    let questionsToday = data.questionsToday || 0;
+    let streakCount = data.streakCount || 0;
+
+    if (data.lastActiveDate === today) {
+      questionsToday += 1;
+    } else {
+      questionsToday = 1;
+      if (data.lastActiveDate === yesterday) { streakCount += 1; }
+      else { streakCount = 1; }
+    }
+
+    await updateDoc(userRef, { questionsAsked: (data.questionsAsked || 0) + 1, questionsToday, lastActiveDate: today, streakCount });
+    state.trackerData.questionsToday = questionsToday;
+    state.trackerData.streakCount = streakCount;
+    renderTracker();
+  } catch (err) { console.error("incrementStudyTracker error:", err); }
+}
+
+function renderTracker() {
+  const qtEl = document.getElementById("questionsToday");
+  const skEl = document.getElementById("streakCount");
+  if (qtEl) qtEl.textContent = state.trackerData.questionsToday;
+  if (skEl) skEl.textContent = state.trackerData.streakCount;
+}
+
+function todayString() { return new Date().toISOString().slice(0, 10); }
+function yesterdayString() { const d = new Date(); d.setDate(d.getDate() - 1); return d.toISOString().slice(0, 10); }
+
+// ---------------------------------------------------------------------------
+// Dashboard
+// ---------------------------------------------------------------------------
+
+function initDashboardPage() {
+  ui = {
+    body: document.body,
+    newChatBtn: document.getElementById("newChatBtn"),
+    chatHistoryList: document.getElementById("chatHistoryList"),
+    chatTitle: document.getElementById("chatTitle"),
+    chatMessages: document.getElementById("chatMessages"),
+    chatForm: document.getElementById("chatForm"),
+    userInput: document.getElementById("userInput"),
+    sendBtn: document.getElementById("sendBtn"),
+    modeDropdown: document.getElementById("modeDropdown"),
+    selectedMode: document.getElementById("selectedMode"),
+    dropdownOptions: document.getElementById("dropdownOptions"),
+    notesDropdown: document.getElementById("notesDropdown"),
+    notesSelected: document.getElementById("notesSelected"),
+    notesDropdownOptions: document.getElementById("notesDropdownOptions"),
+    hinglishToggle: document.getElementById("hinglishToggle"),
+    profileBtn: document.getElementById("profileBtn"),
+    profileDropdown: document.getElementById("profileDropdown"),
+    userShortName: document.getElementById("userShortName"),
+    userAvatar: document.getElementById("userAvatar"),
+    dropdownAvatar: document.getElementById("dropdownAvatar"),
+    dropdownUserName: document.getElementById("userName"),
+    dropdownUserEmail: document.getElementById("userEmail"),
+    settingsBtn: document.getElementById("settingsBtn"),
+    editNameBtn: document.getElementById("editNameBtn"),
+    editNameModal: document.getElementById("editNameModal"),
+    newNameInput: document.getElementById("newNameInput"),
+    saveNameBtn: document.getElementById("saveNameBtn"),
+    cancelBtn: document.getElementById("cancelBtn"),
+    logoutBtn: document.getElementById("logoutBtn"),
+    menuToggleBtn: document.getElementById("menuToggleBtn"),
+    sidebarOverlay: document.getElementById("sidebarOverlay")
+  };
+
+  bindDashboardEvents();
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { cleanupChatSubscription(); window.location.replace("login.html"); return; }
+    state.currentUser = user;
+    await ensureUserDocument(user);
+    displayUserProfile(user.displayName || "User", user.email || "No email found", user.photoURL || "");
+    loadChats();
+    loadTrackerData();
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Settings
+// ---------------------------------------------------------------------------
+
+function initSettingsPage() {
+  ui = {
+    themeSelector: document.getElementById("themeSelector"),
+    defaultModeSelect: document.getElementById("defaultModeSelect"),
+    defaultNotesModeSelect: document.getElementById("defaultNotesModeSelect"),
+    defaultHinglishToggle: document.getElementById("defaultHinglishToggle"),
+    settingsUserName: document.getElementById("settingsUserName"),
+    settingsUserEmail: document.getElementById("settingsUserEmail"),
+    resetSettingsBtn: document.getElementById("resetSettingsBtn"),
+    clearHistoryBtn: document.getElementById("clearHistoryBtn")
+  };
+
+  bindSettingsEvents();
+  renderSettingsPreferences();
+
+  onAuthStateChanged(auth, async (user) => {
+    if (!user) { window.location.replace("login.html"); return; }
+    state.currentUser = user;
+    renderSettingsAccount(user);
+  });
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard events
+// ---------------------------------------------------------------------------
+
+function bindDashboardEvents() {
+  ui.newChatBtn.addEventListener("click", handleNewChat);
+  ui.logoutBtn.addEventListener("click", handleLogout);
+  bindModeDropdown();
+  bindNotesDropdown();
+
+  ui.chatForm.addEventListener("submit", async (e) => { e.preventDefault(); await handleSendMessage(); });
+  ui.userInput.addEventListener("input", () => autoResizeTextarea(ui.userInput));
+  ui.userInput.addEventListener("keydown", async (e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); await handleSendMessage(); } });
+  ui.hinglishToggle.addEventListener("change", async () => await saveActiveChatSettings());
+
+  ui.profileBtn.addEventListener("click", (e) => { e.stopPropagation(); closeModeDropdown(); closeNotesDropdown(); ui.profileDropdown.classList.toggle("show"); });
+  if (ui.settingsBtn) ui.settingsBtn.addEventListener("click", () => goToSettings());
+  ui.editNameBtn.addEventListener("click", () => openEditNameModal());
+  ui.cancelBtn.addEventListener("click", () => closeEditNameModal());
+  ui.saveNameBtn.addEventListener("click", async () => await saveDisplayName());
+  ui.newNameInput.addEventListener("keydown", async (e) => { if (e.key === "Enter") { e.preventDefault(); await saveDisplayName(); } if (e.key === "Escape") closeEditNameModal(); });
+
+  ui.chatHistoryList.addEventListener("click", async (e) => {
+    const o = e.target.closest("[data-open-chat]"), r = e.target.closest("[data-rename-chat]"),
+      d = e.target.closest("[data-delete-chat]"), s = e.target.closest("[data-save-rename]"),
+      c = e.target.closest("[data-cancel-rename]");
+    if (o) return openChat(o.dataset.openChat);
+    if (r) return startRename(r.dataset.renameChat);
+    if (d) return await deleteChat(d.dataset.deleteChat);
+    if (s) return await saveRename(s.dataset.saveRename);
+    if (c) return cancelRename();
+  });
+  ui.chatHistoryList.addEventListener("input", (e) => { if (e.target.matches(".rename-input")) state.renameDraft = e.target.value; });
+  ui.chatHistoryList.addEventListener("keydown", async (e) => { if (!e.target.matches(".rename-input")) return; if (e.key === "Enter") { e.preventDefault(); await saveRename(e.target.dataset.chatId); } if (e.key === "Escape") cancelRename(); });
+
+  ui.chatMessages.addEventListener("click", async (e) => {
+    const cp = e.target.closest("[data-copy-message]");
+    const rg = e.target.closest("[data-regenerate-message]");
+    if (cp) return await copyMessageContent(Number(cp.dataset.copyMessage));
+    if (rg) return await regenerateAiMessage(Number(rg.dataset.regenerateMessage));
+  });
+
+  ui.menuToggleBtn.addEventListener("click", toggleSidebar);
+  ui.sidebarOverlay.addEventListener("click", closeSidebar);
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".profile-wrap") && ui.profileDropdown.classList.contains("show")) ui.profileDropdown.classList.remove("show");
+    if (!e.target.closest("#modeDropdown")) closeModeDropdown();
+    if (!e.target.closest("#notesDropdown")) closeNotesDropdown();
+  });
+  ui.editNameModal.addEventListener("click", (e) => { if (e.target === ui.editNameModal) closeEditNameModal(); });
+}
+
+// ---------------------------------------------------------------------------
+// Settings events
+// ---------------------------------------------------------------------------
+
+function bindSettingsEvents() {
+  if (ui.themeSelector) {
+    ui.themeSelector.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-theme]");
+      if (!btn) return;
+      setTheme(btn.dataset.theme);
+      renderSettingsPreferences();
+    });
+  }
+  if (ui.defaultModeSelect) ui.defaultModeSelect.addEventListener("change", () => saveDefaultMode(ui.defaultModeSelect.value));
+  if (ui.defaultNotesModeSelect) ui.defaultNotesModeSelect.addEventListener("change", () => saveDefaultNotesMode(ui.defaultNotesModeSelect.value));
+  if (ui.defaultHinglishToggle) ui.defaultHinglishToggle.addEventListener("change", () => saveHinglishDefault(ui.defaultHinglishToggle.checked));
+  if (ui.resetSettingsBtn) ui.resetSettingsBtn.addEventListener("click", () => resetPreferences());
+  if (ui.clearHistoryBtn) ui.clearHistoryBtn.addEventListener("click", async () => await clearCurrentUserChats());
+}
+
+// ---------------------------------------------------------------------------
+// Logout / profile
+// ---------------------------------------------------------------------------
+
+async function handleLogout() {
+  try { cleanupChatSubscription(); await signOut(auth); queueFlashToast("Logged out successfully.", "success"); window.location.replace("login.html"); }
+  catch (err) { console.error("Logout error:", err); showToast(err.message, "error"); }
+}
+
+function cleanupChatSubscription() { 
+  if (typeof state.chatsUnsubscribe === "function") { state.chatsUnsubscribe(); state.chatsUnsubscribe = null; } 
+  if (typeof window.messagesUnsubscribe === "function") { window.messagesUnsubscribe(); window.messagesUnsubscribe = null; }
+}
+
+function displayUserProfile(name, email, photo) {
+  const avatarUrl = photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
+  const shortName = getShortName(name);
+  ui.userAvatar.src = avatarUrl; ui.userAvatar.alt = `${name} avatar`;
+  ui.dropdownAvatar.src = avatarUrl; ui.dropdownAvatar.alt = `${name} avatar`;
+  ui.userShortName.textContent = shortName;
+  ui.dropdownUserName.innerText = name; ui.dropdownUserEmail.innerText = email;
+}
+
+function renderSettingsAccount(user) {
+  ui.settingsUserName.textContent = user.displayName || "User";
+  ui.settingsUserEmail.textContent = user.email || "No email found";
+}
+
+function openEditNameModal() {
+  const currentName = auth.currentUser?.displayName || "User";
+  ui.profileDropdown.classList.remove("show");
+  ui.newNameInput.value = currentName; ui.editNameModal.classList.add("show");
+  requestAnimationFrame(() => { ui.newNameInput.focus(); ui.newNameInput.select(); });
+}
+
+function closeEditNameModal() { ui.editNameModal.classList.remove("show"); }
+
+async function saveDisplayName() {
+  const newName = ui.newNameInput.value.trim();
+  if (!newName) { showToast("Name cannot be empty.", "error"); return; }
+  const user = auth.currentUser;
+  if (!user) { showToast("No user is currently logged in.", "error"); return; }
+  try {
+    await updateProfile(user, { displayName: newName });
+    await updateDoc(doc(db, "users", user.uid), { name: newName });
+    displayUserProfile(newName, user.email || "No email found", user.photoURL || "");
+    closeEditNameModal(); showToast("Name updated successfully.", "success");
+  } catch (err) { console.error("Failed to update name:", err); showToast("Failed to update name.", "error"); }
+}
+
+// ---------------------------------------------------------------------------
+// Chat CRUD
+// ---------------------------------------------------------------------------
+
+async function handleNewChat() {
+  try {
+    const userId = getCurrentUserId();
+    const defaultMode = getSavedDefaultMode();
+    const defaultHinglish = getSavedHinglishDefault();
+    const defaultNotesMode = getSavedDefaultNotesMode();
+
+    const docRef = await addDoc(collection(db, "chats"), {
+      userId: userId, 
+      title: "New Chat", 
+      mode: defaultMode,
+      hinglish: defaultHinglish, 
+      notesMode: defaultNotesMode, 
+      createdAt: serverTimestamp(), 
+      updatedAt: serverTimestamp()
+    });
+
+    const newChat = {
+      id: docRef.id, userId: userId, title: "New Chat",
+      mode: defaultMode, hinglish: defaultHinglish, notesMode: defaultNotesMode,
+      messages: [], createdAt: null, updatedAt: null
+    };
+
+    state.chats = [newChat, ...state.chats.filter((c) => c.id !== docRef.id)];
+    state.currentChatId = docRef.id;
+    state.editingChatId = null; state.renameDraft = "";
+    state.editingMessageIndex = null; state.messageDraft = "";
+
+    loadChats(docRef.id);
+    loadMessages(docRef.id);
+    setSelectedMode(defaultMode);
+    setSelectedNotesMode(defaultNotesMode);
+    ui.hinglishToggle.checked = defaultHinglish;
+    ui.userInput.value = ""; autoResizeTextarea(ui.userInput);
+    renderHistory(); renderMessages();
+    ui.userInput.focus(); closeSidebar();
+  } catch (error) { 
+    console.error(error);
+    if (error.code === "permission-denied") {
+      showToast("Access denied");
+    } else {
+      showToast("Something went wrong");
+    }
+  }
+}
+
+function loadChats(preferredChatId = state.currentChatId) {
+  try {
+    const userId = getCurrentUserId();
+    if (preferredChatId) state.preferredChatId = preferredChatId;
+    if (state.chatsUnsubscribe) { syncHeaderWithActiveChat(); renderHistory(); renderMessages(); return; }
+
+    const chatsQuery = query(collection(db, "chats"), where("userId", "==", userId));
+    state.chatsUnsubscribe = onSnapshot(chatsQuery, (snapshot) => {
+      const messagesMap = state.chats.reduce((acc, chat) => {
+        acc[chat.id] = chat.messages || [];
+        return acc;
+      }, {});
+
+      state.chats = snapshot.docs.map((d) => {
+        const data = d.data({ serverTimestamps: "estimate" });
+        return {
+          id: d.id, userId: data.userId, title: data.title || "New Chat",
+          mode: data.mode || "General", hinglish: Boolean(data.hinglish),
+          notesMode: data.notesMode || "normal",
+          messages: messagesMap[d.id] || [],
+          createdAt: data.createdAt || null,
+          updatedAt: data.updatedAt || data.createdAt || null
+        };
+      }).sort((a, b) => getTimestampValue(b.updatedAt) - getTimestampValue(a.updatedAt));
+      
+      syncStateWithLatestChats(); syncHeaderWithActiveChat(); renderHistory(); 
+      if (state.currentChatId && state.chats.some(c => c.id === state.currentChatId) && !window.messagesUnsubscribe) {
+        loadMessages(state.currentChatId);
+      }
+      renderMessages();
+    }, (error) => { 
+      console.error(error);
+      if (error.code === "permission-denied") {
+        showToast("Access denied");
+      } else {
+        showToast("Something went wrong");
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    if (error.code === "permission-denied") {
+      showToast("Access denied");
+    } else {
+      showToast("Something went wrong");
+    }
+  }
+}
+
+window.messagesUnsubscribe = null;
+
+function loadMessages(chatId) {
+  try {
+    const userId = getCurrentUserId();
+    if (window.messagesUnsubscribe) {
+      window.messagesUnsubscribe();
+      window.messagesUnsubscribe = null;
+    }
+    
+    if (!chatId) return;
+
+    const messagesQuery = query(
+      collection(db, "chats", chatId, "messages"),
+      orderBy("createdAt", "asc")
+    );
+
+    window.messagesUnsubscribe = onSnapshot(messagesQuery, (snapshot) => {
+      const activeChat = getChatById(chatId);
+      if (!activeChat) return;
+
+      activeChat.messages = snapshot.docs.map((d) => ({
+        id: d.id,
+        ...d.data({ serverTimestamps: "estimate" })
+      }));
+      
+      activeChat.messages.sort((a, b) => {
+        const timeA = a.createdAt?.seconds || 0;
+        const timeB = b.createdAt?.seconds || 0;
+        return timeA - timeB;
+      });
+      
+      if (state.currentChatId === chatId) {
+        renderMessages();
+      }
+    }, (error) => {
+      console.error(error);
+      if (error.code === "permission-denied") {
+        showToast("Access denied");
+      } else {
+        showToast("Something went wrong");
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    if (error.code === "permission-denied") {
+      showToast("Access denied");
+    } else {
+      showToast("Something went wrong");
+    }
+  }
+}
+
+function renderHistory() {
+  if (!state.chats.length) { ui.chatHistoryList.innerHTML = `<div class="history-empty">Start a new conversation &#128640;</div>`; return; }
+  const ordered = [...state.chats].sort((a, b) => getTimestampValue(b.updatedAt) - getTimestampValue(a.updatedAt));
+  ui.chatHistoryList.innerHTML = ordered.map((chat) => {
+    const isActive = chat.id === state.currentChatId ? "active" : "";
+    if (chat.id === state.editingChatId) {
+      return `<article class="history-card ${isActive}"><div class="rename-form"><input class="rename-input" data-chat-id="${chat.id}" type="text" maxlength="50" value="${escapeAttribute(state.renameDraft)}" placeholder="Rename chat" /><div class="rename-actions"><button class="rename-btn" data-save-rename="${chat.id}" type="button">Save</button><button class="rename-btn" data-cancel-rename type="button">Cancel</button></div></div></article>`;
+    }
+    return `<article class="history-card ${isActive}"><button class="history-open" data-open-chat="${chat.id}" type="button"><span class="history-title">${escapeHtml(chat.title)}</span><span class="history-meta">${escapeHtml(chat.mode || "General")}${chat.hinglish ? " | Hinglish" : ""}</span><span class="history-meta">${formatSidebarDate(chat.updatedAt)}</span></button><div class="history-actions"><button class="history-action" data-rename-chat="${chat.id}" type="button">Rename</button><button class="history-action danger" data-delete-chat="${chat.id}" type="button">Delete</button></div></article>`;
+  }).join("");
+  focusRenameInput();
+}
+
+function syncStateWithLatestChats() {
+  if (state.preferredChatId && state.chats.some((c) => c.id === state.preferredChatId)) state.currentChatId = state.preferredChatId;
+  else if (state.currentChatId && state.chats.some((c) => c.id === state.currentChatId)) { /* keep */ }
+  else if (state.chats.length > 0) state.currentChatId = state.chats[0].id;
+  else state.currentChatId = null;
+  state.preferredChatId = null;
+  if (!state.chats.some((c) => c.id === state.editingChatId)) { state.editingChatId = null; state.renameDraft = ""; }
+  const activeChat = getCurrentChat();
+  if (!activeChat || state.editingMessageIndex == null) { state.editingMessageIndex = null; state.messageDraft = ""; }
+  else if (!activeChat.messages[state.editingMessageIndex] || activeChat.messages[state.editingMessageIndex].role !== "user") { state.editingMessageIndex = null; state.messageDraft = ""; }
+  if (state.streamingResponse && state.streamingResponse.chatId !== activeChat?.id) stopStreamingResponse();
+}
+
+// ---------------------------------------------------------------------------
+// Messages rendering
+// ---------------------------------------------------------------------------
+
+function renderMessages() {
+  const activeChat = getCurrentChat();
+  const showTyping = Boolean(state.showTypingIndicator);
+  
+  if (!activeChat || (activeChat.messages.length === 0 && !showTyping && !(state.streamingResponse && state.streamingResponse.chatId === activeChat.id))) {
+    ui.chatTitle.textContent = activeChat?.title || "New Chat";
+    ui.chatMessages.innerHTML = `<div class="empty-state"><h3>Start a new conversation &#128640;</h3><p>Create a chat from the sidebar and ask your first question.</p></div>`;
+    return;
+  }
+  ui.chatTitle.textContent = activeChat?.title || "New Chat";
+  
+  const messageMarkup = activeChat.messages.map((message, index) => {
+    const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
+    const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content)}</div>`;
+    const actionMarkup = renderMessageActions(activeChat.messages, message, index);
+    return `<article class="message-row ${message.role}"><div class="message-stack"><div class="message-bubble message"><div class="message-meta"><span>${roleLabel}</span></div>${contentMarkup}</div>${actionMarkup}</div></article>`;
+  }).join("");
+
+  const streamingMarkup = (state.streamingResponse && state.streamingResponse.chatId === activeChat.id)
+    ? `<article class="message-row ai"><div class="message-stack"><div class="message-bubble message"><div class="message-meta"><span>StudyMate AI</span></div><div class="message-content" data-stream-content>${formatMessage(state.streamingResponse.visibleText)}</div></div></div></article>`
+    : "";
+
+  const typingMarkup = showTyping ? `<article class="message-row ai"><div class="message-stack"><div class="message-bubble message"><div class="message-meta"><span>StudyMate AI</span></div><div class="message-content loading-text"><i>Thinking...</i></div></div></div></article>` : "";
+  
+  ui.chatMessages.innerHTML = `${messageMarkup}${streamingMarkup}${typingMarkup}`;
+  focusMessageEditor(); scrollMessagesToBottom();
+}
+
+function openChat(chatId) {
+  if (state.streamingResponse && state.streamingResponse.chatId !== chatId) stopStreamingResponse();
+  state.currentChatId = chatId; state.editingChatId = null; state.renameDraft = "";
+  state.editingMessageIndex = null; state.messageDraft = "";
+  loadMessages(chatId);
+  syncHeaderWithActiveChat(); renderHistory(); renderMessages(); closeSidebar();
+}
+
+// ---------------------------------------------------------------------------
+// Send message → backend proxy
+// ---------------------------------------------------------------------------
+
+async function handleSendMessage() {
+  try {
+    const userId = getCurrentUserId();
+    if (state.isSending) return;
+    const content = ui.userInput.value.trim();
+    if (!content) return;
+    if (!state.currentChatId) await handleNewChat();
+    const activeChat = getCurrentChat();
+    if (!activeChat) { showToast("Unable to open a chat session.", "error"); return; }
+    
+    ui.userInput.value = ""; autoResizeTextarea(ui.userInput);
+    
+    await addDoc(collection(db, "chats", activeChat.id, "messages"), {
+      role: "user",
+      content: content,
+      createdAt: serverTimestamp()
+    });
+    await updateDoc(doc(db, "chats", activeChat.id), { updatedAt: serverTimestamp() });
+    
+    await generateAssistantReply({ chat: activeChat, userContent: content, titleSource: content });
+  } catch (error) {
+    console.error(error);
+    if (error.code === "permission-denied") {
+      showToast("Access denied");
+    } else {
+      showToast("Something went wrong");
+    }
+  }
+}
+
+async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages, mode, hinglish: hinglishEnabled, notesMode: notesMode || "normal" })
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) { throw new Error(data.error || "No response from AI"); }
+    return data.reply || "No response from AI";
+  } catch (err) {
+    console.error("Backend request failed:", err);
+    showToast(err.message || "No response from AI", "error");
+    return "No response from AI";
+  }
+}
+
+async function saveActiveChatSettings() {
+  const activeChat = getCurrentChat();
+  if (!activeChat) return;
+  activeChat.mode = getSelectedMode();
+  activeChat.hinglish = ui.hinglishToggle.checked;
+  activeChat.notesMode = getSelectedNotesMode();
+  activeChat.updatedAt = Timestamp.now();
+  renderHistory();
+  try { await updateDoc(doc(db, "chats", activeChat.id), { mode: activeChat.mode, hinglish: activeChat.hinglish, notesMode: activeChat.notesMode, updatedAt: serverTimestamp() }); }
+  catch (err) { console.error("Save mode error:", err); showToast(err.message, "error"); }
+}
+
+async function generateAssistantReply({ chat, apiMessages = null, userContent = null, titleSource = "", successMessage = "" }) {
+  if (!chat || state.isSending) return;
+  state.isSending = true; state.showTypingIndicator = true;
+  state.editingMessageIndex = null; state.messageDraft = "";
+  setComposerLoading(true);
+  
+  chat.mode = getSelectedMode(); 
+  chat.hinglish = ui.hinglishToggle.checked;
+  chat.notesMode = getSelectedNotesMode();
+  renderHistory(); renderMessages();
+
+  let finalApiMessages = apiMessages || [...chat.messages];
+  if (userContent && !finalApiMessages.some(m => m.content === userContent && m.role === "user")) {
+     finalApiMessages.push({ role: "user", content: userContent });
+  }
+  
+  try {
+    const aiContent = await fetchAIResponse(finalApiMessages, chat.mode, chat.hinglish, chat.notesMode);
+    
+    state.showTypingIndicator = false;
+    await streamAssistantMessage(chat.id, aiContent);
+    
+    await addDoc(collection(db, "chats", chat.id, "messages"), {
+      role: "ai",
+      content: aiContent,
+      createdAt: serverTimestamp()
+    });
+    
+    if (chat.title === "New Chat" && titleSource && finalApiMessages.filter((m) => m.role === "ai").length === 0) {
+      const newTitle = generateChatTitle(titleSource);
+      await updateDoc(doc(db, "chats", chat.id), { title: newTitle, updatedAt: serverTimestamp() });
+    } else {
+      await updateDoc(doc(db, "chats", chat.id), { updatedAt: serverTimestamp() });
+    }
+    
+    await incrementStudyTracker();
+    if (successMessage) showToast(successMessage, "success");
+    
+  } catch (error) { 
+    console.error(error); 
+    state.showTypingIndicator = false; 
+    if (error.code === "permission-denied") {
+      showToast("Access denied");
+    } else {
+      showToast("Something went wrong");
+    }
+  } finally { 
+    state.isSending = false; 
+    setComposerLoading(false); 
+    renderHistory(); 
+    renderMessages(); 
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Message editing / actions
+// ---------------------------------------------------------------------------
+
+// Edit functions removed to enforce strict append-only rules.
+
+async function regenerateAiMessage(messageIndex) {
+  try {
+    const userId = getCurrentUserId();
+    const activeChat = getCurrentChat();
+    if (!activeChat || state.isSending || !isLatestAiMessage(activeChat.messages, messageIndex)) return;
+    const previousUserIndex = findPreviousUserMessageIndex(activeChat.messages, messageIndex);
+    if (previousUserIndex === -1) { showToast("No user message found to regenerate from.", "error"); return; }
+    
+    const baseMessages = activeChat.messages.slice(0, messageIndex);
+    
+    await generateAssistantReply({ chat: activeChat, apiMessages: baseMessages, successMessage: "Response regenerated." });
+  } catch (error) {
+    console.error(error);
+    if (error.code === "permission-denied") {
+      showToast("Access denied");
+    } else {
+      showToast("Something went wrong");
+    }
+  }
+}
+
+async function copyMessageContent(messageIndex) {
+  const activeChat = getCurrentChat();
+  const targetMessage = activeChat?.messages?.[messageIndex];
+  if (!targetMessage) return;
+  try { await navigator.clipboard.writeText(targetMessage.content); showToast("Copied!", "success"); }
+  catch (err) { console.error("Copy message error:", err); showToast("Unable to copy right now.", "error"); }
+}
+
+async function streamAssistantMessage(chatId, text) {
+  stopStreamingResponse();
+  state.streamingResponse = { chatId, visibleText: "", intervalId: null };
+  renderMessages();
+  await new Promise((resolve) => {
+    let cursor = 0;
+    const intervalId = window.setInterval(() => {
+      if (!state.streamingResponse || state.streamingResponse.chatId !== chatId) { window.clearInterval(intervalId); resolve(); return; }
+      cursor += 1; state.streamingResponse.visibleText = text.slice(0, cursor);
+      const contentNode = ui.chatMessages.querySelector(`[data-stream-content]`);
+      if (contentNode) contentNode.innerHTML = formatMessage(state.streamingResponse.visibleText);
+      scrollMessagesToBottom();
+      if (cursor >= text.length) { stopStreamingResponse(); renderMessages(); resolve(); }
+    }, 15);
+    state.streamingResponse.intervalId = intervalId;
+  });
+}
+
+function stopStreamingResponse() { if (state.streamingResponse?.intervalId) window.clearInterval(state.streamingResponse.intervalId); state.streamingResponse = null; }
+
+function renderMessageActions(messages, message, messageIndex) {
+  if (message.role === "user") return "";
+  const regenerateButton = isLatestAiMessage(messages, messageIndex) ? `<button class="message-action-btn" data-regenerate-message="${messageIndex}" type="button" aria-label="Regenerate response" title="Regenerate">${getMessageActionIcon("regenerate")}<span class="sr-only">Regenerate</span></button>` : "";
+  return `<div class="message-actions"><button class="message-action-btn" data-copy-message="${messageIndex}" type="button" aria-label="Copy response" title="Copy">${getMessageActionIcon("copy")}<span class="sr-only">Copy</span></button>${regenerateButton}</div>`;
+}
+
+function isLatestAiMessage(messages, messageIndex) { for (let i = messages.length - 1; i >= 0; i--) { if (messages[i].role === "ai") return i === messageIndex; } return false; }
+function findPreviousUserMessageIndex(messages, messageIndex) { for (let i = messageIndex - 1; i >= 0; i--) { if (messages[i].role === "user") return i; } return -1; }
+function findFirstUserMessageIndex(messages) { return messages.findIndex((m) => m.role === "user"); }
+
+function getMessageActionIcon(type) {
+  if (type === "edit") return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l4.5-1 9-9-3.5-3.5-9 9L4 20zM13.5 5.5l3.5 3.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg>`;
+  if (type === "copy") return `<svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="10" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="1.8"/><path d="M7 15H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h7a2 2 0 0 1 2 2v1" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8"/></svg>`;
+  return `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 1 0 2 5.5M20 4v7h-7" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"/></svg>`;
+}
+
+// ---------------------------------------------------------------------------
+// Chat rename / delete
+// ---------------------------------------------------------------------------
+
+function startRename(chatId) { const chat = getChatById(chatId); if (!chat) return; state.editingChatId = chatId; state.renameDraft = chat.title; renderHistory(); }
+function cancelRename() { state.editingChatId = null; state.renameDraft = ""; renderHistory(); }
+
+async function saveRename(chatId) {
+  const nextTitle = state.renameDraft.trim();
+  if (!nextTitle) { showToast("Chat title cannot be empty.", "error"); return; }
+  const chat = getChatById(chatId); if (!chat) return;
+  chat.title = nextTitle; chat.updatedAt = Timestamp.now();
+  try { await updateDoc(doc(db, "chats", chatId), { title: chat.title, updatedAt: chat.updatedAt }); state.editingChatId = null; state.renameDraft = ""; renderHistory(); renderMessages(); }
+  catch (err) { console.error("Rename error:", err); showToast(err.message, "error"); }
+}
+
+async function deleteChat(chatId) {
+  const chat = getChatById(chatId); if (!chat) return;
+  const confirmed = await showConfirm({ label: "Delete Chat", title: `Delete "${chat.title}"?`, message: "This chat will be removed permanently from your history.", confirmText: "Delete", type: "danger" });
+  if (!confirmed) return;
+  try { await deleteDoc(doc(db, "chats", chatId)); if (state.currentChatId === chatId) state.currentChatId = null; state.editingChatId = null; state.renameDraft = ""; showToast("Chat deleted.", "success"); }
+  catch (err) { console.error("Delete chat error:", err); showToast(err.message, "error"); }
+}
+
+// ---------------------------------------------------------------------------
+// Header sync / composer
+// ---------------------------------------------------------------------------
+
+function syncHeaderWithActiveChat() {
+  const activeChat = getCurrentChat();
+  if (!activeChat) { ui.chatTitle.textContent = "New Chat"; setSelectedMode(getSavedDefaultMode()); setSelectedNotesMode(getSavedDefaultNotesMode()); ui.hinglishToggle.checked = getSavedHinglishDefault(); return; }
+  ui.chatTitle.textContent = activeChat.title || "New Chat";
+  setSelectedMode(activeChat.mode || "General");
+  setSelectedNotesMode(activeChat.notesMode || "normal");
+  ui.hinglishToggle.checked = Boolean(activeChat.hinglish);
+}
+
+function setComposerLoading(isLoading) { 
+  ui.sendBtn.disabled = isLoading; 
+  ui.userInput.disabled = isLoading; 
+}
+function getCurrentChat() { return state.chats.find((c) => c.id === state.currentChatId) || null; }
+function getChatById(chatId) { return state.chats.find((c) => c.id === chatId) || null; }
+
+function generateChatTitle(message) {
+  const cleaned = message.replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+  const words = cleaned.split(" ").filter(Boolean);
+  const slice = words.slice(0, 5);
+  if (slice.length === 0) return "New Chat";
+  if (slice.length < 3) return words.slice(0, Math.min(3, words.length)).join(" ");
+  return slice.join(" ");
+}
+
+function getShortName(name) { const t = String(name || "User").trim(); return t ? t.split(/\s+/)[0] : "User"; }
+
+// ---------------------------------------------------------------------------
+// Sidebar
+// ---------------------------------------------------------------------------
+
+function toggleSidebar() { ui.body.classList.toggle("sidebar-open"); }
+function closeSidebar() { ui.body.classList.remove("sidebar-open"); }
+
+function focusRenameInput() {
+  if (!state.editingChatId) return;
+  const renameInput = ui.chatHistoryList.querySelector(".rename-input");
+  if (!renameInput) return;
+  requestAnimationFrame(() => { renameInput.focus(); renameInput.select(); });
+}
+
+function focusMessageEditor() {
+  if (state.editingMessageIndex == null) return;
+  const messageEditor = ui.chatMessages.querySelector("[data-message-edit-input]");
+  if (!messageEditor) return;
+  requestAnimationFrame(() => { autoResizeTextarea(messageEditor); messageEditor.focus(); messageEditor.setSelectionRange(messageEditor.value.length, messageEditor.value.length); });
+}
+
+function scrollMessagesToBottom() { ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight; }
+function autoResizeTextarea(textarea) { textarea.style.height = "auto"; textarea.style.height = `${textarea.scrollHeight}px`; }
+
+// ---------------------------------------------------------------------------
+// Mode dropdown
+// ---------------------------------------------------------------------------
+
+function bindModeDropdown() {
+  ui.selectedMode.addEventListener("click", (e) => { e.stopPropagation(); ui.profileDropdown.classList.remove("show"); closeNotesDropdown(); ui.modeDropdown.classList.toggle("open"); ui.selectedMode.setAttribute("aria-expanded", String(ui.modeDropdown.classList.contains("open"))); });
+  ui.dropdownOptions.addEventListener("click", async (e) => { const option = e.target.closest(".option"); if (!option) return; setSelectedMode(option.dataset.value || option.textContent.trim()); closeModeDropdown(); await saveActiveChatSettings(); });
+}
+
+function setSelectedMode(mode) {
+  const normalizedMode = normalizeMode(mode);
+  ui.selectedMode.textContent = normalizedMode; ui.selectedMode.dataset.value = normalizedMode;
+  ui.dropdownOptions.querySelectorAll(".option").forEach((o) => o.classList.toggle("active", o.dataset.value === normalizedMode));
+}
+
+function getSelectedMode() { return normalizeMode(ui.selectedMode.dataset.value || ui.selectedMode.textContent); }
+function closeModeDropdown() { ui.modeDropdown.classList.remove("open"); ui.selectedMode.setAttribute("aria-expanded", "false"); }
+
+// ---------------------------------------------------------------------------
+// Notes mode dropdown
+// ---------------------------------------------------------------------------
+
+function bindNotesDropdown() {
+  ui.notesSelected.addEventListener("click", (e) => { e.stopPropagation(); ui.profileDropdown.classList.remove("show"); closeModeDropdown(); ui.notesDropdown.classList.toggle("open"); ui.notesSelected.setAttribute("aria-expanded", String(ui.notesDropdown.classList.contains("open"))); });
+  ui.notesDropdownOptions.addEventListener("click", async (e) => { const option = e.target.closest(".option"); if (!option) return; setSelectedNotesMode(option.dataset.value || "normal"); closeNotesDropdown(); await saveActiveChatSettings(); });
+}
+
+function setSelectedNotesMode(mode) {
+  const normalized = normalizeNotesMode(mode);
+  const labels = { normal: "Normal", bullet: "Bullet Notes", revision: "Revision Notes", flashcards: "Flashcards" };
+  ui.notesSelected.textContent = labels[normalized] || "Normal"; ui.notesSelected.dataset.value = normalized;
+  ui.notesDropdownOptions.querySelectorAll(".option").forEach((o) => o.classList.toggle("active", o.dataset.value === normalized));
+}
+
+function getSelectedNotesMode() { return normalizeNotesMode(ui.notesSelected.dataset.value || "normal"); }
+function closeNotesDropdown() { ui.notesDropdown.classList.remove("open"); ui.notesSelected.setAttribute("aria-expanded", "false"); }
+
+// ---------------------------------------------------------------------------
+// Navigation / settings
+// ---------------------------------------------------------------------------
+
+function goToSettings() { window.location.href = "settings.html"; }
+
+// ---------------------------------------------------------------------------
+// Theme system (4 themes)
+// ---------------------------------------------------------------------------
+
+function applySavedTheme() {
+  const savedTheme = getSavedTheme();
+  document.body.classList.remove("light", "blue", "purple");
+  if (savedTheme !== "dark") document.body.classList.add(savedTheme);
+}
+
+function setTheme(theme) {
+  const normalized = AVAILABLE_THEMES.includes(theme) ? theme : "dark";
+  document.body.classList.remove("light", "blue", "purple");
+  if (normalized !== "dark") document.body.classList.add(normalized);
+  localStorage.setItem(STORAGE_KEYS.theme, normalized);
+}
+
+function getSavedTheme() {
+  const saved = localStorage.getItem(STORAGE_KEYS.theme);
+  return AVAILABLE_THEMES.includes(saved) ? saved : "dark";
+}
+
+// ---------------------------------------------------------------------------
+// Preferences
+// ---------------------------------------------------------------------------
+
+function saveDefaultMode(mode) { localStorage.setItem(STORAGE_KEYS.defaultMode, normalizeMode(mode)); }
+function getSavedDefaultMode() { return normalizeMode(localStorage.getItem(STORAGE_KEYS.defaultMode)); }
+function saveHinglishDefault(isEnabled) { localStorage.setItem(STORAGE_KEYS.hinglishDefault, String(Boolean(isEnabled))); }
+function getSavedHinglishDefault() { return localStorage.getItem(STORAGE_KEYS.hinglishDefault) === "true"; }
+function saveDefaultNotesMode(mode) { localStorage.setItem(STORAGE_KEYS.defaultNotesMode, normalizeNotesMode(mode)); }
+function getSavedDefaultNotesMode() { return normalizeNotesMode(localStorage.getItem(STORAGE_KEYS.defaultNotesMode)); }
+function normalizeMode(mode) { return AVAILABLE_MODES.includes(mode) ? mode : "General"; }
+function normalizeNotesMode(mode) { return AVAILABLE_NOTES_MODES.includes(mode) ? mode : "normal"; }
+
+function renderSettingsPreferences() {
+  if (!ui) return;
+  // Theme selector buttons
+  if (ui.themeSelector) {
+    const currentTheme = getSavedTheme();
+    ui.themeSelector.querySelectorAll("[data-theme]").forEach((btn) => btn.classList.toggle("active", btn.dataset.theme === currentTheme));
+  }
+  if (ui.defaultModeSelect) ui.defaultModeSelect.value = getSavedDefaultMode();
+  if (ui.defaultNotesModeSelect) ui.defaultNotesModeSelect.value = getSavedDefaultNotesMode();
+  if (ui.defaultHinglishToggle) ui.defaultHinglishToggle.checked = getSavedHinglishDefault();
+}
+
+function resetPreferences() { setTheme("dark"); saveDefaultMode("General"); saveDefaultNotesMode("normal"); saveHinglishDefault(false); renderSettingsPreferences(); showToast("Settings have been reset.", "success"); }
+
+async function clearCurrentUserChats() {
+  if (!state.currentUser) { showToast("Please log in again to manage your chats.", "error"); return; }
+  const confirmed = await showConfirm({ label: "Clear History", title: "Clear all chat history?", message: "This will permanently remove every saved chat for your account.", confirmText: "Clear History", type: "danger" });
+  if (!confirmed) return;
+  try {
+    const chatsQuery = query(collection(db, "chats"), where("userId", "==", state.currentUser.uid));
+    const snapshot = await getDocs(chatsQuery);
+    await Promise.all(snapshot.docs.map((d) => deleteDoc(doc(db, "chats", d.id))));
+    showToast("Chat history cleared.", "success");
+  } catch (err) { console.error("Clear chat history error:", err); showToast(err.message, "error"); }
+}
+
+// ---------------------------------------------------------------------------
+// Feedback UI (toasts + confirm modal)
+// ---------------------------------------------------------------------------
+
+function initializeFeedbackUi() {
+  if (feedbackUi.initialized) return;
+  feedbackUi.toastContainer = document.getElementById("toastContainer");
+  feedbackUi.confirmModal = document.getElementById("confirmModal");
+  feedbackUi.confirmLabel = document.getElementById("confirmModalLabel");
+  feedbackUi.confirmTitle = document.getElementById("confirmModalTitle");
+  feedbackUi.confirmMessage = document.getElementById("confirmModalMessage");
+  feedbackUi.confirmCancelBtn = document.getElementById("confirmCancelBtn");
+  feedbackUi.confirmOkBtn = document.getElementById("confirmOkBtn");
+  if (feedbackUi.confirmCancelBtn) feedbackUi.confirmCancelBtn.addEventListener("click", () => closeConfirmModal(false));
+  if (feedbackUi.confirmOkBtn) feedbackUi.confirmOkBtn.addEventListener("click", () => closeConfirmModal(true));
+  if (feedbackUi.confirmModal) feedbackUi.confirmModal.addEventListener("click", (e) => { if (e.target === feedbackUi.confirmModal) closeConfirmModal(false); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && feedbackUi.confirmModal?.classList.contains("show")) closeConfirmModal(false); });
+  feedbackUi.initialized = true;
+}
+
+function showToast(message, type = "info") {
+  if (!message || !feedbackUi.toastContainer) return;
+  const toast = document.createElement("div"); toast.className = `toast ${type}`; toast.textContent = message;
+  feedbackUi.toastContainer.appendChild(toast);
+  window.setTimeout(() => { toast.classList.add("leaving"); window.setTimeout(() => toast.remove(), 220); }, 3000);
+}
+
+function queueFlashToast(message, type = "info") { sessionStorage.setItem(FLASH_TOAST_KEY, JSON.stringify({ message, type })); }
+
+function consumeFlashToast() {
+  const raw = sessionStorage.getItem(FLASH_TOAST_KEY); if (!raw) return;
+  sessionStorage.removeItem(FLASH_TOAST_KEY);
+  try { const d = JSON.parse(raw); showToast(d.message, d.type); } catch (err) { console.error("Toast parse error:", err); }
+}
+
+function showConfirm({ label = "Please Confirm", title = "Are you sure?", message = "This action cannot be undone.", confirmText = "Confirm", cancelText = "Cancel", type = "info" } = {}) {
+  if (!feedbackUi.confirmModal) return Promise.resolve(false);
+  feedbackUi.confirmLabel.textContent = label; feedbackUi.confirmTitle.textContent = title;
+  feedbackUi.confirmMessage.textContent = message; feedbackUi.confirmCancelBtn.textContent = cancelText;
+  feedbackUi.confirmOkBtn.textContent = confirmText;
+  feedbackUi.confirmOkBtn.classList.toggle("danger-btn", type === "danger");
+  feedbackUi.confirmModal.classList.add("show"); feedbackUi.confirmModal.setAttribute("aria-hidden", "false");
+  return new Promise((resolve) => { feedbackUi.confirmResolver = resolve; });
+}
+
+function closeConfirmModal(result) {
+  if (!feedbackUi.confirmModal) return;
+  feedbackUi.confirmModal.classList.remove("show"); feedbackUi.confirmModal.setAttribute("aria-hidden", "true");
+  feedbackUi.confirmOkBtn.classList.remove("danger-btn");
+  if (feedbackUi.confirmResolver) { const resolve = feedbackUi.confirmResolver; feedbackUi.confirmResolver = null; resolve(result); }
+}
+
+// ---------------------------------------------------------------------------
+// Utilities
+// ---------------------------------------------------------------------------
+
+function setFormMessage(element, message, type) { element.textContent = message; element.className = `form-message ${type}`; }
+function formatMessage(content) { return escapeHtml(content).replace(/\n/g, "<br>"); }
+function formatSidebarDate(timestamp) { const date = timestamp?.toDate ? timestamp.toDate() : new Date(); return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
+function getTimestampValue(timestamp) { return timestamp?.toMillis ? timestamp.toMillis() : 0; }
+function escapeHtml(value) { const div = document.createElement("div"); div.textContent = value ?? ""; return div.innerHTML; }
+function escapeAttribute(value) { return String(value ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }

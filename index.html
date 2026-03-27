@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>StudyMate AI</title>
+  <meta name="description" content="StudyMate AI — your personal AI-powered study assistant for UPSC, JEE, NEET and more." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body data-page="dashboard">
+  <div class="app-shell">
+    <aside id="sidebar" class="sidebar glass-card">
+      <div class="sidebar-top">
+        <div class="brand-block">
+          <div class="logo">
+            <img src="img/study-mate.png" alt="StudyMate AI Logo" />
+          </div>
+          <div>
+            <p class="brand-overline">StudyMate AI</p>
+            <h1 class="brand-title">Study smarter with AI</h1>
+          </div>
+        </div>
+
+        <button id="newChatBtn" class="primary-btn full-width" type="button">+ New Chat</button>
+      </div>
+
+      <section class="history-panel">
+        <div class="sidebar-label">Your Chats</div>
+        <div id="chatHistoryList" class="history-list">
+          <div class="history-empty">Start a new conversation 🚀</div>
+        </div>
+      </section>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <main class="main-panel">
+      <header class="topbar glass-card">
+        <!-- Row 1: Hamburger | Title | Profile -->
+        <div class="topbar-row">
+          <button id="menuToggleBtn" class="icon-btn mobile-only" type="button" aria-label="Open sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <div class="topbar-title-block">
+            <span class="panel-overline">StudyMate AI</span>
+            <h2 id="chatTitle" class="chat-title">New Chat</h2>
+          </div>
+
+          <div class="profile-wrap">
+            <button id="profileBtn" class="profile" type="button" aria-label="Open profile menu">
+              <img id="userAvatar" src="https://ui-avatars.com/api/?name=User" alt="User avatar" />
+              <span id="userShortName" class="profile-name">User</span>
+            </button>
+
+            <div class="dropdown" id="profileDropdown">
+              <div class="profile-info">
+                <img id="dropdownAvatar" src="https://ui-avatars.com/api/?name=User" alt="User avatar" />
+                <div>
+                  <p id="userName" class="dropdown-name">User</p>
+                  <p id="userEmail" class="dropdown-email">Loading...</p>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+              <button id="settingsBtn" class="ghost-btn full-width" type="button"
+                onclick="goToSettings()">Settings</button>
+              <button id="editNameBtn" class="ghost-btn full-width" type="button">Edit Name</button>
+              <button id="logoutBtn" class="ghost-btn full-width" type="button">Logout</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Controls (Mode, Notes, Hinglish) -->
+        <div class="header-controls">
+          <div class="mode-group">
+            <label class="control-group" for="selectedMode">
+              <span>Mode</span>
+            </label>
+
+            <div class="custom-dropdown" id="modeDropdown">
+              <button id="selectedMode" class="dropdown-selected" type="button" aria-haspopup="listbox"
+                aria-expanded="false">
+                General
+              </button>
+
+              <div class="dropdown-options" id="dropdownOptions" role="listbox">
+                <button class="option active" data-value="General" type="button">General</button>
+                <button class="option" data-value="UPSC" type="button">UPSC</button>
+                <button class="option" data-value="JEE" type="button">JEE</button>
+                <button class="option" data-value="NEET" type="button">NEET</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="mode-group">
+            <label class="control-group" for="notesSelected">
+              <span>Notes</span>
+            </label>
+
+            <div class="custom-dropdown" id="notesDropdown">
+              <button id="notesSelected" class="dropdown-selected" type="button" aria-haspopup="listbox"
+                aria-expanded="false">
+                Normal
+              </button>
+
+              <div class="dropdown-options" id="notesDropdownOptions" role="listbox">
+                <button class="option active" data-value="normal" type="button">Normal</button>
+                <button class="option" data-value="bullet" type="button">Bullet Notes</button>
+                <button class="option" data-value="revision" type="button">Revision Notes</button>
+                <button class="option" data-value="flashcards" type="button">Flashcards</button>
+              </div>
+            </div>
+          </div>
+
+          <label class="toggle-group hinglish-control hinglish-toggle" for="hinglishToggle">
+            <span>Hinglish</span>
+            <span class="toggle-switch">
+              <input id="hinglishToggle" type="checkbox" />
+              <span class="toggle-slider"></span>
+            </span>
+          </label>
+        </div>
+      </header>
+
+      <!-- Study Tracker Bar -->
+      <div id="studyTrackerBar" class="study-tracker-bar glass-card">
+        <div class="tracker-stat">
+          <span class="tracker-icon">📝</span>
+          <span>Today: <strong id="questionsToday">0</strong></span>
+        </div>
+        <div class="tracker-stat">
+          <span class="tracker-icon">🔥</span>
+          <span>Streak: <strong id="streakCount">0</strong> days</span>
+        </div>
+      </div>
+
+      <section id="chatMessages" class="chat-messages glass-card">
+        <div class="empty-state">
+          <h3>Start a new conversation &#128640;</h3>
+          <p>Create a chat from the sidebar and ask your first question.</p>
+        </div>
+      </section>
+
+      <form id="chatForm" class="composer glass-card" autocomplete="off">
+        <textarea id="userInput" rows="1" placeholder="Ask anything..."></textarea>
+        <button id="sendBtn" class="primary-btn" type="submit">Send</button>
+      </form>
+    </main>
+  </div>
+
+  <div id="editNameModal" class="modal">
+    <div class="modal-content glass-card">
+      <h3>Edit Name</h3>
+      <input type="text" id="newNameInput" placeholder="Enter new name" />
+      <div class="modal-actions">
+        <button id="saveNameBtn" class="primary-btn" type="button">Save</button>
+        <button id="cancelBtn" class="ghost-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="confirmModal" class="modal confirm-modal" aria-hidden="true">
+    <div class="modal-content glass-card confirm-content">
+      <p id="confirmModalLabel" class="panel-overline">Please Confirm</p>
+      <h3 id="confirmModalTitle">Are you sure?</h3>
+      <p id="confirmModalMessage" class="confirm-message">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button id="confirmCancelBtn" class="ghost-btn" type="button">Cancel</button>
+        <button id="confirmOkBtn" class="primary-btn" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>

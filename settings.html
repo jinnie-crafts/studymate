@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Settings | StudyMate AI</title>
+  <meta name="description" content="Customize your StudyMate AI experience — themes, defaults, and account settings." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+
+<body data-page="settings" class="settings-page">
+  <main class="settings-shell">
+    <section class="settings-card glass-card">
+      <div class="settings-header">
+        <div>
+          <p class="panel-overline">StudyMate AI | karsh</p>
+          <h1>Settings</h1>
+          <p class="settings-intro">Personalize your app experience and account defaults.</p>
+        </div>
+        <a class="ghost-btn settings-back" href="index.html">Back to Chat</a>
+      </div>
+
+      <section class="settings-section">
+        <h2>Appearance</h2>
+        <div class="settings-row">
+          <div>
+            <h3>Theme</h3>
+            <p>Choose a color theme for the app.</p>
+          </div>
+          <div class="theme-selector" id="themeSelector">
+            <button class="theme-btn active" data-theme="dark" type="button">
+              <span class="theme-preview dark-preview"></span>
+              <span>Dark</span>
+            </button>
+            <button class="theme-btn" data-theme="light" type="button">
+              <span class="theme-preview light-preview"></span>
+              <span>Light</span>
+            </button>
+            <button class="theme-btn" data-theme="blue" type="button">
+              <span class="theme-preview blue-preview"></span>
+              <span>Blue</span>
+            </button>
+            <button class="theme-btn" data-theme="purple" type="button">
+              <span class="theme-preview purple-preview"></span>
+              <span>Purple</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>Preferences</h2>
+        <div class="settings-row">
+          <div>
+            <h3>Default Mode</h3>
+            <p>Choose which study mode should be selected for new chats.</p>
+          </div>
+          <label class="control-group settings-select">
+            <span>Mode</span>
+            <select id="defaultModeSelect">
+              <option value="General">General</option>
+              <option value="UPSC">UPSC</option>
+              <option value="JEE">JEE</option>
+              <option value="NEET">NEET</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <h3>Default Notes Style</h3>
+            <p>Choose the default notes format for new chats.</p>
+          </div>
+          <label class="control-group settings-select">
+            <span>Notes</span>
+            <select id="defaultNotesModeSelect">
+              <option value="normal">Normal</option>
+              <option value="bullet">Bullet Notes</option>
+              <option value="revision">Revision Notes</option>
+              <option value="flashcards">Flashcards</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="settings-row">
+          <div>
+            <h3>Default Hinglish</h3>
+            <p>Turn Hinglish on automatically for every new chat.</p>
+          </div>
+          <label class="toggle-group settings-toggle" for="defaultHinglishToggle">
+            <span>Hinglish by default</span>
+            <span class="toggle-switch">
+              <input id="defaultHinglishToggle" type="checkbox" />
+              <span class="toggle-slider"></span>
+            </span>
+          </label>
+        </div>
+      </section>
+
+      <section class="settings-section">
+        <h2>Account</h2>
+        <div class="settings-account">
+          <p id="settingsUserName">User</p>
+          <p id="settingsUserEmail">Loading...</p>
+        </div>
+
+        <div class="settings-actions">
+          <button id="resetSettingsBtn" class="ghost-btn" type="button">Reset Settings</button>
+          <button id="clearHistoryBtn" class="ghost-btn danger-btn" type="button">Clear Chat History</button>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="confirmModal" class="modal confirm-modal" aria-hidden="true">
+    <div class="modal-content glass-card confirm-content">
+      <p id="confirmModalLabel" class="panel-overline">Please Confirm</p>
+      <h3 id="confirmModalTitle">Are you sure?</h3>
+      <p id="confirmModalMessage" class="confirm-message">This action cannot be undone.</p>
+      <div class="modal-actions">
+        <button id="confirmCancelBtn" class="ghost-btn" type="button">Cancel</button>
+        <button id="confirmOkBtn" class="primary-btn" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toastContainer" aria-live="polite" aria-atomic="true"></div>
+
+  <script type="module" src="app.js"></script>
+</body>
+
+</html>

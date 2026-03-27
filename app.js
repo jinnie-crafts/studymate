@@ -32,7 +32,7 @@ import {
 
 const API_BASE_URL = window.location.hostname === "localhost"
   ? "http://localhost:3001"
-  : "https://studymate-ai-backend.onrender.com";
+  : "https://studymate-ms3l.onrender.com";
 
 const page = document.body.dataset.page;
 const FLASH_TOAST_KEY = "studymate_flash_toast";
@@ -707,7 +707,13 @@ async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
     const response = await fetch(`${API_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, mode, hinglish: hinglishEnabled, notesMode: notesMode || "normal" })
+      body: JSON.stringify({
+        messages,
+        mode,
+        hinglish: hinglishEnabled,
+        notesMode: notesMode || "normal",
+        userId: getCurrentUserId()
+      })
     });
     const data = await response.json().catch(() => ({}));
     if (!response.ok) { throw new Error(data.error || "No response from AI"); }

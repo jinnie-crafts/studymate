@@ -42,7 +42,9 @@ app.post("/api/chat", async (req, res) => {
     }
 
     // ------ validate request body ------
-    const { messages, mode, hinglish, notesMode } = req.body;
+    const { messages, mode, hinglish, notesMode, userId } = req.body;
+
+    if (userId) console.log(`[AI Request] User: ${userId} | Mode: ${mode || "General"}`);
 
     if (!Array.isArray(messages) || messages.length === 0) {
       return res.status(400).json({ error: "messages[] is required and must not be empty." });

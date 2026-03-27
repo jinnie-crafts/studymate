@@ -1,7 +1,13 @@
 /* ========================================================================
    StudyMate AI — Style System
    Themes: dark (default) | light | blue | purple
-   ======================================================================== */
+   ================= Reset & Core ================= */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
 
 :root {
   --bg-main: #0f172a;
@@ -995,19 +1001,24 @@ a:hover {
 
 /* ---------- User bubble: right-aligned, dynamic sizing ---------- */
 .message-bubble {
-  padding: 12px 16px;
-  border-radius: 16px;
+  padding: 12px 18px;
+  border-radius: 18px;
   border: 1px solid rgba(255, 255, 255, 0.06);
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
   word-break: break-word;
   white-space: normal;
+  line-height: 1.6;
+  min-width: 80px;
+  width: auto;
 }
 
 .message-row.user .message-bubble {
-  max-width: min(70%, 680px);
+  max-width: 80%;
   background: linear-gradient(135deg, #2563eb, #3b82f6);
   color: #f0f6ff;
-  border-radius: 16px 16px 4px 16px;
+  border-radius: 18px 18px 4px 18px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 /* ---------- AI bubble: left-aligned, glassy ---------- */

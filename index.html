@@ -17,6 +17,21 @@
 </head>
 
 <body data-page="dashboard">
+  <!-- Onboarding Overlay -->
+  <div id="onboarding" class="onboarding hidden">
+    <div class="onboarding-card">
+      <h2>Welcome to StudyMate AI 🚀</h2>
+      <p>Your personalized smart learning assistant.</p>
+      
+      <ul class="onboarding-features">
+        <li><span>📚</span> <div><strong>Specialized Modes:</strong> UPSC, JEE, NEET, and more.</div></li>
+        <li><span>🧠</span> <div><strong>Smart Brain:</strong> Ask any question, get deep insights.</div></li>
+        <li><span>📝</span> <div><strong>Study Tools:</strong> Built-in notes and flashcard modes.</div></li>
+      </ul>
+
+      <button id="startBtn" class="primary-btn">Get Started</button>
+    </div>
+  </div>
   <div class="app-shell">
     <aside id="sidebar" class="sidebar glass-card">
       <div class="sidebar-top">
@@ -31,59 +46,8 @@
         </div>
 
         <button id="newChatBtn" class="primary-btn full-width" type="button">+ New Chat</button>
-      </div>
 
-      <section class="history-panel">
-        <div class="sidebar-label">Your Chats</div>
-        <div id="chatHistoryList" class="history-list">
-          <div class="history-empty">Start a new conversation 🚀</div>
-        </div>
-      </section>
-    </aside>
-
-    <div id="sidebarOverlay" class="sidebar-overlay"></div>
-
-    <main class="main-panel">
-      <header class="topbar glass-card">
-        <!-- Row 1: Hamburger | Title | Profile -->
-        <div class="topbar-row">
-          <button id="menuToggleBtn" class="icon-btn mobile-only" type="button" aria-label="Open sidebar">
-            <span></span>
-            <span></span>
-            <span></span>
-          </button>
-
-          <div class="topbar-title-block">
-            <span class="panel-overline">StudyMate AI</span>
-            <h2 id="chatTitle" class="chat-title">New Chat</h2>
-          </div>
-
-          <div class="profile-wrap">
-            <button id="profileBtn" class="profile" type="button" aria-label="Open profile menu">
-              <img id="userAvatar" src="https://ui-avatars.com/api/?name=User" alt="User avatar" />
-              <span id="userShortName" class="profile-name">User</span>
-            </button>
-
-            <div class="dropdown" id="profileDropdown">
-              <div class="profile-info">
-                <img id="dropdownAvatar" src="https://ui-avatars.com/api/?name=User" alt="User avatar" />
-                <div>
-                  <p id="userName" class="dropdown-name">User</p>
-                  <p id="userEmail" class="dropdown-email">Loading...</p>
-                </div>
-              </div>
-
-              <div class="divider"></div>
-              <button id="settingsBtn" class="ghost-btn full-width" type="button"
-                onclick="goToSettings()">Settings</button>
-              <button id="editNameBtn" class="ghost-btn full-width" type="button">Edit Name</button>
-              <button id="logoutBtn" class="ghost-btn full-width" type="button">Logout</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Row 2: Controls (Mode, Notes, Hinglish) -->
-        <div class="header-controls">
+        <div class="sidebar-controls">
           <div class="mode-group">
             <label class="control-group" for="selectedMode">
               <span>Mode</span>
@@ -132,31 +96,86 @@
             </span>
           </label>
         </div>
-      </header>
 
-      <!-- Study Tracker Bar -->
-      <div id="studyTrackerBar" class="study-tracker-bar glass-card">
-        <div class="tracker-stat">
-          <span class="tracker-icon">📝</span>
-          <span>Today: <strong id="questionsToday">0</strong></span>
-        </div>
-        <div class="tracker-stat">
-          <span class="tracker-icon">🔥</span>
-          <span>Streak: <strong id="streakCount">0</strong> days</span>
+        <!-- Study Tracker Bar -->
+        <div id="studyTrackerBar" class="study-tracker-bar sidebar-stats">
+          <div class="tracker-stat">
+            <span class="tracker-icon">📝</span>
+            <span>Today: <strong id="questionsToday">0</strong></span>
+          </div>
+          <div class="tracker-stat">
+            <span class="tracker-icon">🔥</span>
+            <span>Streak: <strong id="streakCount">0</strong> days</span>
+          </div>
         </div>
       </div>
 
-      <section id="chatMessages" class="chat-messages glass-card">
+      <section class="history-panel">
+        <div class="sidebar-label">Your Chats</div>
+        <div id="chatHistoryList" class="history-list">
+          <div class="history-empty">Start a new conversation 🚀</div>
+        </div>
+      </section>
+    </aside>
+
+    <div id="sidebarOverlay" class="sidebar-overlay"></div>
+
+    <main class="main-panel chat-wrapper">
+      <header class="topbar glass-card">
+        <!-- Row 1: Hamburger | Title | Profile -->
+        <div class="topbar-row">
+          <button id="menuToggleBtn" class="icon-btn mobile-only" type="button" aria-label="Open sidebar">
+            <span></span>
+            <span></span>
+            <span></span>
+          </button>
+
+          <div class="topbar-title-block">
+            <span class="panel-overline">StudyMate AI</span>
+            <h2 id="chatTitle" class="chat-title">New Chat</h2>
+          </div>
+
+          <div class="profile-wrap">
+            <button id="profileBtn" class="profile" type="button" aria-label="Open profile menu">
+              <img id="userAvatar" src="https://ui-avatars.com/api/?name=User" alt="User avatar" />
+              <span id="userShortName" class="profile-name">User</span>
+            </button>
+
+            <div class="dropdown" id="profileDropdown">
+              <div class="profile-info">
+                <img id="dropdownAvatar" src="https://ui-avatars.com/api/?name=User" alt="User avatar" />
+                <div>
+                  <p id="userName" class="dropdown-name">User</p>
+                  <p id="userEmail" class="dropdown-email">Loading...</p>
+                </div>
+              </div>
+
+              <div class="divider"></div>
+              <button id="settingsBtn" class="ghost-btn full-width" type="button"
+                onclick="goToSettings()">Settings</button>
+              <button id="editNameBtn" class="ghost-btn full-width" type="button">Edit Name</button>
+              <button id="logoutBtn" class="ghost-btn full-width" type="button">Logout</button>
+            </div>
+          </div>
+        </div>
+
+
+      </header>
+
+
+      <section id="chatMessages" class="chat-messages glass-card chat-container">
         <div class="empty-state">
           <h3>Start a new conversation &#128640;</h3>
           <p>Create a chat from the sidebar and ask your first question.</p>
         </div>
       </section>
 
-      <form id="chatForm" class="composer glass-card" autocomplete="off">
-        <textarea id="userInput" rows="1" placeholder="Ask anything..."></textarea>
-        <button id="sendBtn" class="primary-btn" type="submit">Send</button>
-      </form>
+      <div class="chat-input-container">
+        <form id="chatForm" class="composer glass-card" autocomplete="off">
+          <textarea id="userInput" rows="1" placeholder="Ask anything..."></textarea>
+          <button id="sendBtn" class="primary-btn" type="submit">Send</button>
+        </form>
+      </div>
     </main>
   </div>
 

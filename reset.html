@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Reset Password | StudyMate AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body class="auth-page reset-page">
+  <header class="auth-header">
+    <img src="img/study-mate.png" class="auth-logo" alt="StudyMate Logo" />
+    <div class="auth-badge">StudyMate AI | Premium</div>
+  </header>
+
+  <section class="auth-content">
+    <main class="auth-card">
+      <div class="auth-card-header">
+        <h1 class="auth-title">Reset Password</h1>
+        <p class="auth-subtitle">Enter your new password below.</p>
+      </div>
+
+      <input type="password" id="newPassword" placeholder="New Password" required />
+      <button id="resetBtn" class="primary-btn">Update Password</button>
+
+      <p id="statusMessage" class="form-message" style="margin-top: 15px;"></p>
+    </main>
+  </section>
+
+  <footer class="auth-footer">
+    <p class="auth-switch"><a href="login.html">Back to Login</a></p>
+  </footer>
+
+  <script type="module" src="reset.js"></script>
+</body>
+</html>

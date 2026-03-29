@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verifying... | StudyMate AI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    .verify-page {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: radial-gradient(circle at top, #0f172a, #020617);
+      padding: 24px;
+      text-align: center;
+      color: white;
+    }
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 5px solid rgba(255,255,255,0.1);
+      border-bottom-color: #3b82f6;
+      border-radius: 50%;
+      display: inline-block;
+      box-sizing: border-box;
+      animation: rotation 1s linear infinite;
+      margin-bottom: 24px;
+    }
+    @keyframes rotation {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .status-text {
+      font-size: 20px;
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+    .sub-text {
+      color: #94a3b8;
+      max-width: 320px;
+    }
+  </style>
+</head>
+<body class="auth-page verify-page">
+  <div class="loader"></div>
+  <h1 class="status-text">Checking Verification...</h1>
+  <p class="sub-text">Once you click the link in your email, we'll automatically redirect you to your dashboard.</p>
+  
+  <button id="manualCheckBtn" class="primary-btn" style="margin-top: 30px; display: none;">I have verified</button>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    // Re-use same firebase config from app.js (In a real app, config would be in config.js)
+    // For now, I'll assume standard init pattern or just use onAuthStateChanged
+    // Actually, I'll just redirect to login if they haven't verified or dashboard if they have.
+    
+    // FETCH CONFIG (HACK: usually shared, but for this standalone page we need the key)
+    // I will read app.js to get the config if possible, or just use the same logic.
+    
+    const firebaseConfig = {
+      // Config is usually here. 
+    };
+  </script>
+  
+  <!-- IMPORTANT: Redirect back to login.html if they land here without being signed in -->
+  <script type="module" src="verify.js"></script>
+</body>
+</html>

@@ -10,39 +10,54 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body data-page="login" class="auth-page">
-  <main class="auth-shell">
-    <section class="auth-copy">
-      <div class="auth-badge">StudyMate AI | karsh</div>
-      <h1>Welcome back to your personal study space.</h1>
-      <p>
-        Login with your email and password to continue your saved chats and get real AI answers.
-      </p>
-    </section>
+  <header class="auth-header">
+    <img src="img/study-mate.png" class="auth-logo" alt="StudyMate Logo" />
+    <div class="auth-badge">StudyMate AI | Premium</div>
+  </header>
 
-    <section class="auth-card glass-card">
-      <div class="auth-header">
-        <h2>Login</h2>
-        <p>Enter your credentials to Login.</p>
+  <section class="auth-content">
+    <div id="verifyModal" class="modal">
+      <div class="modal-box glass-card">
+        <h3 class="auth-title">Verify Your Email 📧</h3>
+        <p class="auth-subtitle">We've sent a link to your inbox. Please check your email (and spam folder) to activate your account.</p>
+        
+        <button id="resendVerifyBtn" class="primary-btn resend-btn">Resend Email</button>
+        <p id="verifyStatus" class="verify-status"></p>
+        
+        <button id="closeVerifyModal" class="auth-switch" style="margin-top: 20px; border: none; background: none; cursor: pointer;">Return to Login</button>
+      </div>
+    </div>
+    <div id="forgotModal" class="modal">
+      <div class="modal-box glass-card">
+        <button id="closeModal" class="close-btn" type="button" aria-label="Close modal">✕</button>
+        <h3 class="auth-title">Reset Password</h3>
+        <p class="auth-subtitle">Enter your email to receive a password reset link.</p>
+        
+        <input type="email" id="resetEmail" placeholder="you@example.com" required />
+        <button id="sendResetBtn" class="primary-btn" style="margin-top: 20px;">Send Reset Link</button>
+        <p id="resetStatus" class="form-message" style="margin-top: 15px;"></p>
+      </div>
+    </div>
+
+    <main class="auth-card">
+      <div class="auth-card-header">
+        <h1 class="auth-title">Welcome Back</h1>
+        <p class="auth-subtitle">Login to your personal study space.</p>
       </div>
 
       <form id="loginForm" class="auth-form" novalidate>
-        <label>
-          <span>Email</span>
-          <input id="loginEmail" type="email" placeholder="you@example.com" required />
-        </label>
+        <input id="loginEmail" type="email" placeholder="Email Address" required />
+        <input id="loginPassword" type="password" placeholder="Password" required />
+        
+        <div style="text-align: right; margin: -8px 0 8px;">
+          <a id="forgotPasswordLink" class="auth-switch" href="javascript:void(0)" style="font-size: 13px;">Forgot Password?</a>
+        </div>
 
-        <label>
-          <span>Password</span>
-          <input id="loginPassword" type="password" placeholder="Enter your password" required />
-        </label>
-
-        <a id="forgotPasswordLink" class="forgot-password-link" href="javascript:void(0)">Forgot Password?</a>
-
-        <button class="primary-btn full-width" type="submit">Login</button>
+        <button class="primary-btn" type="submit">Login</button>
       </form>
 
-      <div class="auth-divider">
-        <span>OR</span>
+      <div class="auth-divider" style="margin: 12px 0;">
+        <span style="background: transparent; color: #64748b; font-size: 12px; font-weight: 600; letter-spacing: 1px;">OR</span>
       </div>
 
       <button id="googleLoginBtn" class="google-btn" type="button">
@@ -54,11 +69,13 @@
         </svg>
         <span>Continue with Google</span>
       </button>
+    </main>
+  </section>
 
-      <p id="authMessage" class="form-message"></p>
-      <p class="auth-switch">Don't have an account? <a href="signup.html">Create one</a></p>
-    </section>
-  </main>
+  <footer class="auth-footer">
+    <p id="authMessage" class="form-message" style="margin-bottom: 15px;"></p>
+    <p class="auth-switch">Don't have an account? <a href="signup.html">Create one</a></p>
+  </footer>
 
   <div id="confirmModal" class="modal confirm-modal" aria-hidden="true">
     <div class="modal-content glass-card confirm-content">
@@ -68,6 +85,24 @@
       <div class="modal-actions">
         <button id="confirmCancelBtn" class="ghost-btn" type="button">Cancel</button>
         <button id="confirmOkBtn" class="primary-btn" type="button">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="resetCard" class="reset-card hidden">
+    <div class="reset-card-header">
+      <img src="img/study-mate.png" class="reset-logo" alt="StudyMate Logo" />
+      <button id="closeResetCard" aria-label="Close" type="button">✕</button>
+    </div>
+
+    <div class="reset-card-body">
+      <h3>Password Reset Sent</h3>
+      <p>
+        We’ve sent a password reset link to your email.
+      </p>
+
+      <div class="alert-warning">
+        ⚠️ Check your spam folder if you don’t see it.
       </div>
     </div>
   </div>

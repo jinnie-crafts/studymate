@@ -97,60 +97,292 @@ function initLoginPage() {
   const googleLoginBtn = document.getElementById("googleLoginBtn");
   const forgotPasswordLink = document.getElementById("forgotPasswordLink");
 
-  onAuthStateChanged(auth, (user) => { if (user) window.location.replace("index.html"); });
+  onAuthStateChanged(auth, (user) => {
+    if (user && (user.emailVerified || user.providerData[0]?.providerId === 'google.com')) {
+      window.location.replace("index.html");
+    }
+  });
 
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
     const email = document.getElementById("loginEmail").value.trim();
     const password = document.getElementById("loginPassword").value;
-    if (!email || !password) { setFormMessage(authMessage, "Please enter your email and password.", "error"); showToast("Please enter your email and password.", "error"); return; }
+
+    if (!email || !password) {
+      setFormMessage(authMessage, "Please enter your email and password.", "error");
+      return;
+    }
+
     try {
       setFormMessage(authMessage, "Logging in...", "success");
       const cred = await signInWithEmailAndPassword(auth, email, password);
-      await ensureUserDocument(cred.user);
+
+      // Mandatory reload for real-time verification status
+      await cred.user.reload();
+      const updatedUser = auth.currentUser;
+
+      const isGoogle = updatedUser.providerData[0]?.providerId === 'google.com';
+      if (!updatedUser.emailVerified && !isGoogle) {
+        // Not verified and not google
+        await signOut(auth);
+        showVerificationModal(updatedUser);
+        setFormMessage(authMessage, "Please verify your email before logging in.", "error");
+        return;
+      }
+
+      await ensureUserDocument(updatedUser);
       queueFlashToast("Logged in successfully.", "success");
       window.location.replace("index.html");
-    } catch (err) { console.error("Login error:", err); setFormMessage(authMessage, err.message, "error"); showToast(err.message, "error"); }
+    } catch (err) {
+      console.error("Login error:", err);
+      setFormMessage(authMessage, "Invalid email or password.", "error");
+      showToast("Invalid email or password.", "error");
+    }
   });
 
   if (forgotPasswordLink) {
-    forgotPasswordLink.addEventListener("click", async () => {
-      const email = document.getElementById("loginEmail").value.trim() || prompt("Enter your email address:");
-      if (!email) return;
-      try {
-        await sendPasswordResetEmail(auth, email);
-        showToast("Password reset email sent! Check your inbox.", "success");
-      } catch (err) {
-        console.error("Password reset error:", err);
-        showToast(err.message, "error");
+    const forgotModal = document.getElementById("forgotModal");
+    const resetEmailInput = document.getElementById("resetEmail");
+    const sendResetBtn = document.getElementById("sendResetBtn");
+    const resetStatus = document.getElementById("resetStatus");
+    const closeModalBtn = document.getElementById("closeModal");
+
+    forgotPasswordLink.addEventListener("click", () => {
+      if (forgotModal) forgotModal.classList.add("show");
+      if (resetEmailInput) {
+        resetEmailInput.value = document.getElementById("loginEmail").value.trim();
+        resetEmailInput.focus();
       }
     });
+
+    if (closeModalBtn) {
+      closeModalBtn.addEventListener("click", () => {
+        if (forgotModal) forgotModal.classList.remove("show");
+        if (resetStatus) resetStatus.textContent = "";
+      });
+    }
+
+    if (forgotModal) {
+      forgotModal.addEventListener("click", (e) => {
+        if (e.target === forgotModal) {
+          forgotModal.classList.remove("show");
+          if (resetStatus) resetStatus.textContent = "";
+        }
+      });
+    }
+
+    if (sendResetBtn) {
+      sendResetBtn.addEventListener("click", async () => {
+        const email = resetEmailInput.value.trim();
+        if (!email) {
+          resetStatus.textContent = "Please enter an email address.";
+          resetStatus.className = "form-message error";
+          return;
+        }
+
+        try {
+          sendResetBtn.disabled = true;
+          sendResetBtn.textContent = "Sending...";
+          await sendPasswordResetEmail(auth, email, {
+            url: "https://studymateai-psbg.onrender.com/reset.html",
+            handleCodeInApp: true
+          });
+
+          resetStatus.textContent = "If an account exists, a reset link has been sent.";
+          resetStatus.className = "form-message success";
+
+          setTimeout(() => {
+            if (forgotModal) forgotModal.classList.remove("show");
+            sendResetBtn.disabled = false;
+            sendResetBtn.textContent = "Send Reset Link";
+            resetStatus.textContent = "";
+          }, 4000);
+
+        } catch (err) {
+          console.error("Password reset error:", err);
+          // Generic error for security
+          resetStatus.textContent = "If an account exists, a reset link has been sent.";
+          resetStatus.className = "form-message success";
+          sendResetBtn.disabled = false;
+          sendResetBtn.textContent = "Send Reset Link";
+        }
+      });
+    }
+
+    const closeResetCardBtn = document.getElementById("closeResetCard");
+    if (closeResetCardBtn) {
+      closeResetCardBtn.addEventListener("click", () => {
+        const resetCard = document.getElementById("resetCard");
+        if (resetCard) resetCard.classList.add("hidden");
+      });
+    }
   }
 
   googleLoginBtn.addEventListener("click", loginWithGoogle);
 }
+
+const blockedDomains = new Set([
+  "tempmail.com", "10minutemail.com", "mailinator.com", "guerrillamail.com", "yopmail.com",
+  "dispostable.com", "tempmailaddress.com", "getnada.com", "temp-mail.org"
+]);
 
 function initSignupPage() {
   const signupForm = document.getElementById("signupForm");
   const authMessage = document.getElementById("authMessage");
   const googleLoginBtn = document.getElementById("googleLoginBtn");
 
-  onAuthStateChanged(auth, (user) => { if (user) window.location.replace("index.html"); });
+  onAuthStateChanged(auth, (user) => {
+    if (user && user.emailVerified) window.location.replace("index.html");
+  });
 
+  let isSubmitting = false;
   signupForm.addEventListener("submit", async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
+
     const email = document.getElementById("signupEmail").value.trim();
     const password = document.getElementById("signupPassword").value;
-    if (!email || !password) { setFormMessage(authMessage, "Please enter your email and password.", "error"); showToast("Please enter your email and password.", "error"); return; }
+
+    if (!email || !password) {
+      setFormMessage(authMessage, "Please fill in all fields.", "error");
+      return;
+    }
+
+    const domain = email.split("@")[1]?.toLowerCase();
+    if (blockedDomains.has(domain)) {
+      setFormMessage(authMessage, "Temporary/Disposable emails are not allowed.", "error");
+      showToast("Please use a permanent email address.", "error");
+      return;
+    }
+
     try {
-      setFormMessage(authMessage, "Creating account...", "success");
-      const cred = await createUserWithEmailAndPassword(auth, email, password);
-      await ensureUserDocument(cred.user);
-      queueFlashToast("Account created successfully.", "success");
-      window.location.replace("index.html");
-    } catch (err) { console.error("Signup error:", err); setFormMessage(authMessage, err.message, "error"); showToast(err.message, "error"); }
+      isSubmitting = true;
+      const submitBtn = signupForm.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = true;
+
+      setFormMessage(authMessage, "Creating your secure account...", "success");
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        console.log("User created:", cred.user.email);
+        console.log("Sending verification email...");
+
+        await sendEmailVerification(cred.user, {
+          url: window.location.origin + "/login.html"
+        });
+
+        await ensureUserDocument(cred.user);
+        await signOut(auth);
+
+        showVerificationModal(cred.user);
+        setFormMessage(authMessage, "If an account exists, a verification email has been sent.", "success");
+
+      } catch (err) {
+        if (err.code === "auth/email-already-in-use") {
+          console.log("Email already in use. Attempting to resend verification link...");
+          try {
+            // Attempt login with same credentials to verify ownership
+            const loginCred = await signInWithEmailAndPassword(auth, email, password);
+            console.log("User verified via login:", loginCred.user.email);
+            console.log("Sending verification email...");
+
+            await sendEmailVerification(loginCred.user, {
+              url: window.location.origin + "/login.html"
+            });
+
+            await signOut(auth);
+            showVerificationModal(loginCred.user);
+            setFormMessage(authMessage, "If an account exists, a verification email has been sent.", "success");
+          } catch (loginError) {
+            console.error("Login verification failed (wrong password?):", loginError);
+            // Generic response to prevent enumeration
+            showVerificationModal({ email });
+            setFormMessage(authMessage, "If an account exists, a verification email has been sent.", "success");
+          }
+        } else {
+          throw err; // Re-throw other errors
+        }
+      }
+
+    } catch (err) {
+      console.error("Signup error:", err);
+      setFormMessage(authMessage, "An error occurred. Please try again.", "error");
+      showToast(err.message, "error");
+    } finally {
+      isSubmitting = false;
+      const submitBtn = signupForm.querySelector('button[type="submit"]');
+      if (submitBtn) submitBtn.disabled = false;
+    }
   });
-  googleLoginBtn.addEventListener("click", loginWithGoogle);
+
+  if (googleLoginBtn) googleLoginBtn.addEventListener("click", loginWithGoogle);
+}
+
+function showVerificationModal(user) {
+  const modal = document.getElementById("verifyModal");
+  if (!modal) return;
+
+  modal.classList.add("show");
+
+  const resendBtn = document.getElementById("resendVerifyBtn");
+  const statusEl = document.getElementById("verifyStatus");
+  const closeBtn = document.getElementById("closeVerifyModal");
+
+  let cooldown = 0;
+  let timerInterval = null;
+
+  const startCooldown = () => {
+    const timestamp = Date.now();
+    localStorage.setItem("lastResendTimestamp", timestamp);
+    resendBtn.classList.add("disabled");
+    resendBtn.disabled = true;
+
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      const elapsed = Math.floor((Date.now() - timestamp) / 1000);
+      cooldown = 60 - elapsed;
+      resendBtn.textContent = `Resend available in ${cooldown}s`;
+      if (cooldown <= 0) {
+        clearInterval(timerInterval);
+        resendBtn.classList.remove("disabled");
+        resendBtn.disabled = false;
+        resendBtn.textContent = "Resend Email";
+        localStorage.removeItem("lastResendTimestamp");
+      }
+    }, 1000);
+  };
+
+  // Check for existing cooldown on modal open
+  const savedTimestamp = localStorage.getItem("lastResendTimestamp");
+  if (savedTimestamp) {
+    const elapsed = Math.floor((Date.now() - parseInt(savedTimestamp)) / 1000);
+    if (elapsed < 60) {
+      startCooldown();
+    }
+  }
+
+  resendBtn.onclick = async () => {
+    try {
+      statusEl.textContent = "Sending verification...";
+      statusEl.className = "verify-status waiting";
+
+      // If user is signed out, we might need them to sign in again or just use the link
+      // But Firebase allows sending toCurrentUser if they just signed up
+      await sendEmailVerification(auth.currentUser || user);
+
+      statusEl.textContent = "New verification link sent!";
+      statusEl.className = "verify-status success";
+      startCooldown();
+    } catch (err) {
+      statusEl.textContent = "Failed to resend. Please try again later.";
+      statusEl.className = "verify-status error";
+    }
+  };
+
+  closeBtn.onclick = () => {
+    modal.classList.remove("show");
+    if (timerInterval) clearInterval(timerInterval);
+  };
 }
 
 async function loginWithGoogle() {
@@ -178,17 +410,21 @@ async function ensureUserDocument(user) {
         name: user.displayName || "User",
         email: user.email || "",
         photoURL: user.photoURL || "",
+        onboardingDone: false,
         createdAt: serverTimestamp()
       });
+      state.userOnboardingDone = false;
     } else {
+      const data = snap.data();
+      state.userOnboardingDone = data.onboardingDone || false;
       await updateDoc(userRef, {
-        name: user.displayName || snap.data().name || "User",
-        email: user.email || snap.data().email || "",
+        name: user.displayName || data.name || "User",
+        email: user.email || data.email || "",
         photoURL: user.photoURL || snap.data().photoURL || ""
       });
     }
-  } catch (error) { 
-    console.error(error); 
+  } catch (error) {
+    console.error(error);
     if (error.code === "permission-denied") {
       showToast("Access denied");
     } else {
@@ -294,12 +530,78 @@ function initDashboardPage() {
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { cleanupChatSubscription(); window.location.replace("login.html"); return; }
-    state.currentUser = user;
-    await ensureUserDocument(user);
-    displayUserProfile(user.displayName || "User", user.email || "No email found", user.photoURL || "");
+
+    // Mandatory reload for real-time verification status
+    await user.reload();
+    const updatedUser = auth.currentUser;
+
+    // Check for email verification, skip if Google user
+    const isGoogle = updatedUser.providerData[0]?.providerId === 'google.com';
+    if (!updatedUser.emailVerified && !isGoogle) {
+      window.location.replace("login.html");
+      return;
+    }
+
+    state.currentUser = updatedUser;
+    await ensureUserDocument(updatedUser);
+    displayUserProfile(updatedUser.displayName || "User", updatedUser.email || "No email found", updatedUser.photoURL || "");
+
+    // Check for onboarding (Firestore sync)
+    if (state.userOnboardingDone === false) {
+      showOnboardingOverlay();
+    }
+
     loadChats();
     loadTrackerData();
   });
+}
+
+function showOnboardingOverlay() {
+  const overlay = document.getElementById("onboarding");
+  const startBtn = document.getElementById("startBtn");
+  if (!overlay || !startBtn) return;
+
+  overlay.classList.remove("hidden");
+
+  // Highlight New Chat briefly
+  const newChatBtn = document.getElementById("newChatBtn");
+  if (newChatBtn) {
+    newChatBtn.style.boxShadow = "0 0 20px #3b82f6";
+    setTimeout(() => { if (newChatBtn) newChatBtn.style.boxShadow = ""; }, 3000);
+  }
+
+  startBtn.onclick = async () => {
+    try {
+      startBtn.disabled = true;
+      startBtn.textContent = "Setting up...";
+
+      // Persistence: Update Firestore
+      const userRef = doc(db, "users", state.currentUser.uid);
+      await updateDoc(userRef, { onboardingDone: true });
+      state.userOnboardingDone = true;
+
+      overlay.classList.add("hidden");
+
+      // Welcome message in chat (Prevention of duplicates)
+      if (ui.chatMessages && !sessionStorage.getItem("welcomeMessageSent")) {
+        const welcomeMsg = document.createElement("div");
+        welcomeMsg.className = "message ai-message";
+        welcomeMsg.innerHTML = `<p>Hi! I'm StudyMate AI 👋 What would you like to learn today? I can help with UPSC, JEE, NEET subjects or any other study topic!</p>`;
+        ui.chatMessages.appendChild(welcomeMsg);
+        scrollMessagesToBottom();
+        sessionStorage.setItem("welcomeMessageSent", "true");
+      }
+
+      // Auto focus input
+      if (ui.userInput) {
+        ui.userInput.placeholder = "Ask anything... (e.g. Explain photosynthesis)";
+        ui.userInput.focus();
+      }
+    } catch (err) {
+      console.error("Onboarding setup error:", err);
+      overlay.classList.add("hidden"); // Proceed anyway but log error
+    }
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -323,6 +625,13 @@ function initSettingsPage() {
 
   onAuthStateChanged(auth, async (user) => {
     if (!user) { window.location.replace("login.html"); return; }
+
+    const isGoogle = user.providerData[0]?.providerId === 'google.com';
+    if (!user.emailVerified && !isGoogle) {
+      window.location.replace("login.html");
+      return;
+    }
+
     state.currentUser = user;
     renderSettingsAccount(user);
   });
@@ -410,8 +719,8 @@ async function handleLogout() {
   catch (err) { console.error("Logout error:", err); showToast(err.message, "error"); }
 }
 
-function cleanupChatSubscription() { 
-  if (typeof state.chatsUnsubscribe === "function") { state.chatsUnsubscribe(); state.chatsUnsubscribe = null; } 
+function cleanupChatSubscription() {
+  if (typeof state.chatsUnsubscribe === "function") { state.chatsUnsubscribe(); state.chatsUnsubscribe = null; }
   if (typeof window.messagesUnsubscribe === "function") { window.messagesUnsubscribe(); window.messagesUnsubscribe = null; }
 }
 
@@ -456,49 +765,62 @@ async function saveDisplayName() {
 // ---------------------------------------------------------------------------
 
 async function handleNewChat() {
-  try {
-    const userId = getCurrentUserId();
-    const defaultMode = getSavedDefaultMode();
-    const defaultHinglish = getSavedHinglishDefault();
-    const defaultNotesMode = getSavedDefaultNotesMode();
+  state.currentChatId = null;
+  state.preferredChatId = null;
+  state.editingChatId = null;
+  state.renameDraft = "";
+  state.editingMessageIndex = null;
+  state.messageDraft = "";
+  if (state.streamingResponse) stopStreamingResponse();
 
-    const docRef = await addDoc(collection(db, "chats"), {
-      userId: userId, 
-      title: "New Chat", 
-      mode: defaultMode,
-      hinglish: defaultHinglish, 
-      notesMode: defaultNotesMode, 
-      createdAt: serverTimestamp(), 
-      updatedAt: serverTimestamp()
-    });
+  const defaultMode = getSavedDefaultMode();
+  const defaultHinglish = getSavedHinglishDefault();
+  const defaultNotesMode = getSavedDefaultNotesMode();
 
-    const newChat = {
-      id: docRef.id, userId: userId, title: "New Chat",
-      mode: defaultMode, hinglish: defaultHinglish, notesMode: defaultNotesMode,
-      messages: [], createdAt: null, updatedAt: null
-    };
+  setSelectedMode(defaultMode);
+  setSelectedNotesMode(defaultNotesMode);
+  ui.hinglishToggle.checked = defaultHinglish;
 
-    state.chats = [newChat, ...state.chats.filter((c) => c.id !== docRef.id)];
-    state.currentChatId = docRef.id;
-    state.editingChatId = null; state.renameDraft = "";
-    state.editingMessageIndex = null; state.messageDraft = "";
+  ui.chatTitle.textContent = "New Chat";
+  ui.userInput.value = "";
+  autoResizeTextarea(ui.userInput);
 
-    loadChats(docRef.id);
-    loadMessages(docRef.id);
-    setSelectedMode(defaultMode);
-    setSelectedNotesMode(defaultNotesMode);
-    ui.hinglishToggle.checked = defaultHinglish;
-    ui.userInput.value = ""; autoResizeTextarea(ui.userInput);
-    renderHistory(); renderMessages();
-    ui.userInput.focus(); closeSidebar();
-  } catch (error) { 
-    console.error(error);
-    if (error.code === "permission-denied") {
-      showToast("Access denied");
-    } else {
-      showToast("Something went wrong");
-    }
-  }
+  renderHistory();
+  renderMessages();
+
+  ui.userInput.focus();
+  closeSidebar();
+}
+
+async function createNewChatDocument() {
+  const userId = getCurrentUserId();
+  const defaultMode = getSavedDefaultMode();
+  const defaultHinglish = getSavedHinglishDefault();
+  const defaultNotesMode = getSavedDefaultNotesMode();
+
+  const docRef = await addDoc(collection(db, "chats"), {
+    userId: userId,
+    title: "New Chat",
+    mode: defaultMode,
+    hinglish: defaultHinglish,
+    notesMode: defaultNotesMode,
+    createdAt: serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+
+  const newChat = {
+    id: docRef.id, userId: userId, title: "New Chat",
+    mode: defaultMode, hinglish: defaultHinglish, notesMode: defaultNotesMode,
+    messages: [], createdAt: null, updatedAt: null
+  };
+
+  state.chats = [newChat, ...state.chats.filter((c) => c.id !== docRef.id)];
+  state.currentChatId = docRef.id;
+
+  loadChats(docRef.id);
+  loadMessages(docRef.id);
+
+  return newChat;
 }
 
 function loadChats(preferredChatId = state.currentChatId) {
@@ -525,13 +847,13 @@ function loadChats(preferredChatId = state.currentChatId) {
           updatedAt: data.updatedAt || data.createdAt || null
         };
       }).sort((a, b) => getTimestampValue(b.updatedAt) - getTimestampValue(a.updatedAt));
-      
-      syncStateWithLatestChats(); syncHeaderWithActiveChat(); renderHistory(); 
+
+      syncStateWithLatestChats(); syncHeaderWithActiveChat(); renderHistory();
       if (state.currentChatId && state.chats.some(c => c.id === state.currentChatId) && !window.messagesUnsubscribe) {
         loadMessages(state.currentChatId);
       }
       renderMessages();
-    }, (error) => { 
+    }, (error) => {
       console.error(error);
       if (error.code === "permission-denied") {
         showToast("Access denied");
@@ -558,7 +880,7 @@ function loadMessages(chatId) {
       window.messagesUnsubscribe();
       window.messagesUnsubscribe = null;
     }
-    
+
     if (!chatId) return;
 
     const messagesQuery = query(
@@ -574,13 +896,13 @@ function loadMessages(chatId) {
         id: d.id,
         ...d.data({ serverTimestamps: "estimate" })
       }));
-      
+
       activeChat.messages.sort((a, b) => {
         const timeA = a.createdAt?.seconds || 0;
         const timeB = b.createdAt?.seconds || 0;
         return timeA - timeB;
       });
-      
+
       if (state.currentChatId === chatId) {
         renderMessages();
       }
@@ -618,7 +940,6 @@ function renderHistory() {
 function syncStateWithLatestChats() {
   if (state.preferredChatId && state.chats.some((c) => c.id === state.preferredChatId)) state.currentChatId = state.preferredChatId;
   else if (state.currentChatId && state.chats.some((c) => c.id === state.currentChatId)) { /* keep */ }
-  else if (state.chats.length > 0) state.currentChatId = state.chats[0].id;
   else state.currentChatId = null;
   state.preferredChatId = null;
   if (!state.chats.some((c) => c.id === state.editingChatId)) { state.editingChatId = null; state.renameDraft = ""; }
@@ -635,27 +956,27 @@ function syncStateWithLatestChats() {
 function renderMessages() {
   const activeChat = getCurrentChat();
   const showTyping = Boolean(state.showTypingIndicator);
-  
+
   if (!activeChat || (activeChat.messages.length === 0 && !showTyping && !(state.streamingResponse && state.streamingResponse.chatId === activeChat.id))) {
     ui.chatTitle.textContent = activeChat?.title || "New Chat";
     ui.chatMessages.innerHTML = `<div class="empty-state"><h3>Start a new conversation &#128640;</h3><p>Create a chat from the sidebar and ask your first question.</p></div>`;
     return;
   }
   ui.chatTitle.textContent = activeChat?.title || "New Chat";
-  
+
   const messageMarkup = activeChat.messages.map((message, index) => {
     const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
     const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content)}</div>`;
     const actionMarkup = renderMessageActions(activeChat.messages, message, index);
-    return `<article class="message-row ${message.role}"><div class="message-stack"><div class="message-bubble message"><div class="message-meta"><span>${roleLabel}</span></div>${contentMarkup}</div>${actionMarkup}</div></article>`;
+    return `<article class="message-row ${message.role}"><div class="message-stack"><div class="message-bubble message ${message.role}-message"><div class="message-meta"><strong>${roleLabel}</strong></div>${contentMarkup}</div>${actionMarkup}</div></article>`;
   }).join("");
 
   const streamingMarkup = (state.streamingResponse && state.streamingResponse.chatId === activeChat.id)
-    ? `<article class="message-row ai"><div class="message-stack"><div class="message-bubble message"><div class="message-meta"><span>StudyMate AI</span></div><div class="message-content" data-stream-content>${formatMessage(state.streamingResponse.visibleText)}</div></div></div></article>`
+    ? `<article class="message-row ai"><div class="message-stack"><div class="message-bubble message ai-message"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content" data-stream-content>${formatMessage(state.streamingResponse.visibleText)}</div></div></div></article>`
     : "";
 
-  const typingMarkup = showTyping ? `<article class="message-row ai"><div class="message-stack"><div class="message-bubble message"><div class="message-meta"><span>StudyMate AI</span></div><div class="message-content loading-text"><i>Thinking...</i></div></div></div></article>` : "";
-  
+  const typingMarkup = showTyping ? `<article class="message-row ai"><div class="message-stack"><div class="message-bubble message ai-message"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content loading-text"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div></div></article>` : "";
+
   ui.chatMessages.innerHTML = `${messageMarkup}${streamingMarkup}${typingMarkup}`;
   focusMessageEditor(); scrollMessagesToBottom();
 }
@@ -678,19 +999,19 @@ async function handleSendMessage() {
     if (state.isSending) return;
     const content = ui.userInput.value.trim();
     if (!content) return;
-    if (!state.currentChatId) await handleNewChat();
+    if (!state.currentChatId) await createNewChatDocument();
     const activeChat = getCurrentChat();
     if (!activeChat) { showToast("Unable to open a chat session.", "error"); return; }
-    
+
     ui.userInput.value = ""; autoResizeTextarea(ui.userInput);
-    
+
     await addDoc(collection(db, "chats", activeChat.id, "messages"), {
       role: "user",
       content: content,
       createdAt: serverTimestamp()
     });
     await updateDoc(doc(db, "chats", activeChat.id), { updatedAt: serverTimestamp() });
-    
+
     await generateAssistantReply({ chat: activeChat, userContent: content, titleSource: content });
   } catch (error) {
     console.error(error);
@@ -742,52 +1063,52 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
   state.isSending = true; state.showTypingIndicator = true;
   state.editingMessageIndex = null; state.messageDraft = "";
   setComposerLoading(true);
-  
-  chat.mode = getSelectedMode(); 
+
+  chat.mode = getSelectedMode();
   chat.hinglish = ui.hinglishToggle.checked;
   chat.notesMode = getSelectedNotesMode();
   renderHistory(); renderMessages();
 
   let finalApiMessages = apiMessages || [...chat.messages];
   if (userContent && !finalApiMessages.some(m => m.content === userContent && m.role === "user")) {
-     finalApiMessages.push({ role: "user", content: userContent });
+    finalApiMessages.push({ role: "user", content: userContent });
   }
-  
+
   try {
     const aiContent = await fetchAIResponse(finalApiMessages, chat.mode, chat.hinglish, chat.notesMode);
-    
+
     state.showTypingIndicator = false;
     await streamAssistantMessage(chat.id, aiContent);
-    
+
     await addDoc(collection(db, "chats", chat.id, "messages"), {
       role: "ai",
       content: aiContent,
       createdAt: serverTimestamp()
     });
-    
+
     if (chat.title === "New Chat" && titleSource && finalApiMessages.filter((m) => m.role === "ai").length === 0) {
       const newTitle = generateChatTitle(titleSource);
       await updateDoc(doc(db, "chats", chat.id), { title: newTitle, updatedAt: serverTimestamp() });
     } else {
       await updateDoc(doc(db, "chats", chat.id), { updatedAt: serverTimestamp() });
     }
-    
+
     await incrementStudyTracker();
     if (successMessage) showToast(successMessage, "success");
-    
-  } catch (error) { 
-    console.error(error); 
-    state.showTypingIndicator = false; 
+
+  } catch (error) {
+    console.error(error);
+    state.showTypingIndicator = false;
     if (error.code === "permission-denied") {
       showToast("Access denied");
     } else {
       showToast("Something went wrong");
     }
-  } finally { 
-    state.isSending = false; 
-    setComposerLoading(false); 
-    renderHistory(); 
-    renderMessages(); 
+  } finally {
+    state.isSending = false;
+    setComposerLoading(false);
+    renderHistory();
+    renderMessages();
   }
 }
 
@@ -804,9 +1125,9 @@ async function regenerateAiMessage(messageIndex) {
     if (!activeChat || state.isSending || !isLatestAiMessage(activeChat.messages, messageIndex)) return;
     const previousUserIndex = findPreviousUserMessageIndex(activeChat.messages, messageIndex);
     if (previousUserIndex === -1) { showToast("No user message found to regenerate from.", "error"); return; }
-    
+
     const baseMessages = activeChat.messages.slice(0, messageIndex);
-    
+
     await generateAssistantReply({ chat: activeChat, apiMessages: baseMessages, successMessage: "Response regenerated." });
   } catch (error) {
     console.error(error);
@@ -899,9 +1220,9 @@ function syncHeaderWithActiveChat() {
   ui.hinglishToggle.checked = Boolean(activeChat.hinglish);
 }
 
-function setComposerLoading(isLoading) { 
-  ui.sendBtn.disabled = isLoading; 
-  ui.userInput.disabled = isLoading; 
+function setComposerLoading(isLoading) {
+  ui.sendBtn.disabled = isLoading;
+  ui.userInput.disabled = isLoading;
 }
 function getCurrentChat() { return state.chats.find((c) => c.id === state.currentChatId) || null; }
 function getChatById(chatId) { return state.chats.find((c) => c.id === chatId) || null; }

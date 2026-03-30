@@ -28,74 +28,99 @@ app.get("/", (_req, res) => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/chat — proxy to OpenRouter
+// POST /api/chat — proxy to OpenRouter with fallback
 // ---------------------------------------------------------------------------
+
+const DEFAULT_MODELS = [
+  "deepseek/deepseek-r1:free",
+  "mistralai/mistral-small:free",
+  "qwen/qwen-3-coder:free"
+];
+
+const TECHNICAL_MODELS = [
+  "qwen/qwen-3-coder:free",
+  "deepseek/deepseek-r1:free",
+  "mistralai/mistral-small:free"
+];
 
 app.post("/api/chat", async (req, res) => {
   try {
-    // ------ validate env key ------
     const apiKey = process.env.OPENROUTER_API_KEY;
-
     if (!apiKey) {
-      console.error("OPENROUTER_API_KEY is not set in environment variables.");
-      return res.status(500).json({ error: "Server not responding.." });
+      console.error("OPENROUTER_API_KEY is not set.");
+      return res.status(500).json({ error: "AI Service is currently unavailable." });
     }
 
-    // ------ validate request body ------
     const { messages, mode, hinglish, notesMode, userId } = req.body;
-
     if (userId) console.log(`[AI Request] User: ${userId} | Mode: ${mode || "General"}`);
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: "messages[] is required and must not be empty." });
+      return res.status(400).json({ error: "No messages provided." });
     }
 
-    // Ensure every message has role + content
-    for (const msg of messages) {
-      if (!msg.role || typeof msg.content !== "string" || !msg.content.trim()) {
-        return res.status(400).json({ error: "Each message must have a role and non-empty content." });
-      }
-    }
+    // Performance: Limit history to last 10 messages
+    const limitedMessages = messages.slice(-10);
 
-    // ------ build system prompt ------
+    // Build system message
     const systemMessage = buildSystemMessage(mode, hinglish, notesMode);
-
-    // ------ build conversation payload ------
-    const conversationMessages = messages.map((msg) => ({
+    const conversationMessages = limitedMessages.map((msg) => ({
       role: msg.role === "ai" ? "assistant" : msg.role,
       content: msg.content
     }));
 
-    // ------ call OpenRouter ------
-    const orResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-        "HTTP-Referer": "https://studymate-ai.onrender.com",
-        "X-Title": "StudyMate AI"
-      },
-      body: JSON.stringify({
-        model: "meta-llama/llama-3-8b-instruct",
-        messages: [
-          { role: "system", content: systemMessage },
-          ...conversationMessages
-        ]
-      })
-    });
+    const finalMessages = [
+      { role: "system", content: systemMessage },
+      ...conversationMessages
+    ];
 
-    const data = await orResponse.json().catch(() => ({}));
+    // Determine model priority based on context (JEE/NEET prioritize Coder)
+    const isTechnical = ["jee", "neet"].includes(String(mode || "").toLowerCase());
+    const modelList = isTechnical ? TECHNICAL_MODELS : DEFAULT_MODELS;
 
-    if (!orResponse.ok) {
-      console.error("OpenRouter error:", data);
-      return res.status(orResponse.status).json({
-        error: data.error?.message || "AI service returned an error."
-      });
+    // Fallback Loop
+    for (const model of modelList) {
+      // 1 Retry per model (Total 2 attempts per model)
+      for (let attempt = 1; attempt <= 2; attempt++) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s Timeout
+
+        try {
+          console.log(`[AI Attempt] Model: ${model} | Attempt: ${attempt}`);
+          const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+              "HTTP-Referer": "https://studymate-ai.onrender.com",
+              "X-Title": "StudyMate AI"
+            },
+            body: JSON.stringify({ model, messages: finalMessages }),
+            signal: controller.signal
+          });
+
+          clearTimeout(timeoutId);
+
+          if (response.ok) {
+            const data = await response.json();
+            const content = data.choices?.[0]?.message?.content;
+            if (content) {
+              console.log(`[AI Success] Using model: ${model}`);
+              return res.json({ reply: content });
+            }
+          } else {
+            const errorData = await response.json().catch(() => ({}));
+            console.warn(`[AI Warn] ${model} attempt ${attempt} failed:`, errorData.error?.message || response.statusText);
+          }
+        } catch (error) {
+          clearTimeout(timeoutId);
+          console.error(`[AI Error] ${model} attempt ${attempt} failed:`, error.name === 'AbortError' ? 'Timeout' : error.message);
+        }
+      }
     }
 
-    const reply = data.choices?.[0]?.message?.content || "No response from AI";
+    // If all models and retries fail
+    return res.status(503).json({ error: "AI is busy right now. Please try again." });
 
-    return res.json({ reply });
   } catch (error) {
     console.error("POST /api/chat error:", error);
     return res.status(500).json({ error: "Internal server error." });
@@ -108,8 +133,6 @@ app.post("/api/chat", async (req, res) => {
 
 function buildSystemMessage(mode, hinglish, notesMode) {
   let base = "";
-
-  // Mode-specific instruction
   const normalizedMode = String(mode || "General").toLowerCase();
 
   if (normalizedMode === "upsc") {

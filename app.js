@@ -184,7 +184,7 @@ function initLoginPage() {
           sendResetBtn.disabled = true;
           sendResetBtn.textContent = "Sending...";
           await sendPasswordResetEmail(auth, email, {
-            url: "https://studymateai-psbg.onrender.com/reset.html",
+            url: window.location.origin + "/action-handler.html",
             handleCodeInApp: true
           });
 
@@ -1037,12 +1037,15 @@ async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
       })
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) { throw new Error(data.error || "No response from AI"); }
-    return data.reply || "No response from AI";
+    if (!response.ok) { 
+      // If backend returns a friendly "AI is busy" error, we use it.
+      throw new Error(data.error || "AI service is currently unavailable."); 
+    }
+    return data.reply || "No response received.";
   } catch (err) {
     console.error("Backend request failed:", err);
-    showToast(err.message || "No response from AI", "error");
-    return "No response from AI";
+    // Return the error message directly so it can be shown in the chat
+    return err.message;
   }
 }
 

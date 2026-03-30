@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Processing Action | StudyMate AI</title>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: 'Outfit', sans-serif;
+            text-align: center;
+        }
+        .loader-container {
+            padding: 2rem;
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(10px);
+            border-radius: 1rem;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid rgba(59, 130, 246, 0.3);
+            border-top: 3px solid #3b82f6;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .redirect-text {
+            font-size: 1.1rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader-container">
+        <div class="spinner"></div>
+        <p class="redirect-text">Redirecting to custom reset page...</p>
+    </div>
+
+    <script type="module">
+        const params = new URLSearchParams(window.location.search);
+        const mode = params.get("mode");
+        const oobCode = params.get("oobCode");
+
+        if (mode === "resetPassword" && oobCode) {
+            // Redirect to custom reset page
+            window.location.href = `/reset.html?oobCode=${oobCode}`;
+        } else {
+            // Fallback for other modes if needed, or redirect to home/login
+            console.warn("Unhandled action mode:", mode);
+            setTimeout(() => {
+                window.location.href = "/login.html";
+            }, 2000);
+        }
+    </script>
+</body>
+</html>

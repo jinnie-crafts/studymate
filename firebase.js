@@ -3,12 +3,12 @@ import { getAuth } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY_HERE",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyDljS0leq2NDd0el5daQkUK-MvMsPwk9MM",
+  authDomain: "studymate-ai-bc65e.firebaseapp.com",
+  projectId: "studymate-ai-bc65e",
+  storageBucket: "studymate-ai-bc65e.firebasestorage.app",
+  messagingSenderId: "320860002411",
+  appId: "1:320860002411:web:1f02c4140623920facb92e"
 };
 
 // Firebase client config is public-safe.

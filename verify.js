@@ -15,11 +15,7 @@ if (oobCode) {
   statusText.textContent = "Verifying email...";
   applyActionCode(auth, oobCode)
     .then(() => {
-      statusText.textContent = "Email Verified!";
-      subText.textContent = "Your account is now active. Redirecting to dashboard...";
-      setTimeout(() => {
-        window.location.replace("index.html");
-      }, 2000);
+      showVerifySuccess();
     })
     .catch((error) => {
       console.error("Verification error:", error);
@@ -49,10 +45,7 @@ onAuthStateChanged(auth, async (user) => {
       const isGoogle = updatedUser.providerData[0]?.providerId === 'google.com';
       
       if (updatedUser.emailVerified || isGoogle) {
-        statusText.textContent = "Verified! Redirecting...";
-        setTimeout(() => {
-          window.location.replace("index.html");
-        }, 1000);
+        showVerifySuccess();
         return true;
       }
     } catch (err) {
@@ -86,3 +79,28 @@ onAuthStateChanged(auth, async (user) => {
     };
   }
 });
+
+function showVerifySuccess() {
+  document.body.innerHTML = `
+    <div class="success-container">
+      <div class="success-card">
+        <h2>🎉 Email Verified!</h2>
+        <p>Your account is now fully activated.</p>
+        <p>Redirecting to dashboard in <strong id="timer">3</strong>s...</p>
+      </div>
+    </div>
+  `;
+
+  let time = 3;
+  const timerEl = document.getElementById("timer");
+
+  const interval = setInterval(() => {
+    time--;
+    if (timerEl) timerEl.textContent = time;
+
+    if (time <= 0) {
+      clearInterval(interval);
+      window.location.replace("index.html");
+    }
+  }, 1000);
+}

@@ -1,5 +1,5 @@
 import { auth } from "./firebase.js";
-import { confirmPasswordReset } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { confirmPasswordReset, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 
 const params = new URLSearchParams(window.location.search);
 const oobCode = params.get("oobCode");
@@ -34,15 +34,15 @@ if (resetBtn) {
 
     try {
       resetBtn.disabled = true;
-      resetBtn.innerText = "Updating...";
+      resetBtn.innerHTML = `
+        <span class="spinner" style="display:inline-block; width:16px; height:16px; border:2px solid rgba(255,255,255,0.3); border-top-color:#fff; border-radius:50%; animation:spin 0.8s linear infinite; margin-right:8px;"></span>
+        Updating...
+      `;
+      
       await confirmPasswordReset(auth, oobCode, newPassword);
       
-      msg.innerText = "Password updated successfully! Redirecting to login...";
-      msg.style.color = "#4ade80"; 
-      
-      setTimeout(() => {
-        window.location.replace("login.html");
-      }, 3000);
+      // Success flow
+      showResetSuccess(newPassword);
 
     } catch (error) {
       console.error("Password reset error:", error);
@@ -56,4 +56,51 @@ if (resetBtn) {
       resetBtn.disabled = false;
     }
   };
+}
+
+function showResetSuccess(newPassword) {
+  let target = "login.html";
+  let targetLabel = "login";
+  const email = localStorage.getItem("resetEmail");
+  let autoLoginSuccess = false;
+
+  const performAutoLogin = async () => {
+    if (email && newPassword) {
+      try {
+        await signInWithEmailAndPassword(auth, email, newPassword);
+        target = "index.html";
+        targetLabel = "dashboard";
+        autoLoginSuccess = true;
+        localStorage.removeItem("resetEmail");
+      } catch (err) {
+        console.warn("Auto-login failed:", err);
+      }
+    }
+  };
+
+  performAutoLogin().then(() => {
+    document.body.innerHTML = `
+      <div class="success-container">
+        <div class="success-card">
+          <h2>✅ Success!</h2>
+          <p>Your password has been reset.</p>
+          ${autoLoginSuccess ? "<p><strong>Logging you in automatically...</strong></p>" : ""}
+          <p>Redirecting to ${targetLabel} in <strong id="timer">3</strong>s...</p>
+        </div>
+      </div>
+    `;
+
+    let time = 3;
+    const timerEl = document.getElementById("timer");
+
+    const interval = setInterval(() => {
+      time--;
+      if (timerEl) timerEl.textContent = time;
+
+      if (time <= 0) {
+        clearInterval(interval);
+        window.location.replace(target);
+      }
+    }, 1000);
+  });
 }

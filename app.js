@@ -240,6 +240,9 @@ function initLoginPage() {
             handleCodeInApp: true
           });
 
+          // Store for auto-login on reset page
+          localStorage.setItem("resetEmail", email);
+
           resetStatus.textContent = "If an account exists, a reset link has been sent.";
           resetStatus.className = "form-message success";
 

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recover Account | StudyMate AI</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="auth-page recover-page">
+    <header class="auth-header">
+        <img src="img/study-mate.png" class="auth-logo" alt="StudyMate Logo" />
+        <div class="auth-badge">StudyMate AI | Security</div>
+    </header>
+
+    <section class="auth-content">
+        <main class="auth-card">
+            <div class="auth-card-header">
+                <h1 class="auth-title">Account Recovery</h1>
+                <p class="auth-subtitle">Restoring your account to its previous state.</p>
+            </div>
+
+            <div id="recovery-status" class="status-container">
+                <div class="loader" style="width:40px; height:40px; border:3px solid rgba(59,130,246,0.1); border-top:3px solid #3b82f6; border-radius:50%; animation:spin 1s linear infinite; margin:0 auto 20px;"></div>
+                <p id="status-message">Verifying recovery code...</p>
+            </div>
+
+            <div id="success-actions" style="display:none; margin-top:30px;">
+                <button onclick="window.location.replace('login.html')" class="primary-btn">Back to Login</button>
+            </div>
+        </main>
+    </section>
+
+    <style>
+        @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
+        .success-text { color: #4ade80; font-weight: 600; }
+        .error-text { color: #ef4444; font-weight: 600; }
+    </style>
+
+    <script type="module" src="recover.js"></script>
+</body>
+</html>

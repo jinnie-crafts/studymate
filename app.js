@@ -1,4 +1,57 @@
 import { auth, db } from "./firebase.js";
+
+// ---------------------------------------------------------------------------
+// Firebase Action Interceptor (Centralized)
+// ---------------------------------------------------------------------------
+(function() {
+  if (window.__firebaseActionHandled) return;
+  const params = new URLSearchParams(window.location.search);
+  const mode = params.get("mode");
+  const oobCode = params.get("oobCode");
+
+  // Strict Validation: Length > 20 and alphanumeric/safe characters
+  const isValidCode = oobCode && oobCode.length > 20 && /^[a-zA-Z0-9_-]+$/.test(oobCode);
+  
+  if (isValidCode && ["resetPassword", "verifyEmail", "recoverEmail"].includes(mode)) {
+    window.__firebaseActionHandled = true;
+
+    // Determine target and message
+    let target = "";
+    let message = "Processing your request...";
+    
+    if (mode === "resetPassword") { target = "reset.html"; message = "Preparing password reset..."; }
+    else if (mode === "verifyEmail") { target = "verify.html"; message = "Verifying your account..."; }
+    else if (mode === "recoverEmail") { target = "recover.html"; message = "Recovering your account..."; }
+
+    // Prevent redirect if already on target page
+    if (window.location.pathname.includes(target)) return;
+
+    // Inject Loading Overlay
+    const overlay = document.createElement("div");
+    overlay.id = "action-loading-overlay";
+    overlay.innerHTML = `
+      <div class="loader-container" style="position: fixed; top:0; left:0; width:100%; height:100%; background:#020617; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999; font-family:'Outfit',sans-serif; color:white; text-align:center;">
+        <div class="spinner" style="width:48px; height:48px; border:4px solid rgba(59,130,246,0.1); border-top:4px solid #3b82f6; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:20px;"></div>
+        <div id="action-status" style="font-size:20px; font-weight:600;">${message}</div>
+        <div id="action-timeout" style="margin-top:20px; font-size:14px; color:#94a3b8; display:none;">Link not redirecting? <a href="${target}?oobCode=${encodeURIComponent(oobCode)}" style="color:#3b82f6; text-decoration:none;">Click here manually</a></div>
+      </div>
+      <style>@keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }</style>
+    `;
+    document.body.appendChild(overlay);
+
+    // Timeout fallback (5 seconds)
+    setTimeout(() => {
+      const timeoutEl = document.getElementById("action-timeout");
+      if (timeoutEl) timeoutEl.style.display = "block";
+    }, 5000);
+
+    // Execute Redirect
+    setTimeout(() => {
+      window.location.replace(`${target}?oobCode=${encodeURIComponent(oobCode)}`);
+    }, 800); // Small delay for visual feedback
+  }
+})();
+
 import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
@@ -184,7 +237,7 @@ function initLoginPage() {
           sendResetBtn.disabled = true;
           sendResetBtn.textContent = "Sending...";
           await sendPasswordResetEmail(auth, email, {
-            url: window.location.origin + "/action-handler.html",
+            url: window.location.origin,
             handleCodeInApp: true
           });
 
@@ -268,7 +321,7 @@ function initSignupPage() {
         console.log("Sending verification email...");
 
         await sendEmailVerification(cred.user, {
-          url: window.location.origin + "/login.html"
+          url: window.location.origin
         });
 
         await ensureUserDocument(cred.user);
@@ -287,7 +340,7 @@ function initSignupPage() {
             console.log("Sending verification email...");
 
             await sendEmailVerification(loginCred.user, {
-              url: window.location.origin + "/login.html"
+              url: window.location.origin
             });
 
             await signOut(auth);

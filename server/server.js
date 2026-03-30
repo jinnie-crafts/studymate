@@ -31,21 +31,17 @@ app.get("/", (_req, res) => {
 // POST /api/chat — proxy to OpenRouter with fallback
 // ---------------------------------------------------------------------------
 
-const DEFAULT_MODELS = [
-  "deepseek/deepseek-r1:free",
-  "mistralai/mistral-small:free",
-  "qwen/qwen-3-coder:free"
-];
-
-const TECHNICAL_MODELS = [
-  "qwen/qwen-3-coder:free",
-  "deepseek/deepseek-r1:free",
-  "mistralai/mistral-small:free"
+const MODELS = [
+  "deepseek/deepseek-chat",
+  "mistralai/mistral-small",
+  "qwen/qwen-2.5-72b-instruct"
 ];
 
 app.post("/api/chat", async (req, res) => {
   try {
     const apiKey = process.env.OPENROUTER_API_KEY;
+    console.log("API KEY:", apiKey ? "Loaded (sk-or-v1...)" : "UNDEFINED");
+    
     if (!apiKey) {
       console.error("OPENROUTER_API_KEY is not set.");
       return res.status(500).json({ error: "AI Service is currently unavailable." });
@@ -73,19 +69,15 @@ app.post("/api/chat", async (req, res) => {
       ...conversationMessages
     ];
 
-    // Determine model priority based on context (JEE/NEET prioritize Coder)
-    const isTechnical = ["jee", "neet"].includes(String(mode || "").toLowerCase());
-    const modelList = isTechnical ? TECHNICAL_MODELS : DEFAULT_MODELS;
-
     // Fallback Loop
-    for (const model of modelList) {
+    for (const model of MODELS) {
       // 1 Retry per model (Total 2 attempts per model)
       for (let attempt = 1; attempt <= 2; attempt++) {
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s Timeout
+        const timeoutId = setTimeout(() => controller.abort(), 20000); // 20s Timeout
 
         try {
-          console.log(`[AI Attempt] Model: ${model} | Attempt: ${attempt}`);
+          console.log("Trying model:", model, `(Attempt ${attempt})`);
           const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
             method: "POST",
             headers: {
@@ -102,14 +94,17 @@ app.post("/api/chat", async (req, res) => {
 
           if (response.ok) {
             const data = await response.json();
-            const content = data.choices?.[0]?.message?.content;
-            if (content) {
-              console.log(`[AI Success] Using model: ${model}`);
-              return res.json({ reply: content });
+            if (!data?.choices?.[0]?.message?.content) {
+              throw new Error("Empty response from OpenRouter");
             }
+
+            const content = data.choices[0].message.content;
+            console.log(`[AI Success] Using model: ${model}`);
+            return res.json({ reply: content });
+
           } else {
-            const errorData = await response.json().catch(() => ({}));
-            console.warn(`[AI Warn] ${model} attempt ${attempt} failed:`, errorData.error?.message || response.statusText);
+            const rawError = await response.text();
+            console.error("Failed:", model, rawError);
           }
         } catch (error) {
           clearTimeout(timeoutId);

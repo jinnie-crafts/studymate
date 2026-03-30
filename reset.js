@@ -9,11 +9,12 @@ console.log("Reset URL:", window.location.href);
 console.log("Activation Code detected:", oobCode ? "Yes" : "No");
 
 // If no oobCode is present, show error immediately
-if (!oobCode) {
+if (!oobCode || oobCode.length < 20) {
   const msg = document.getElementById("statusMessage");
   if (msg) {
-    msg.innerText = "Invalid or missing password reset link. Please request a new one.";
+    msg.innerText = "Invalid or missing password reset link. Please request a new one from the Login page.";
     msg.style.color = "#ef4444";
+    msg.style.fontWeight = "bold";
   }
 }
 

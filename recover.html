@@ -28,10 +28,16 @@
             </div>
 
             <div id="success-actions" style="display:none; margin-top:30px;">
-                <button onclick="window.location.replace('login.html')" class="primary-btn">Back to Login</button>
+                <button id="backBtn" onclick="goBack()" class="primary-btn">Back to Login</button>
             </div>
         </main>
     </section>
+    
+    <footer class="auth-footer" style="margin-top: 20px; text-align: center;">
+        <p class="auth-switch" style="font-size: 13px; opacity: 0.8;">
+            <a href="privacy.html" target="_blank">Privacy Policy</a> | <a href="terms.html" target="_blank">Terms of Service</a>
+        </p>
+    </footer>
 
     <style>
         @keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }
@@ -39,6 +45,22 @@
         .error-text { color: #ef4444; font-weight: 600; }
     </style>
 
+    <script>
+        function goBack() {
+          if (document.referrer && document.referrer !== window.location.href) {
+            window.history.back();
+          } else {
+            window.location.href = "login.html";
+          }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+          const backBtn = document.getElementById('backBtn');
+          if (backBtn) {
+            backBtn.textContent = document.referrer ? "← Back" : "← Go to Login";
+          }
+        });
+    </script>
     <script type="module" src="recover.js"></script>
 </body>
 </html>

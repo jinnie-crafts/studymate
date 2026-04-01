@@ -466,7 +466,7 @@ a:hover {
   height: 100%;
   padding: 20px;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
   gap: 18px;
   overflow-y: auto;
 }

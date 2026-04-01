@@ -10,17 +10,17 @@ const oobCode = params.get("oobCode");
 
 // Strict validation of the action link
 const isFirebaseAction = !!(
-  oobCode && 
-  oobCode.length > 20 && 
-  /^[a-zA-Z0-9_-]+$/.test(oobCode) && 
+  oobCode &&
+  oobCode.length > 20 &&
+  /^[a-zA-Z0-9_-]+$/.test(oobCode) &&
   ["resetPassword", "verifyEmail", "recoverEmail"].includes(mode)
 );
 
 // Global Interception Guard
-(function() {
+(function () {
   if (isFirebaseAction && !window.__firebaseActionHandled) {
     window.__firebaseActionHandled = true;
-    
+
     // Choose dynamic message/target
     let target = "";
     let message = "Processing account action...";
@@ -320,47 +320,33 @@ function initSignupPage() {
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, password);
         console.log("User created:", cred.user.email);
-        console.log("Sending verification email...");
 
-        await sendEmailVerification(cred.user, {
-          url: window.location.origin
-        });
+        try {
+          console.log("Sending verification email...");
+          await sendEmailVerification(cred.user, {
+            url: window.location.origin
+          });
+        } catch (emailError) {
+          console.error("Verification email error:", emailError);
+        }
 
         await ensureUserDocument(cred.user);
         await signOut(auth);
 
         showVerificationModal(cred.user);
-        setFormMessage(authMessage, "If an account exists, a verification email has been sent.", "success");
+        setFormMessage(authMessage, "Verification email sent. Please check your inbox.", "success");
 
       } catch (err) {
         if (err.code === "auth/email-already-in-use") {
-          console.log("Email already in use. Attempting to resend verification link...");
-          try {
-            // Attempt login with same credentials to verify ownership
-            const loginCred = await signInWithEmailAndPassword(auth, email, password);
-            console.log("User verified via login:", loginCred.user.email);
-            console.log("Sending verification email...");
-
-            await sendEmailVerification(loginCred.user, {
-              url: window.location.origin
-            });
-
-            await signOut(auth);
-            showVerificationModal(loginCred.user);
-            setFormMessage(authMessage, "If an account exists, a verification email has been sent.", "success");
-          } catch (loginError) {
-            console.error("Login verification failed (wrong password?):", loginError);
-            // Generic response to prevent enumeration
-            showVerificationModal({ email });
-            setFormMessage(authMessage, "If an account exists, a verification email has been sent.", "success");
-          }
+          setFormMessage(authMessage, "Account already exists. Please login.", "error");
         } else {
-          throw err; // Re-throw other errors
+          console.error("Signup error:", err.code);
+          setFormMessage(authMessage, "Signup failed. Try again.", "error");
         }
       }
 
     } catch (err) {
-      console.error("Signup error:", err);
+      console.error("Critical Signup error:", err);
       setFormMessage(authMessage, "An error occurred. Please try again.", "error");
       showToast(err.message, "error");
     } finally {
@@ -1025,17 +1011,18 @@ function renderMessages() {
     const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
     const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content)}</div>`;
     const actionMarkup = renderMessageActions(activeChat.messages, message, index);
-    return `<article class="message-row ${message.role}"><div class="message-stack"><div class="message-bubble message ${message.role}-message"><div class="message-meta"><strong>${roleLabel}</strong></div>${contentMarkup}</div>${actionMarkup}</div></article>`;
+    return `<div class="message-row ${message.role}"><div class="message-bubble"><div class="message-meta"><strong>${roleLabel}</strong></div>${contentMarkup}${actionMarkup}</div></div>`;
   }).join("");
 
   const streamingMarkup = (state.streamingResponse && state.streamingResponse.chatId === activeChat.id)
-    ? `<article class="message-row ai"><div class="message-stack"><div class="message-bubble message ai-message"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content" data-stream-content>${formatMessage(state.streamingResponse.visibleText)}</div></div></div></article>`
+    ? `<div class="message-row ai"><div class="message-bubble"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content" data-stream-content>${formatMessage(state.streamingResponse.visibleText)}</div></div></div>`
     : "";
 
-  const typingMarkup = showTyping ? `<article class="message-row ai"><div class="message-stack"><div class="message-bubble message ai-message"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content loading-text"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div></div></article>` : "";
+  const typingMarkup = showTyping ? `<div class="message-row ai"><div class="message-bubble"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content loading-text"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div></div>` : "";
 
   ui.chatMessages.innerHTML = `${messageMarkup}${streamingMarkup}${typingMarkup}`;
-  focusMessageEditor(); scrollMessagesToBottom();
+  focusMessageEditor();
+  scrollMessagesToBottom();
 }
 
 function openChat(chatId) {
@@ -1081,10 +1068,14 @@ async function handleSendMessage() {
 }
 
 async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
   try {
     const response = await fetch(`${API_BASE_URL}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
       body: JSON.stringify({
         messages,
         mode,
@@ -1093,13 +1084,20 @@ async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
         userId: getCurrentUserId()
       })
     });
+
+    clearTimeout(timeoutId);
+
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) { 
+    if (!response.ok) {
       // If backend returns a friendly "AI is busy" error, we use it.
-      throw new Error(data.error || "AI service is currently unavailable."); 
+      throw new Error(data.error || "AI service is currently unavailable.");
     }
     return data.reply || "No response received.";
   } catch (err) {
+    clearTimeout(timeoutId);
+    if (err.name === "AbortError") {
+      return "AI response timed out. Please try shortening your message or trying again.";
+    }
     console.error("Backend request failed:", err);
     // Return the error message directly so it can be shown in the chat
     return err.message;
@@ -1128,8 +1126,9 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
   chat.hinglish = ui.hinglishToggle.checked;
   chat.notesMode = getSelectedNotesMode();
   renderHistory(); renderMessages();
+  scrollMessagesToBottom(); // Centralized scroll after updating state
 
-  let finalApiMessages = apiMessages || [...chat.messages];
+  let finalApiMessages = apiMessages || [...chat.messages].slice(-6);
   if (userContent && !finalApiMessages.some(m => m.content === userContent && m.role === "user")) {
     finalApiMessages.push({ role: "user", content: userContent });
   }
@@ -1302,8 +1301,25 @@ function getShortName(name) { const t = String(name || "User").trim(); return t 
 // Sidebar
 // ---------------------------------------------------------------------------
 
-function toggleSidebar() { ui.body.classList.toggle("sidebar-open"); }
-function closeSidebar() { ui.body.classList.remove("sidebar-open"); }
+function toggleSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  const body = document.body;
+
+  if (sidebar) sidebar.classList.toggle("open");
+  if (overlay) overlay.classList.toggle("active");
+  if (body) body.classList.toggle("sidebar-open");
+}
+
+function closeSidebar() {
+  const sidebar = document.getElementById("sidebar");
+  const overlay = document.getElementById("sidebarOverlay");
+  const body = document.body;
+
+  if (sidebar) sidebar.classList.remove("open");
+  if (overlay) overlay.classList.remove("active");
+  if (body) body.classList.remove("sidebar-open");
+}
 
 function focusRenameInput() {
   if (!state.editingChatId) return;
@@ -1319,7 +1335,13 @@ function focusMessageEditor() {
   requestAnimationFrame(() => { autoResizeTextarea(messageEditor); messageEditor.focus(); messageEditor.setSelectionRange(messageEditor.value.length, messageEditor.value.length); });
 }
 
-function scrollMessagesToBottom() { ui.chatMessages.scrollTop = ui.chatMessages.scrollHeight; }
+function scrollMessagesToBottom() {
+  const el = document.querySelector(".chat-container");
+  if (!el) return;
+  requestAnimationFrame(() => {
+    el.scrollTop = el.scrollHeight;
+  });
+}
 function autoResizeTextarea(textarea) { textarea.style.height = "auto"; textarea.style.height = `${textarea.scrollHeight}px`; }
 
 // ---------------------------------------------------------------------------

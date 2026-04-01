@@ -55,6 +55,7 @@ import {
   createUserWithEmailAndPassword,
   GoogleAuthProvider,
   onAuthStateChanged,
+  sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
   signInWithPopup,
@@ -236,8 +237,7 @@ function initLoginPage() {
           sendResetBtn.disabled = true;
           sendResetBtn.textContent = "Sending...";
           await sendPasswordResetEmail(auth, email, {
-            url: window.location.origin,
-            handleCodeInApp: true
+            url: window.location.origin
           });
 
           // Store for auto-login on reset page
@@ -318,30 +318,40 @@ function initSignupPage() {
       setFormMessage(authMessage, "Creating your secure account...", "success");
 
       try {
-        const cred = await createUserWithEmailAndPassword(auth, email, password);
-        console.log("User created:", cred.user.email);
+        const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
 
+        console.log("User created:", user.email);
+
+        // SEND VERIFICATION EMAIL
         try {
           console.log("Sending verification email...");
-          await sendEmailVerification(cred.user, {
+          await sendEmailVerification(user, {
             url: window.location.origin
           });
+          console.log("Verification email sent");
         } catch (emailError) {
-          console.error("Verification email error:", emailError);
+          console.error("Email send failed:", emailError);
         }
 
-        await ensureUserDocument(cred.user);
+        // ENSURE FIRESTORE SYNC
+        await ensureUserDocument(user);
+
+        // SHOW SUCCESS MESSAGE (Specific)
+        setFormMessage(authMessage, "Verification email sent. Please check your inbox and spam folder.", "success");
+
+        // SIGN OUT (IMPORTANT: must verify before full session)
         await signOut(auth);
 
-        showVerificationModal(cred.user);
-        setFormMessage(authMessage, "Verification email sent. Please check your inbox.", "success");
+        // TRIGGER MODAL
+        showVerificationModal(user);
 
       } catch (err) {
+        console.error("Signup error:", err.code);
         if (err.code === "auth/email-already-in-use") {
           setFormMessage(authMessage, "Account already exists. Please login.", "error");
         } else {
-          console.error("Signup error:", err.code);
-          setFormMessage(authMessage, "Signup failed. Try again.", "error");
+          setFormMessage(authMessage, "Signup failed. Please try again.", "error");
         }
       }
 
@@ -409,7 +419,10 @@ function showVerificationModal(user) {
 
       // If user is signed out, we might need them to sign in again or just use the link
       // But Firebase allows sending toCurrentUser if they just signed up
-      await sendEmailVerification(auth.currentUser || user);
+      console.log("Resending verification email to:", user.email || (auth.currentUser ? auth.currentUser.email : "Unknown"));
+      await sendEmailVerification(auth.currentUser || user, {
+        url: window.location.origin
+      });
 
       statusEl.textContent = "New verification link sent!";
       statusEl.className = "verify-status success";

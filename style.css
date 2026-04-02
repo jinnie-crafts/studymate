@@ -1,3 +1,5 @@
+@import url("https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css");
+
 /* ========================================================================
    StudyMate AI — Style System
    Themes: dark (default) | light | blue | purple
@@ -1129,6 +1131,72 @@ a:hover {
   background: transparent;
   padding: 0;
   display: block;
+}
+
+.code-block {
+  background: #0f172a;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.code-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #1e293b;
+  padding: 6px 10px;
+  font-size: 12px;
+  color: #cbd5f5;
+  text-transform: lowercase;
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  color: #38bdf8;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.copy-btn:hover {
+  color: #7dd3fc;
+}
+
+.code-block pre {
+  margin: 0;
+  padding: 12px;
+  overflow-x: auto;
+  background: transparent;
+}
+
+.code-block pre code.hljs {
+  padding: 0;
+  background: transparent;
+}
+
+.sources {
+  margin-top: 10px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.sources p {
+  margin: 0 0 6px;
+  color: var(--text-soft);
+}
+
+.sources a {
+  display: block;
+  color: #3b82f6;
+  text-decoration: none;
+  margin: 2px 0;
+}
+
+.sources a:hover {
+  text-decoration: underline;
 }
 
 .message-actions {

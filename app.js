@@ -1,5 +1,6 @@
 import { auth, db } from "./firebase.js";
 import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
+import hljs from "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/+esm";
 
 // ---------------------------------------------------------------------------
 // 1. Firebase Action Interceptor (Priority Handling)
@@ -86,7 +87,7 @@ import {
 
 const API_BASE_URL = window.location.hostname === "localhost"
   ? "http://localhost:3001"
-  : "https://studymate-ms3l.onrender.com";
+  : "https://api.aadirishi.in";
 
 const page = document.body.dataset.page;
 const FLASH_TOAST_KEY = "studymate_flash_toast";
@@ -96,6 +97,8 @@ const STORAGE_KEYS = { theme: "theme", defaultMode: "defaultMode", hinglishDefau
 const AVAILABLE_MODES = ["General", "UPSC", "JEE", "NEET"];
 const AVAILABLE_NOTES_MODES = ["normal", "bullet", "revision", "flashcards"];
 const AVAILABLE_THEMES = ["dark", "light", "blue", "purple"];
+const REALTIME_QUERY_REGEX = /(today|now|latest|news|current|recent|weather|price|score|stock|time)/i;
+const STREAM_WORD_DELAY_MS = 20;
 
 // ---------------------------------------------------------------------------
 // State
@@ -118,9 +121,28 @@ const feedbackUi = {
   confirmCancelBtn: null, confirmOkBtn: null, confirmResolver: null
 };
 
+const markdownRenderer = new marked.Renderer();
+
+markdownRenderer.code = (code, language) => {
+  const rawCode = typeof code === "string" ? code : String(code?.text || "");
+  const rawLanguage = typeof language === "string"
+    ? language
+    : String(code?.lang || "");
+  const lang = rawLanguage.trim().split(/\s+/)[0].toLowerCase();
+  const hasLang = lang && hljs.getLanguage(lang);
+  const highlighted = hasLang
+    ? hljs.highlight(rawCode, { language: lang }).value
+    : hljs.highlightAuto(rawCode).value;
+  const label = escapeHtml(lang || "code");
+  const langClass = lang ? ` language-${escapeAttribute(lang)}` : "";
+
+  return `<div class="code-block"><div class="code-header"><span>${label}</span><button class="copy-btn" type="button" data-copy-code>Copy</button></div><pre><code class="hljs${langClass}">${highlighted}</code></pre></div>`;
+};
+
 marked.setOptions({
   gfm: true,
-  breaks: true
+  breaks: true,
+  renderer: markdownRenderer
 });
 
 // ---------------------------------------------------------------------------
@@ -713,11 +735,12 @@ function closeGuestLimitModal() {
   ui.guestLimitModal.setAttribute("aria-hidden", "true");
 }
 
-function createGuestMessage(role, content) {
+function createGuestMessage(role, content, sources = []) {
   return {
     id: `guest-msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     role,
     content,
+    sources: normalizeSources(sources),
     createdAt: Timestamp.now()
   };
 }
@@ -840,8 +863,10 @@ function bindDashboardEvents() {
   ui.chatHistoryList.addEventListener("keydown", async (e) => { if (!e.target.matches(".rename-input")) return; if (e.key === "Enter") { e.preventDefault(); await saveRename(e.target.dataset.chatId); } if (e.key === "Escape") cancelRename(); });
 
   ui.chatMessages.addEventListener("click", async (e) => {
+    const cb = e.target.closest("[data-copy-code]");
     const cp = e.target.closest("[data-copy-message]");
     const rg = e.target.closest("[data-regenerate-message]");
+    if (cb) return await window.copyCode(cb);
     if (cp) return await copyMessageContent(Number(cp.dataset.copyMessage));
     if (rg) return await regenerateAiMessage(Number(rg.dataset.regenerateMessage));
   });
@@ -1173,8 +1198,9 @@ function renderMessages() {
   const messageMarkup = activeChat.messages.map((message, index) => {
     const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
     const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content, message.role)}</div>`;
+    const sourcesMarkup = renderMessageSources(message);
     const actionMarkup = renderMessageActions(activeChat.messages, message, index);
-    return `<div class="message-row ${message.role}"><div class="message-bubble"><div class="message-meta"><strong>${roleLabel}</strong></div>${contentMarkup}${actionMarkup}</div></div>`;
+    return `<div class="message-row ${message.role}"><div class="message-bubble"><div class="message-meta"><strong>${roleLabel}</strong></div>${contentMarkup}${sourcesMarkup}${actionMarkup}</div></div>`;
   }).join("");
 
   const streamingMarkup = (state.streamingResponse && state.streamingResponse.chatId === activeChat.id)
@@ -1256,6 +1282,8 @@ async function fetchWithRetry(fn, retries = 2) {
 }
 
 async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
+  const latestUserMessage = getLatestUserMessageFromPayload(messages);
+  const isRealtimeQuery = REALTIME_QUERY_REGEX.test(latestUserMessage);
   const requestPayload = {
     messages,
     mode,
@@ -1290,7 +1318,20 @@ async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
         if (!response.ok) {
           throw new Error(data.error || "AI service is currently unavailable.");
         }
-        return data.reply || "No response received.";
+        let aiResponse = typeof data?.text === "string"
+          ? data.text
+          : (typeof data?.reply === "string" ? data.reply : "No response received.");
+        if (!aiResponse || aiResponse.trim().length < 5) {
+          aiResponse = "Sorry, I couldn't generate a proper response. Please try again.";
+        }
+        const sources = normalizeSources(data?.sources);
+        console.log({
+          query: latestUserMessage,
+          realtime: isRealtimeQuery,
+          sourcesCount: sources.length,
+          timestamp: new Date().toISOString()
+        });
+        return { text: aiResponse, sources };
       } finally {
         window.clearTimeout(timeoutId);
       }
@@ -1298,9 +1339,9 @@ async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
   } catch (err) {
     console.error("Backend request failed:", err);
     if (err?.name === "AbortError" || /timed out/i.test(err?.message || "")) {
-      return "AI response timed out after multiple retries. Please try again.";
+      return { text: "AI response timed out after multiple retries. Please try again.", sources: [] };
     }
-    return err?.message || "AI service is currently unavailable.";
+    return { text: err?.message || "AI service is currently unavailable.", sources: [] };
   }
 }
 
@@ -1335,13 +1376,15 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
   }
 
   try {
-    const aiContent = await fetchAIResponse(finalApiMessages, chat.mode, chat.hinglish, chat.notesMode);
+    const aiResult = await fetchAIResponse(finalApiMessages, chat.mode, chat.hinglish, chat.notesMode);
+    const aiContent = aiResult?.text || "Sorry, I couldn't generate a proper response. Please try again.";
+    const aiSources = normalizeSources(aiResult?.sources);
 
     state.showTypingIndicator = false;
     await streamAssistantMessage(chat.id, aiContent);
 
     if (state.isGuestMode) {
-      chat.messages.push(createGuestMessage("ai", aiContent));
+      chat.messages.push(createGuestMessage("ai", aiContent, aiSources));
       chat.updatedAt = Timestamp.now();
       if (chat.title === "New Chat" && titleSource && finalApiMessages.filter((m) => m.role === "ai").length === 0) {
         chat.title = generateChatTitle(titleSource);
@@ -1350,6 +1393,7 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
       await addDoc(collection(db, "chats", chat.id, "messages"), {
         role: "ai",
         content: aiContent,
+        sources: aiSources,
         createdAt: serverTimestamp()
       });
 
@@ -1423,23 +1467,38 @@ async function copyMessageContent(messageIndex) {
 
 async function streamAssistantMessage(chatId, text) {
   stopStreamingResponse();
-  state.streamingResponse = { chatId, visibleText: "", intervalId: null };
+  const responseText = String(text ?? "");
+  state.streamingResponse = { chatId, visibleText: "", isCancelled: false };
   renderMessages();
-  await new Promise((resolve) => {
-    let cursor = 0;
-    const intervalId = window.setInterval(() => {
-      if (!state.streamingResponse || state.streamingResponse.chatId !== chatId) { window.clearInterval(intervalId); resolve(); return; }
-      cursor += 1; state.streamingResponse.visibleText = text.slice(0, cursor);
-      const contentNode = ui.chatMessages.querySelector(`[data-stream-content]`);
-      if (contentNode) contentNode.innerHTML = formatMessage(state.streamingResponse.visibleText, "ai");
-      scrollMessagesToBottom();
-      if (cursor >= text.length) { stopStreamingResponse(); renderMessages(); resolve(); }
-    }, 15);
-    state.streamingResponse.intervalId = intervalId;
-  });
+  if (!responseText.trim()) {
+    stopStreamingResponse();
+    renderMessages();
+    return;
+  }
+  const words = responseText.split(" ");
+  let current = "";
+
+  for (let i = 0; i < words.length; i++) {
+    if (!state.streamingResponse || state.streamingResponse.chatId !== chatId || state.streamingResponse.isCancelled) {
+      return;
+    }
+
+    current += i === 0 ? words[i] : ` ${words[i]}`;
+    state.streamingResponse.visibleText = current;
+    const contentNode = ui.chatMessages.querySelector(`[data-stream-content]`);
+    if (contentNode) contentNode.innerHTML = formatMessage(state.streamingResponse.visibleText, "ai");
+    scrollMessagesToBottom();
+    await delay(STREAM_WORD_DELAY_MS);
+  }
+
+  stopStreamingResponse();
+  renderMessages();
 }
 
-function stopStreamingResponse() { if (state.streamingResponse?.intervalId) window.clearInterval(state.streamingResponse.intervalId); state.streamingResponse = null; }
+function stopStreamingResponse() {
+  if (state.streamingResponse) state.streamingResponse.isCancelled = true;
+  state.streamingResponse = null;
+}
 
 function renderMessageActions(messages, message, messageIndex) {
   if (message.role === "user") return "";
@@ -1716,6 +1775,24 @@ function consumeFlashToast() {
   try { const d = JSON.parse(raw); showToast(d.message, d.type); } catch (err) { console.error("Toast parse error:", err); }
 }
 
+window.copyCode = async function copyCode(button) {
+  const codeNode = button?.closest(".code-block")?.querySelector("pre code");
+  if (!codeNode) return;
+  const codeText = codeNode.innerText || codeNode.textContent || "";
+
+  try {
+    await navigator.clipboard.writeText(codeText);
+    const originalText = button.textContent;
+    button.textContent = "Copied!";
+    window.setTimeout(() => {
+      button.textContent = originalText || "Copy";
+    }, 1500);
+  } catch (error) {
+    console.error("Code copy failed:", error);
+    showToast("Unable to copy code right now.", "error");
+  }
+};
+
 function showConfirm({ label = "Please Confirm", title = "Are you sure?", message = "This action cannot be undone.", confirmText = "Confirm", cancelText = "Cancel", type = "info" } = {}) {
   if (!feedbackUi.confirmModal) return Promise.resolve(false);
   feedbackUi.confirmLabel.textContent = label; feedbackUi.confirmTitle.textContent = title;
@@ -1738,6 +1815,33 @@ function closeConfirmModal(result) {
 // ---------------------------------------------------------------------------
 
 function setFormMessage(element, message, type) { element.textContent = message; element.className = `form-message ${type}`; }
+function delay(ms) { return new Promise((resolve) => window.setTimeout(resolve, ms)); }
+function getLatestUserMessageFromPayload(messages) {
+  if (!Array.isArray(messages)) return "";
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]?.role === "user" && typeof messages[i]?.content === "string") return messages[i].content;
+  }
+  return "";
+}
+function normalizeSources(sources) {
+  if (!Array.isArray(sources)) return [];
+  return sources
+    .filter((src) => src && typeof src.url === "string" && typeof src.title === "string")
+    .map((src) => ({ title: src.title.trim(), url: src.url.trim() }))
+    .filter((src) => src.title && /^https?:\/\//i.test(src.url))
+    .slice(0, 5);
+}
+function renderMessageSources(message) {
+  if (message?.role !== "ai") return "";
+  const sources = normalizeSources(message?.sources);
+  if (!sources.length) return "";
+  const linksMarkup = sources.map((src) => (
+    `<a href="${escapeAttribute(src.url)}" target="_blank" rel="noopener noreferrer">` +
+    `&#128279; ${escapeHtml(src.title)}` +
+    `</a>`
+  )).join("");
+  return `<div class="sources"><p>Sources:</p>${linksMarkup}</div>`;
+}
 function formatMessage(content, role = "ai") {
   const text = String(content ?? "");
   if (role !== "ai") return escapeHtml(text).replace(/\n/g, "<br>");

@@ -1,4 +1,5 @@
 import { auth, db } from "./firebase.js";
+import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
 
 // ---------------------------------------------------------------------------
 // 1. Firebase Action Interceptor (Priority Handling)
@@ -89,6 +90,8 @@ const API_BASE_URL = window.location.hostname === "localhost"
 
 const page = document.body.dataset.page;
 const FLASH_TOAST_KEY = "studymate_flash_toast";
+const GUEST_QUESTION_LIMIT = 5;
+const GUEST_USAGE_KEY = "studymate_guest_question_count";
 const STORAGE_KEYS = { theme: "theme", defaultMode: "defaultMode", hinglishDefault: "hinglishDefault", defaultNotesMode: "defaultNotesMode" };
 const AVAILABLE_MODES = ["General", "UPSC", "JEE", "NEET"];
 const AVAILABLE_NOTES_MODES = ["normal", "bullet", "revision", "flashcards"];
@@ -103,7 +106,9 @@ const state = {
   renameDraft: "", isSending: false, showTypingIndicator: false,
   editingMessageIndex: null, messageDraft: "", chatsUnsubscribe: null,
   preferredChatId: null, streamingResponse: null,
-  trackerData: { questionsToday: 0, streakCount: 0 }
+  trackerData: { questionsToday: 0, streakCount: 0 },
+  isGuestMode: false,
+  guestQuestionsUsed: 0
 };
 
 let ui = null;
@@ -112,6 +117,11 @@ const feedbackUi = {
   confirmLabel: null, confirmTitle: null, confirmMessage: null,
   confirmCancelBtn: null, confirmOkBtn: null, confirmResolver: null
 };
+
+marked.setOptions({
+  gfm: true,
+  breaks: true
+});
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -577,13 +587,21 @@ function initDashboardPage() {
     cancelBtn: document.getElementById("cancelBtn"),
     logoutBtn: document.getElementById("logoutBtn"),
     menuToggleBtn: document.getElementById("menuToggleBtn"),
-    sidebarOverlay: document.getElementById("sidebarOverlay")
+    sidebarOverlay: document.getElementById("sidebarOverlay"),
+    guestLimitModal: document.getElementById("guestLimitModal"),
+    guestLimitText: document.getElementById("guestLimitText"),
+    guestLoginBtn: document.getElementById("guestLoginBtn"),
+    guestSignupBtn: document.getElementById("guestSignupBtn"),
+    guestLaterBtn: document.getElementById("guestLaterBtn")
   };
 
   bindDashboardEvents();
 
   onAuthStateChanged(auth, async (user) => {
-    if (!user && !isFirebaseAction) { cleanupChatSubscription(); window.location.replace("login.html"); return; }
+    if (!user && !isFirebaseAction) {
+      initializeGuestDashboard();
+      return;
+    }
     if (!user) return;
 
     // Mandatory reload for real-time verification status
@@ -595,6 +613,22 @@ function initDashboardPage() {
     if (!updatedUser.emailVerified && !isGoogle && !isFirebaseAction) {
       window.location.replace("login.html");
       return;
+    }
+
+    closeGuestLimitModal();
+    cleanupChatSubscription();
+    state.isGuestMode = false;
+    state.currentUser = null;
+    state.chats = [];
+    state.currentChatId = null;
+    state.preferredChatId = null;
+    state.editingChatId = null;
+    state.renameDraft = "";
+    state.guestQuestionsUsed = loadGuestQuestionUsage();
+    if (ui.logoutBtn) ui.logoutBtn.textContent = "Logout";
+    if (ui.editNameBtn) {
+      ui.editNameBtn.disabled = false;
+      ui.editNameBtn.removeAttribute("title");
     }
 
     state.currentUser = updatedUser;
@@ -609,6 +643,83 @@ function initDashboardPage() {
     loadChats();
     loadTrackerData();
   });
+}
+
+function initializeGuestDashboard() {
+  closeGuestLimitModal();
+  cleanupChatSubscription();
+  state.isGuestMode = true;
+  state.currentUser = null;
+  state.chats = [];
+  state.currentChatId = null;
+  state.preferredChatId = null;
+  state.editingChatId = null;
+  state.renameDraft = "";
+  state.editingMessageIndex = null;
+  state.messageDraft = "";
+  state.showTypingIndicator = false;
+  state.guestQuestionsUsed = loadGuestQuestionUsage();
+
+  displayUserProfile("Guest", "Login to save chat history", "");
+  if (ui.logoutBtn) ui.logoutBtn.textContent = "Login";
+  if (ui.editNameBtn) {
+    ui.editNameBtn.disabled = true;
+    ui.editNameBtn.title = "Please log in to edit your profile";
+  }
+
+  setSelectedMode(getSavedDefaultMode());
+  setSelectedNotesMode(getSavedDefaultNotesMode());
+  ui.hinglishToggle.checked = getSavedHinglishDefault();
+
+  renderHistory();
+  renderMessages();
+}
+
+function loadGuestQuestionUsage() {
+  const raw = localStorage.getItem(GUEST_USAGE_KEY);
+  const parsed = Number.parseInt(raw ?? "0", 10);
+  return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+}
+
+function saveGuestQuestionUsage(count) {
+  localStorage.setItem(GUEST_USAGE_KEY, String(Math.max(0, count)));
+}
+
+function isGuestUsageLimitReached() {
+  return state.isGuestMode && state.guestQuestionsUsed >= GUEST_QUESTION_LIMIT;
+}
+
+function incrementGuestQuestionUsage() {
+  if (!state.isGuestMode) return;
+  state.guestQuestionsUsed += 1;
+  saveGuestQuestionUsage(state.guestQuestionsUsed);
+}
+
+function showGuestLimitModal() {
+  if (!ui?.guestLimitModal) return;
+  if (ui.guestLimitText) {
+    const remaining = Math.max(0, GUEST_QUESTION_LIMIT - state.guestQuestionsUsed);
+    ui.guestLimitText.textContent = remaining > 0
+      ? `You have ${remaining} guest question${remaining === 1 ? "" : "s"} left.`
+      : `You have reached the ${GUEST_QUESTION_LIMIT}-question guest limit.`;
+  }
+  ui.guestLimitModal.classList.add("show");
+  ui.guestLimitModal.setAttribute("aria-hidden", "false");
+}
+
+function closeGuestLimitModal() {
+  if (!ui?.guestLimitModal) return;
+  ui.guestLimitModal.classList.remove("show");
+  ui.guestLimitModal.setAttribute("aria-hidden", "true");
+}
+
+function createGuestMessage(role, content) {
+  return {
+    id: `guest-msg-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    role,
+    content,
+    createdAt: Timestamp.now()
+  };
 }
 
 function showOnboardingOverlay() {
@@ -737,6 +848,14 @@ function bindDashboardEvents() {
 
   ui.menuToggleBtn.addEventListener("click", toggleSidebar);
   ui.sidebarOverlay.addEventListener("click", closeSidebar);
+  if (ui.guestLoginBtn) ui.guestLoginBtn.addEventListener("click", () => window.location.assign("login.html"));
+  if (ui.guestSignupBtn) ui.guestSignupBtn.addEventListener("click", () => window.location.assign("signup.html"));
+  if (ui.guestLaterBtn) ui.guestLaterBtn.addEventListener("click", closeGuestLimitModal);
+  if (ui.guestLimitModal) {
+    ui.guestLimitModal.addEventListener("click", (e) => {
+      if (e.target === ui.guestLimitModal) closeGuestLimitModal();
+    });
+  }
 
   document.addEventListener("click", (e) => {
     if (!e.target.closest(".profile-wrap") && ui.profileDropdown.classList.contains("show")) ui.profileDropdown.classList.remove("show");
@@ -771,6 +890,10 @@ function bindSettingsEvents() {
 // ---------------------------------------------------------------------------
 
 async function handleLogout() {
+  if (state.isGuestMode) {
+    window.location.replace("login.html");
+    return;
+  }
   try { cleanupChatSubscription(); await signOut(auth); queueFlashToast("Logged out successfully.", "success"); window.location.replace("login.html"); }
   catch (err) { console.error("Logout error:", err); showToast(err.message, "error"); }
 }
@@ -795,6 +918,10 @@ function renderSettingsAccount(user) {
 }
 
 function openEditNameModal() {
+  if (state.isGuestMode) {
+    showToast("Please log in to edit your profile.", "info");
+    return;
+  }
   const currentName = auth.currentUser?.displayName || "User";
   ui.profileDropdown.classList.remove("show");
   ui.newNameInput.value = currentName; ui.editNameModal.classList.add("show");
@@ -877,6 +1004,29 @@ async function createNewChatDocument() {
   loadMessages(docRef.id);
 
   return newChat;
+}
+
+function createGuestChatDocument() {
+  const defaultMode = getSavedDefaultMode();
+  const defaultHinglish = getSavedHinglishDefault();
+  const defaultNotesMode = getSavedDefaultNotesMode();
+  const guestChat = {
+    id: `guest-chat-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    userId: "guest",
+    title: "New Chat",
+    mode: defaultMode,
+    hinglish: defaultHinglish,
+    notesMode: defaultNotesMode,
+    messages: [],
+    createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now()
+  };
+  state.chats = [guestChat, ...state.chats.filter((c) => c.id !== guestChat.id)];
+  state.currentChatId = guestChat.id;
+  syncHeaderWithActiveChat();
+  renderHistory();
+  renderMessages();
+  return guestChat;
 }
 
 function loadChats(preferredChatId = state.currentChatId) {
@@ -1022,13 +1172,13 @@ function renderMessages() {
 
   const messageMarkup = activeChat.messages.map((message, index) => {
     const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
-    const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content)}</div>`;
+    const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content, message.role)}</div>`;
     const actionMarkup = renderMessageActions(activeChat.messages, message, index);
     return `<div class="message-row ${message.role}"><div class="message-bubble"><div class="message-meta"><strong>${roleLabel}</strong></div>${contentMarkup}${actionMarkup}</div></div>`;
   }).join("");
 
   const streamingMarkup = (state.streamingResponse && state.streamingResponse.chatId === activeChat.id)
-    ? `<div class="message-row ai"><div class="message-bubble"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content" data-stream-content>${formatMessage(state.streamingResponse.visibleText)}</div></div></div>`
+    ? `<div class="message-row ai"><div class="message-bubble"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content" data-stream-content>${formatMessage(state.streamingResponse.visibleText, "ai")}</div></div></div>`
     : "";
 
   const typingMarkup = showTyping ? `<div class="message-row ai"><div class="message-bubble"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content loading-text"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div></div>` : "";
@@ -1042,7 +1192,7 @@ function openChat(chatId) {
   if (state.streamingResponse && state.streamingResponse.chatId !== chatId) stopStreamingResponse();
   state.currentChatId = chatId; state.editingChatId = null; state.renameDraft = "";
   state.editingMessageIndex = null; state.messageDraft = "";
-  loadMessages(chatId);
+  if (!state.isGuestMode) loadMessages(chatId);
   syncHeaderWithActiveChat(); renderHistory(); renderMessages(); closeSidebar();
 }
 
@@ -1052,22 +1202,38 @@ function openChat(chatId) {
 
 async function handleSendMessage() {
   try {
-    const userId = getCurrentUserId();
     if (state.isSending) return;
     const content = ui.userInput.value.trim();
     if (!content) return;
-    if (!state.currentChatId) await createNewChatDocument();
+    if (state.isGuestMode && isGuestUsageLimitReached()) {
+      showGuestLimitModal();
+      showToast("Guest question limit reached. Please log in to continue.", "info");
+      return;
+    }
+
+    if (!state.currentChatId) {
+      if (state.isGuestMode) createGuestChatDocument();
+      else await createNewChatDocument();
+    }
     const activeChat = getCurrentChat();
     if (!activeChat) { showToast("Unable to open a chat session.", "error"); return; }
 
     ui.userInput.value = ""; autoResizeTextarea(ui.userInput);
 
-    await addDoc(collection(db, "chats", activeChat.id, "messages"), {
-      role: "user",
-      content: content,
-      createdAt: serverTimestamp()
-    });
-    await updateDoc(doc(db, "chats", activeChat.id), { updatedAt: serverTimestamp() });
+    if (state.isGuestMode) {
+      incrementGuestQuestionUsage();
+      activeChat.messages.push(createGuestMessage("user", content));
+      activeChat.updatedAt = Timestamp.now();
+      renderHistory();
+      renderMessages();
+    } else {
+      await addDoc(collection(db, "chats", activeChat.id, "messages"), {
+        role: "user",
+        content: content,
+        createdAt: serverTimestamp()
+      });
+      await updateDoc(doc(db, "chats", activeChat.id), { updatedAt: serverTimestamp() });
+    }
 
     await generateAssistantReply({ chat: activeChat, userContent: content, titleSource: content });
   } catch (error) {
@@ -1080,40 +1246,61 @@ async function handleSendMessage() {
   }
 }
 
+async function fetchWithRetry(fn, retries = 2) {
+  try {
+    return await fn();
+  } catch (err) {
+    if (retries > 0) return fetchWithRetry(fn, retries - 1);
+    throw err;
+  }
+}
+
 async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+  const requestPayload = {
+    messages,
+    mode,
+    hinglish: hinglishEnabled,
+    notesMode: notesMode || "normal",
+    userId: state.currentUser?.uid || "guest"
+  };
 
   try {
-    const response = await fetch(`${API_BASE_URL}/api/chat`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      signal: controller.signal,
-      body: JSON.stringify({
-        messages,
-        mode,
-        hinglish: hinglishEnabled,
-        notesMode: notesMode || "normal",
-        userId: getCurrentUserId()
-      })
-    });
+    return await fetchWithRetry(async () => {
+      const controller = new AbortController();
+      let timeoutId;
+      const timeoutPromise = new Promise((_, reject) => {
+        timeoutId = window.setTimeout(() => {
+          controller.abort();
+          reject(new Error("AI request timed out."));
+        }, 18000);
+      });
 
-    clearTimeout(timeoutId);
+      try {
+        const response = await Promise.race([
+          fetch(`${API_BASE_URL}/api/chat`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify(requestPayload)
+          }),
+          timeoutPromise
+        ]);
 
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      // If backend returns a friendly "AI is busy" error, we use it.
-      throw new Error(data.error || "AI service is currently unavailable.");
-    }
-    return data.reply || "No response received.";
+        const data = await response.json().catch(() => ({}));
+        if (!response.ok) {
+          throw new Error(data.error || "AI service is currently unavailable.");
+        }
+        return data.reply || "No response received.";
+      } finally {
+        window.clearTimeout(timeoutId);
+      }
+    }, 2);
   } catch (err) {
-    clearTimeout(timeoutId);
-    if (err.name === "AbortError") {
-      return "AI response timed out. Please try shortening your message or trying again.";
-    }
     console.error("Backend request failed:", err);
-    // Return the error message directly so it can be shown in the chat
-    return err.message;
+    if (err?.name === "AbortError" || /timed out/i.test(err?.message || "")) {
+      return "AI response timed out after multiple retries. Please try again.";
+    }
+    return err?.message || "AI service is currently unavailable.";
   }
 }
 
@@ -1125,6 +1312,7 @@ async function saveActiveChatSettings() {
   activeChat.notesMode = getSelectedNotesMode();
   activeChat.updatedAt = Timestamp.now();
   renderHistory();
+  if (state.isGuestMode) return;
   try { await updateDoc(doc(db, "chats", activeChat.id), { mode: activeChat.mode, hinglish: activeChat.hinglish, notesMode: activeChat.notesMode, updatedAt: serverTimestamp() }); }
   catch (err) { console.error("Save mode error:", err); showToast(err.message, "error"); }
 }
@@ -1152,20 +1340,28 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
     state.showTypingIndicator = false;
     await streamAssistantMessage(chat.id, aiContent);
 
-    await addDoc(collection(db, "chats", chat.id, "messages"), {
-      role: "ai",
-      content: aiContent,
-      createdAt: serverTimestamp()
-    });
-
-    if (chat.title === "New Chat" && titleSource && finalApiMessages.filter((m) => m.role === "ai").length === 0) {
-      const newTitle = generateChatTitle(titleSource);
-      await updateDoc(doc(db, "chats", chat.id), { title: newTitle, updatedAt: serverTimestamp() });
+    if (state.isGuestMode) {
+      chat.messages.push(createGuestMessage("ai", aiContent));
+      chat.updatedAt = Timestamp.now();
+      if (chat.title === "New Chat" && titleSource && finalApiMessages.filter((m) => m.role === "ai").length === 0) {
+        chat.title = generateChatTitle(titleSource);
+      }
     } else {
-      await updateDoc(doc(db, "chats", chat.id), { updatedAt: serverTimestamp() });
+      await addDoc(collection(db, "chats", chat.id, "messages"), {
+        role: "ai",
+        content: aiContent,
+        createdAt: serverTimestamp()
+      });
+
+      if (chat.title === "New Chat" && titleSource && finalApiMessages.filter((m) => m.role === "ai").length === 0) {
+        const newTitle = generateChatTitle(titleSource);
+        await updateDoc(doc(db, "chats", chat.id), { title: newTitle, updatedAt: serverTimestamp() });
+      } else {
+        await updateDoc(doc(db, "chats", chat.id), { updatedAt: serverTimestamp() });
+      }
     }
 
-    await incrementStudyTracker();
+    if (!state.isGuestMode) await incrementStudyTracker();
     if (successMessage) showToast(successMessage, "success");
 
   } catch (error) {
@@ -1192,13 +1388,19 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
 
 async function regenerateAiMessage(messageIndex) {
   try {
-    const userId = getCurrentUserId();
+    if (state.isGuestMode && isGuestUsageLimitReached()) {
+      showGuestLimitModal();
+      showToast("Guest question limit reached. Please log in to continue.", "info");
+      return;
+    }
+
     const activeChat = getCurrentChat();
     if (!activeChat || state.isSending || !isLatestAiMessage(activeChat.messages, messageIndex)) return;
     const previousUserIndex = findPreviousUserMessageIndex(activeChat.messages, messageIndex);
     if (previousUserIndex === -1) { showToast("No user message found to regenerate from.", "error"); return; }
 
     const baseMessages = activeChat.messages.slice(0, messageIndex);
+    if (state.isGuestMode) incrementGuestQuestionUsage();
 
     await generateAssistantReply({ chat: activeChat, apiMessages: baseMessages, successMessage: "Response regenerated." });
   } catch (error) {
@@ -1229,7 +1431,7 @@ async function streamAssistantMessage(chatId, text) {
       if (!state.streamingResponse || state.streamingResponse.chatId !== chatId) { window.clearInterval(intervalId); resolve(); return; }
       cursor += 1; state.streamingResponse.visibleText = text.slice(0, cursor);
       const contentNode = ui.chatMessages.querySelector(`[data-stream-content]`);
-      if (contentNode) contentNode.innerHTML = formatMessage(state.streamingResponse.visibleText);
+      if (contentNode) contentNode.innerHTML = formatMessage(state.streamingResponse.visibleText, "ai");
       scrollMessagesToBottom();
       if (cursor >= text.length) { stopStreamingResponse(); renderMessages(); resolve(); }
     }, 15);
@@ -1267,6 +1469,13 @@ async function saveRename(chatId) {
   if (!nextTitle) { showToast("Chat title cannot be empty.", "error"); return; }
   const chat = getChatById(chatId); if (!chat) return;
   chat.title = nextTitle; chat.updatedAt = Timestamp.now();
+  if (state.isGuestMode) {
+    state.editingChatId = null;
+    state.renameDraft = "";
+    renderHistory();
+    renderMessages();
+    return;
+  }
   try { await updateDoc(doc(db, "chats", chatId), { title: chat.title, updatedAt: chat.updatedAt }); state.editingChatId = null; state.renameDraft = ""; renderHistory(); renderMessages(); }
   catch (err) { console.error("Rename error:", err); showToast(err.message, "error"); }
 }
@@ -1275,6 +1484,17 @@ async function deleteChat(chatId) {
   const chat = getChatById(chatId); if (!chat) return;
   const confirmed = await showConfirm({ label: "Delete Chat", title: `Delete "${chat.title}"?`, message: "This chat will be removed permanently from your history.", confirmText: "Delete", type: "danger" });
   if (!confirmed) return;
+  if (state.isGuestMode) {
+    state.chats = state.chats.filter((c) => c.id !== chatId);
+    if (state.currentChatId === chatId) state.currentChatId = state.chats[0]?.id || null;
+    state.editingChatId = null;
+    state.renameDraft = "";
+    syncHeaderWithActiveChat();
+    renderHistory();
+    renderMessages();
+    showToast("Chat deleted.", "success");
+    return;
+  }
   try { await deleteDoc(doc(db, "chats", chatId)); if (state.currentChatId === chatId) state.currentChatId = null; state.editingChatId = null; state.renameDraft = ""; showToast("Chat deleted.", "success"); }
   catch (err) { console.error("Delete chat error:", err); showToast(err.message, "error"); }
 }
@@ -1518,8 +1738,33 @@ function closeConfirmModal(result) {
 // ---------------------------------------------------------------------------
 
 function setFormMessage(element, message, type) { element.textContent = message; element.className = `form-message ${type}`; }
-function formatMessage(content) { return escapeHtml(content).replace(/\n/g, "<br>"); }
+function formatMessage(content, role = "ai") {
+  const text = String(content ?? "");
+  if (role !== "ai") return escapeHtml(text).replace(/\n/g, "<br>");
+  try {
+    const parsed = marked.parse(text);
+    return sanitizeRenderedHtml(String(parsed));
+  } catch (err) {
+    console.error("Markdown render error:", err);
+    return escapeHtml(text).replace(/\n/g, "<br>");
+  }
+}
 function formatSidebarDate(timestamp) { const date = timestamp?.toDate ? timestamp.toDate() : new Date(); return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
 function getTimestampValue(timestamp) { return timestamp?.toMillis ? timestamp.toMillis() : 0; }
 function escapeHtml(value) { const div = document.createElement("div"); div.textContent = value ?? ""; return div.innerHTML; }
 function escapeAttribute(value) { return String(value ?? "").replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;").replace(/>/g, "&gt;"); }
+
+function sanitizeRenderedHtml(rawHtml) {
+  const template = document.createElement("template");
+  template.innerHTML = rawHtml;
+  template.content.querySelectorAll("script, style, iframe, object, embed, link, meta").forEach((node) => node.remove());
+  template.content.querySelectorAll("*").forEach((el) => {
+    [...el.attributes].forEach((attr) => {
+      const name = attr.name.toLowerCase();
+      const value = attr.value || "";
+      if (name.startsWith("on")) el.removeAttribute(attr.name);
+      if ((name === "href" || name === "src") && /^\s*javascript:/i.test(value)) el.removeAttribute(attr.name);
+    });
+  });
+  return template.innerHTML;
+}

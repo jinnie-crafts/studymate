@@ -113,7 +113,6 @@ body.purple {
 }
 
 html,
-html,
 body {
   margin: 0;
   height: 100%;
@@ -156,7 +155,7 @@ body[data-page="dashboard"] {
 }
 
 body[data-page="settings"] {
-  min-height: 100vh;
+  min-height: 100dvh;
 }
 
 button,
@@ -447,12 +446,29 @@ a:hover {
    Dashboard layout
    ======================================================================== */
 
+.app-container {
+  display: flex;
+  height: 100dvh;
+  overflow: hidden;
+}
+
 .app-shell {
+  position: relative;
   height: 100%;
-  display: grid;
-  grid-template-columns: 250px minmax(0, 1fr);
+  display: flex;
+  flex: 1 1 auto;
   gap: 18px;
   padding: 18px;
+  min-height: 0;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
 }
 
 .sidebar,
@@ -463,10 +479,21 @@ a:hover {
 }
 
 .sidebar {
+  width: 260px;
+  min-width: 260px;
   height: 100%;
   padding: 20px;
-  display: grid;
-  grid-template-rows: auto auto 1fr auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow: hidden;
+}
+
+.sidebar-content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
   gap: 18px;
   overflow-y: auto;
 }
@@ -495,16 +522,31 @@ a:hover {
 }
 
 .history-panel {
+  flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-rows: auto 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 12px;
+  overflow: visible;
 }
 
 .history-list {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  overflow: visible;
+  padding-right: 0;
+}
+
+.sidebar-footer {
+  margin-top: auto;
+  padding: 12px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+  font-size: 0.8rem;
+  color: var(--text-soft);
+  flex-shrink: 0;
 }
 
 .history-empty {
@@ -596,7 +638,7 @@ a:hover {
   min-height: 0;
   gap: 10px;
   position: relative;
-  overflow: visible;
+  overflow: hidden;
 }
 
 .topbar {
@@ -1046,6 +1088,49 @@ a:hover {
   font-size: 15px;
 }
 
+.message-content p {
+  margin: 0 0 0.75rem;
+}
+
+.message-content p:last-child {
+  margin-bottom: 0;
+}
+
+.message-content ul,
+.message-content ol {
+  margin: 0.6rem 0;
+  padding-left: 1.25rem;
+}
+
+.message-content li {
+  margin: 0.2rem 0;
+}
+
+.message-content code {
+  background: rgba(148, 163, 184, 0.2);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 8px;
+  padding: 1px 6px;
+  font-family: "Fira Code", "Courier New", monospace;
+  font-size: 0.92em;
+}
+
+.message-content pre {
+  margin: 0.7rem 0;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background: rgba(2, 6, 23, 0.45);
+  overflow-x: auto;
+}
+
+.message-content pre code {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  display: block;
+}
+
 .message-actions {
   display: flex;
   gap: 8px;
@@ -1221,7 +1306,7 @@ a:hover {
 }
 
 .sidebar-overlay {
-  position: fixed;
+  position: absolute;
   inset: 0;
   opacity: 0;
   visibility: hidden;
@@ -1251,6 +1336,19 @@ a:hover {
   transition: opacity var(--transition);
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
 .modal.show {
   display: flex;
   opacity: 1;
@@ -1261,6 +1359,11 @@ a:hover {
   padding: 22px;
   border-radius: 16px;
   animation: fade-up 180ms ease;
+}
+
+.modal-overlay .modal-content {
+  max-width: 400px;
+  width: 90%;
 }
 
 .modal-content h3 {
@@ -1287,6 +1390,11 @@ a:hover {
   gap: 10px;
   margin-top: 16px;
   justify-content: flex-end;
+}
+
+.guest-limit-actions {
+  justify-content: space-between;
+  flex-wrap: wrap;
 }
 
 .danger-btn {
@@ -1362,7 +1470,7 @@ a:hover {
    ======================================================================== */
 
 .settings-shell {
-  min-height: 100vh;
+  min-height: 100dvh;
   display: grid;
   place-items: center;
   padding: 24px;
@@ -1593,7 +1701,7 @@ a:hover {
   }
 
   .sidebar {
-    position: fixed;
+    position: absolute;
     top: 0;
     left: -100%; /* Default hidden on mobile */
     z-index: 1001; /* Must be above overlay */
@@ -1602,7 +1710,7 @@ a:hover {
     border-radius: 0 24px 24px 0;
     transition: left 0.3s ease;
     pointer-events: auto;
-    overflow-y: auto; /* allow scroll */
+    overflow: hidden;
   }
 
   .sidebar.open {
@@ -1633,11 +1741,11 @@ a:hover {
     position: relative;
     left: 0;
     z-index: 1;
-    width: 280px;
+    width: 260px;
     height: 100%;
     border-radius: 0;
     pointer-events: auto;
-    overflow-y: auto;
+    overflow: hidden;
   }
 
   .sidebar-overlay {
@@ -1936,9 +2044,17 @@ select,
 
 /* Replaced by refined sidebar logic in media queries */
 
-.app-shell {
+.app-container {
   display: flex !important;
   height: 100dvh !important;
+  overflow: hidden !important;
+}
+
+.app-shell {
+  position: relative;
+  display: flex !important;
+  flex: 1 1 auto;
+  height: 100% !important;
   width: 100% !important;
   overflow: hidden !important;
 }
@@ -1947,10 +2063,6 @@ select,
   flex-shrink: 0;
   width: 100%;
   z-index: 10;
-  border-radius: 0 !important;
-  border-left: none;
-  border-right: none;
-  border-top: none;
 }
 
 .chat-wrapper {
@@ -1963,16 +2075,22 @@ select,
 
 .chat-input-container {
   flex-shrink: 0;
-  position: sticky;
-  bottom: 0;
+  position: relative;
+  bottom: auto;
   width: 100%;
-  padding: 10px;
-  background: var(--bg-main) !important;
-  z-index: 10;
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: transparent !important;
+  z-index: auto;
+}
+
+.chat-input {
+  padding: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 @supports (height: 100dvh) {
-  .app-shell {
+  .app-container {
     height: 100dvh !important;
   }
 
@@ -1989,7 +2107,7 @@ select,
 
 /* Sidebar Overlay */
 .sidebar-overlay {
-  position: fixed;
+  position: absolute;
   top: 0;
   left: 0;
   width: 100%;

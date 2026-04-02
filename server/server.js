@@ -12,6 +12,7 @@ const cors = require("cors");
 const app = express();
 const PORT = process.env.PORT || 3001;
 const REALTIME_QUERY_REGEX = /(today|now|latest|news|current|recent|weather|price|score|stock|time)/i;
+const NEWS_QUERY_REGEX = /(news|headlines|breaking|latest news|current affairs)/i;
 const CODE_QUERY_REGEX = /code|programming|debug/i;
 const MATH_QUERY_REGEX = /math|calculate|solve/i;
 const DEFAULT_MODEL = "meta-llama/llama-3-8b-instruct";
@@ -86,22 +87,43 @@ app.post("/api/chat", async (req, res) => {
     let externalContext = "";
     let sources = [];
     const realtimeRequested = isRealtimeQuery(latestUserMessage);
+    const isNewsQuery = NEWS_QUERY_REGEX.test(latestUserMessage);
+    const enhancedQuery = `${latestUserMessage} latest today news current`;
     const selectedModel = selectModelForQuery(latestUserMessage);
 
-    if (realtimeRequested) {
+    if (realtimeRequested || isNewsQuery) {
       try {
-        const realtimeResult = await fetchRealtimeContext(latestUserMessage);
+        const realtimeResult = await fetchRealtimeContext(enhancedQuery);
         externalContext = realtimeResult.text;
         sources = realtimeResult.sources;
       } catch (error) {
         console.error("Search API failed:", error);
       }
     }
+
+    sources = Array.isArray(sources)
+      ? sources.filter((src) => (
+        src &&
+        typeof src.url === "string" &&
+        /^https?:\/\//i.test(src.url) &&
+        typeof src.title === "string" &&
+        src.title.trim()
+      ))
+      : [];
+    sources = dedupeSources(sources).slice(0, 5);
+    sources = sources.map((src, i) => ({
+      title: `🔗 Source ${i + 1}`,
+      url: src.url
+    }));
+
     console.log({
       query: latestUserMessage,
+      enhancedQuery,
+      sourcesCount: sources.length,
+      isNewsQuery,
+      sourceType: isNewsQuery ? "news/hybrid" : "normal",
       model: selectedModel,
       realtime: realtimeRequested,
-      sourcesCount: sources.length,
       timestamp: new Date().toISOString()
     });
 
@@ -138,6 +160,10 @@ app.post("/api/chat", async (req, res) => {
       return res.status(503).json({ error: "AI is busy right now. Please try again." });
     }
 
+    if (externalContext && String(aiResponse || "").trim().length < 20) {
+      aiResponse = `Here are the latest updates:\n\n${externalContext}`;
+    }
+
     if (!aiResponse || aiResponse.trim().length < 5) {
       return res.json({
         text: "Sorry, I couldn't generate a proper response. Please try again.",
@@ -146,8 +172,16 @@ app.post("/api/chat", async (req, res) => {
       });
     }
 
+    const answerBody = String(aiResponse).trim();
+    const sourcesNotice = sources.length > 0 ? "\n\n### 🔗 Sources available below" : "";
+    aiResponse = `### 📌 Answer\n\n${answerBody}${sourcesNotice}`;
+    if (externalContext) {
+      aiResponse += "\n\n⚠️ This answer is based on available data and may not reflect the latest updates.";
+    }
+
     console.log(`[AI Success] Using model: ${modelUsed}`);
-    return res.json({ text: aiResponse, reply: aiResponse, sources });
+    const responseSources = externalContext ? sources : [];
+    return res.json({ text: aiResponse, reply: aiResponse, sources: responseSources || [] });
 
   } catch (error) {
     console.error("POST /api/chat error:", error);
@@ -323,7 +357,7 @@ async function callAIModel(apiKey, model, messages) {
 }
 
 function buildSystemMessage(mode, hinglish, notesMode, externalContext = "") {
-  let base = "You are StudyMate AI, a helpful AI study assistant.";
+  let base = "You are StudyMate AI, a high-quality AI assistant.";
   const normalizedMode = String(mode || "General").toLowerCase();
 
   if (normalizedMode === "upsc") {
@@ -356,14 +390,20 @@ function buildSystemMessage(mode, hinglish, notesMode, externalContext = "") {
 
 Current date: ${new Date().toDateString()}
 
-Rules:
-- Be clear and concise.
-- Use structured answers.
-- Prefer real-time data if available.
-- Do not hallucinate or invent facts.
-- If unsure, say "I don't have enough information."
+Instructions:
+- Answer clearly and in a structured format.
+- Use headings and bullet points where useful.
+- Keep answers concise but informative.
+- Base your answer on provided context if available.
+- Do NOT hallucinate.
+- If unsure or data may be outdated, clearly mention it.
 
-Real-time context:
+Tone:
+- Professional
+- Helpful
+- Clean and easy to read
+
+Context:
 ${externalContext || "No real-time data was fetched for this request."}
 `;
 
@@ -406,39 +446,35 @@ async function fetchRealtimeContext(query) {
   const cached = getCachedRealtimeContext(query);
   if (cached.text) return cached;
 
-  let newsResult = { text: "", sources: [] };
-  if (process.env.NEWS_API_KEY) {
-    try {
-      newsResult = await fetchNewsResults(query);
-    } catch (error) {
-      console.error("[Realtime] News API failed:", error.message);
-    }
+  const [newsDataResult, ddgResult] = await Promise.allSettled([
+    fetchNewsData(query),
+    fetchSearchResults(query)
+  ]);
+
+  if (newsDataResult.status === "rejected") {
+    console.error("[Realtime] NewsData failed:", newsDataResult.reason);
+  }
+  if (ddgResult.status === "rejected") {
+    console.error("[Realtime] DuckDuckGo failed:", ddgResult.reason);
   }
 
-  if (newsResult.text) {
-    const context = {
-      text: `News API results:\n${newsResult.text}`,
-      sources: newsResult.sources
-    };
+  const newsSources = newsDataResult.status === "fulfilled" && Array.isArray(newsDataResult.value?.sources)
+    ? newsDataResult.value.sources
+    : [];
+  const ddgSources = ddgResult.status === "fulfilled" && Array.isArray(ddgResult.value?.sources)
+    ? ddgResult.value.sources
+    : [];
+  const combinedSources = dedupeSources([...newsSources, ...ddgSources]).slice(0, 5);
+  const externalText = combinedSources.map((src) => `- ${src.title}`).join("\n");
+
+  const context = {
+    text: externalText,
+    sources: combinedSources
+  };
+  if (context.text || context.sources.length > 0) {
     setCachedRealtimeContext(query, context);
-    return context;
   }
-
-  try {
-    const searchResult = await fetchSearchResults(query);
-    if (searchResult.text) {
-      const context = {
-        text: `DuckDuckGo results:\n${searchResult.text}`,
-        sources: searchResult.sources
-      };
-      setCachedRealtimeContext(query, context);
-      return context;
-    }
-  } catch (error) {
-    console.error("[Realtime] DuckDuckGo failed:", error.message);
-  }
-
-  return { text: "", sources: [] };
+  return context;
 }
 
 async function fetchSearchResults(query) {
@@ -456,11 +492,10 @@ async function fetchSearchResults(query) {
 
     const data = await res.json();
     const sources = collectDuckDuckGoSources(data?.RelatedTopics).slice(0, 5);
-    const abstractText = typeof data?.AbstractText === "string" ? data.AbstractText.trim() : "";
-    const fallbackText = JSON.stringify(data?.RelatedTopics || []).slice(0, 1000);
+    const text = sources.map((source) => source.title).join("\n");
 
     return {
-      text: abstractText || fallbackText,
+      text,
       sources
     };
   } finally {
@@ -490,45 +525,59 @@ function collectDuckDuckGoSources(relatedTopics) {
   })).filter((item) => /^https?:\/\//i.test(item.url));
 }
 
-async function fetchNewsResults(query) {
+function dedupeSources(sources) {
+  if (!Array.isArray(sources)) return [];
+  return sources.filter((src, index, self) => (
+    index === self.findIndex((s) => String(s?.url || "").trim() === String(src?.url || "").trim())
+  ));
+}
+
+async function fetchNewsData(query) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 8000);
 
   try {
-    const apiKey = process.env.NEWS_API_KEY;
+    const apiKey = process.env.NEWSDATA_API_KEY;
     if (!apiKey) return { text: "", sources: [] };
 
-    const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(query)}&pageSize=3&sortBy=publishedAt&language=en&apiKey=${apiKey}`;
+    const url = `https://newsdata.io/api/1/news?apikey=${apiKey}&q=${encodeURIComponent(query)}&language=en`;
     const res = await fetch(url, { signal: controller.signal });
 
     if (!res.ok) {
-      throw new Error(`News API request failed with status ${res.status}`);
+      throw new Error(`NewsData request failed with status ${res.status}`);
     }
 
     const data = await res.json();
-    if (!Array.isArray(data?.articles) || data.articles.length === 0) {
+    if (!Array.isArray(data?.results) || data.results.length === 0) {
       return { text: "", sources: [] };
     }
 
-    const articles = data.articles.slice(0, 3);
+    const now = new Date();
+    const freshArticles = data.results.filter((article) => {
+      if (!article?.pubDate || !article?.link || !article?.title) return false;
+      if (!/^https?:\/\//i.test(article.link)) return false;
 
-    const lines = articles.map((article, index) => {
-      const title = article?.title || "Untitled";
-      const source = article?.source?.name ? ` (${article.source.name})` : "";
-      const date = article?.publishedAt ? ` - ${new Date(article.publishedAt).toISOString().slice(0, 10)}` : "";
-      const description = article?.description ? `: ${article.description}` : "";
-      return `${index + 1}. ${title}${source}${date}${description}`;
+      const published = new Date(article.pubDate);
+      if (Number.isNaN(published.getTime())) return false;
+
+      const diffHours = (now - published) / (1000 * 60 * 60);
+      return diffHours >= 0 && diffHours <= 24;
     });
 
-    const sources = articles
-      .filter((article) => article?.url && article?.title && /^https?:\/\//i.test(article.url))
-      .map((article) => ({
-        title: article.title,
-        url: article.url
-      }));
+    if (freshArticles.length === 0) {
+      return { text: "", sources: [] };
+    }
+
+    const articles = freshArticles.slice(0, 5);
+
+    const sources = articles.map((article) => ({
+      title: article.title,
+      url: article.link
+    }));
+    const text = articles.map((article) => article.title).join("\n");
 
     return {
-      text: lines.join("\n").slice(0, 1500),
+      text,
       sources
     };
   } finally {

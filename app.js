@@ -1,4 +1,5 @@
 import { auth, db } from "./firebase.js";
+import { DISPOSABLE_DOMAINS } from "./disposableDomains.js";
 import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
 import hljs from "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/+esm";
 
@@ -308,10 +309,44 @@ function initLoginPage() {
   googleLoginBtn.addEventListener("click", loginWithGoogle);
 }
 
-const blockedDomains = new Set([
-  "tempmail.com", "10minutemail.com", "mailinator.com", "guerrillamail.com", "yopmail.com",
-  "dispostable.com", "tempmailaddress.com", "getnada.com", "temp-mail.org"
-]);
+const disposableDomainSet = new Set(
+  DISPOSABLE_DOMAINS.map((domain) => String(domain || "").toLowerCase())
+);
+
+function isDisposableEmail(email) {
+  const domain = String(email || "").split("@")[1]?.toLowerCase();
+  return !!domain && disposableDomainSet.has(domain);
+}
+
+async function checkDisposableAPI(email, timeoutMs = 2500) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const res = await fetch(`https://open.kickbox.com/v1/disposable/${encodeURIComponent(email)}`, {
+      signal: controller.signal
+    });
+    if (!res.ok) return false;
+    const data = await res.json();
+    return Boolean(data?.disposable);
+  } catch (error) {
+    if (error?.name !== "AbortError") {
+      console.warn("Disposable email API check skipped:", error?.message || error);
+    }
+    return false;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+async function validateSignupEmail(email) {
+  if (isDisposableEmail(email)) {
+    throw new Error("Disposable email addresses are not allowed. Please use a valid email.");
+  }
+  if (await checkDisposableAPI(email)) {
+    throw new Error("Temporary email addresses are not allowed.");
+  }
+}
 
 function initSignupPage() {
   const signupForm = document.getElementById("signupForm");
@@ -335,10 +370,12 @@ function initSignupPage() {
       return;
     }
 
-    const domain = email.split("@")[1]?.toLowerCase();
-    if (blockedDomains.has(domain)) {
-      setFormMessage(authMessage, "Temporary/Disposable emails are not allowed.", "error");
-      showToast("Please use a permanent email address.", "error");
+    try {
+      await validateSignupEmail(email);
+    } catch (validationError) {
+      const validationMessage = validationError?.message || "Signup failed";
+      setFormMessage(authMessage, validationMessage, "error");
+      showToast(validationMessage, "error");
       return;
     }
 

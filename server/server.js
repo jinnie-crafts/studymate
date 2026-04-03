@@ -18,11 +18,11 @@ const MATH_QUERY_REGEX = /math|calculate|solve/i;
 const DEFAULT_MODEL = "meta-llama/llama-3-8b-instruct";
 const IDENTITY_CLASSIFIER_MODEL = "meta-llama/llama-3-8b-instruct";
 const IDENTITY_RESPONSES = [
-  "I was created by Harsh Maurya, the developer of StudyMate AI.",
-  "StudyMate AI was built by Harsh Maurya.",
-  "I’m a project developed by Harsh Maurya to help students learn better.",
-  "Harsh Maurya is the creator behind me.",
-  "I was designed and developed by Harsh Maurya."
+  "I was created by Harsh Maurya, the developer of StudyMate AI. The UI is designed by Komal Sharma",
+  "StudyMate AI was built by Harsh Maurya and Komal Sharma",
+  "I’m a project developed by Harsh Maurya and designed by Komal Sharma to help students learn better.",
+  "Harsh Maurya and Komal Sharma are the creators behind me.",
+  "I was designed by Komal Sharma and developed by Harsh Maurya."
 ];
 const REALTIME_CACHE_TTL_MS = 5 * 60 * 1000;
 const IDENTITY_CACHE_TTL_MS = 30 * 60 * 1000;

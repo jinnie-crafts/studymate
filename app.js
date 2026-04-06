@@ -2020,15 +2020,42 @@ function renderMessageSources(message) {
   return `<div class="sources"><p>Sources:</p>${linksMarkup}</div>`;
 }
 function formatMessage(content, role = "ai") {
-  const text = String(content ?? "");
+  let text = String(content ?? "");
   if (role !== "ai") return escapeHtml(text).replace(/\n/g, "<br>");
+
+  // 1. Identify the quiz portion BEFORE markdown parsing for cleaner structure
+  const quizMarker = "Quiz:";
+  const quizIndex = text.lastIndexOf(quizMarker);
+
+  let mainText = text;
+  let quizText = "";
+
+  if (quizIndex !== -1) {
+    mainText = text.substring(0, quizIndex).trim();
+    quizText = text.substring(quizIndex + quizMarker.length).trim();
+  }
+
+  // 2. Parse main content normally
+  let html = "";
   try {
-    const parsed = marked.parse(text);
-    return sanitizeRenderedHtml(String(parsed));
+    html = sanitizeRenderedHtml(String(marked.parse(mainText)));
   } catch (err) {
     console.error("Markdown render error:", err);
-    return escapeHtml(text).replace(/\n/g, "<br>");
+    html = escapeHtml(mainText).replace(/\n/g, "<br>");
   }
+
+  // 3. Append styled quiz box if quiz exists
+  if (quizText) {
+    const quizHtml = `
+      <div class="quiz-box">
+        <span class="quiz-arrow">➤</span>
+        <span class="quiz-text">${escapeHtml(quizText)}</span>
+      </div>
+    `.trim();
+    html += quizHtml;
+  }
+
+  return html;
 }
 function formatSidebarDate(timestamp) { const date = timestamp?.toDate ? timestamp.toDate() : new Date(); return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
 function getTimestampValue(timestamp) { return timestamp?.toMillis ? timestamp.toMillis() : 0; }

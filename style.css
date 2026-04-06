@@ -1027,7 +1027,8 @@ a:hover {
 .message-row {
   display: flex;
   width: 100%;
-  margin: 8px 0;
+  margin: 12px 0;
+  transition: opacity 0.2s ease;
 }
 
 .message-row.user {
@@ -1040,19 +1041,25 @@ a:hover {
 
 /* ---------- User bubble: right-aligned, dynamic sizing ---------- */
 .message-bubble {
-  max-width: 70%;
+  max-width: 82%;
   width: auto;
-  min-width: 40px;
+  min-width: 44px;
   flex-shrink: 0;
 
-  padding: 12px 16px;
+  padding: 12px 14px;
   border-radius: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
+  transition: transform 0.2s ease, background 0.2s ease;
+  position: relative;
 
   /* ROBUST TEXT WRAPPING */
   white-space: normal;
   word-break: break-word;
   overflow-wrap: anywhere;
+}
+
+.message-bubble:hover {
+  transform: translateY(-1px);
 }
 
 .message-row.user .message-bubble {
@@ -1062,10 +1069,16 @@ a:hover {
 }
 
 .message-row.ai .message-bubble {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15);
-  border-radius: 16px 16px 16px 4px;
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  border-radius: 18px 18px 18px 4px;
+}
+
+.message-row.ai .message-bubble:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .message-meta {
@@ -1096,6 +1109,38 @@ a:hover {
 
 .message-content p:last-child {
   margin-bottom: 0;
+}
+
+/* Quiz UI Enhancement */
+.quiz-box {
+  margin-top: 14px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.05);
+  border-left: 3px solid #10b981;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  line-height: 1.5;
+  animation: fadeIn 0.3s ease;
+}
+
+.quiz-arrow {
+  color: #10b981;
+  font-weight: bold;
+  font-size: 1.1rem;
+  margin-top: 1px;
+}
+
+.quiz-text {
+  color: var(--text-main);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .message-content ul,

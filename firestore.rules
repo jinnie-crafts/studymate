@@ -1,0 +1,119 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // -------------------------
+    // 🔧 HELPER FUNCTIONS
+    // -------------------------
+
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && request.auth.token.admin == true;
+    }
+
+    // -------------------------
+    // 👤 USERS COLLECTION
+    // -------------------------
+
+    match /users/{userId} {
+
+      // Create own profile
+      allow create: if isOwner(userId);
+
+      // Read: only self OR admin
+      allow read: if isOwner(userId) || isAdmin();
+
+      // Update: only self
+      allow update: if isOwner(userId);
+
+      // Delete: disabled
+      allow delete: if false;
+    }
+
+    // -------------------------
+    // 💬 CHATS COLLECTION
+    // -------------------------
+
+    match /chats/{chatId} {
+
+      // Create chat — allow all fields the app writes
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.keys().hasOnly([
+          'userId', 'title', 'mode', 'hinglish', 'notesMode', 'createdAt', 'updatedAt'
+        ]);
+
+      // Read/update/delete only by owner
+      allow read, update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+
+      // -------------------------
+      // 💬 MESSAGES SUBCOLLECTION
+      // -------------------------
+
+      match /messages/{messageId} {
+
+        // Allow both user and AI messages (AI messages include 'sources')
+        allow create: if isAuthenticated()
+          && request.auth.uid ==
+            get(/databases/$(database)/documents/chats/$(chatId)).data.userId
+          && request.resource.data.role in ["user", "ai"]
+          && request.resource.data.content is string
+          && request.resource.data.keys().hasOnly([
+            'role', 'content', 'sources', 'createdAt'
+          ]);
+
+        allow read: if isAuthenticated()
+          && request.auth.uid ==
+            get(/databases/$(database)/documents/chats/$(chatId)).data.userId;
+
+        // Prevent edits/deletes for integrity
+        allow update, delete: if false;
+      }
+    }
+
+    // -------------------------
+    // 🔔 NOTIFICATIONS COLLECTION
+    // -------------------------
+
+    match /notifications/{notificationId} {
+
+      // READ: Only recipient
+      allow read: if isOwner(resource.data.userId);
+
+      // CREATE: Only admin (Cloud Function / Admin SDK)
+      allow create: if isAdmin()
+        && request.resource.data.keys().hasOnly([
+          'userId', 'title', 'message', 'type', 'isRead', 'createdAt'
+        ])
+        && request.resource.data.userId is string
+        && request.resource.data.title is string
+        && request.resource.data.message is string
+        && request.resource.data.type in ["info", "success", "warning"]
+        && request.resource.data.isRead == false;
+
+      // UPDATE: Only allow marking as read
+      allow update: if isOwner(resource.data.userId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['isRead']);
+
+      // DELETE: Disabled
+      allow delete: if false;
+    }
+
+    // -------------------------
+    // 🚫 DEFAULT DENY
+    // -------------------------
+
+    match /{path=**} {
+      allow read, write: if false;
+    }
+  }
+}

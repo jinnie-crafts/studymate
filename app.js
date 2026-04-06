@@ -1,86 +1,35 @@
 import { auth, db } from "./firebase.js";
-import { DISPOSABLE_DOMAINS } from "./disposableDomains.js";
+import { validateEmail, isDisposableEmailSync } from "./disposableEmailValidator.js";
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut, 
+  onAuthStateChanged, 
+  sendPasswordResetEmail, 
+  updateProfile, 
+  sendEmailVerification,
+  GoogleAuthProvider,
+  signInWithPopup 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { 
+  doc, 
+  setDoc, 
+  getDoc, 
+  updateDoc, 
+  collection, 
+  addDoc, 
+  query, 
+  where, 
+  orderBy, 
+  onSnapshot, 
+  serverTimestamp, 
+  deleteDoc,
+  getDocs,
+  Timestamp
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initNotifications, stopNotifications } from "./notificationBell.js";
 import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
 import hljs from "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/+esm";
-
-// ---------------------------------------------------------------------------
-// 1. Firebase Action Interceptor (Priority Handling)
-// ---------------------------------------------------------------------------
-// Extract params immediately to define isFirebaseAction globally
-const params = new URLSearchParams(window.location.search);
-const mode = params.get("mode");
-const oobCode = params.get("oobCode");
-
-// Strict validation of the action link
-const isFirebaseAction = !!(
-  oobCode &&
-  oobCode.length > 20 &&
-  /^[a-zA-Z0-9_-]+$/.test(oobCode) &&
-  ["resetPassword", "verifyEmail", "recoverEmail"].includes(mode)
-);
-
-// Global Interception Guard
-(function () {
-  if (isFirebaseAction && !window.__firebaseActionHandled) {
-    window.__firebaseActionHandled = true;
-
-    // Choose dynamic message/target
-    let target = "";
-    let message = "Processing account action...";
-    if (mode === "resetPassword") { target = "reset.html"; message = "Preparing password reset..."; }
-    else if (mode === "verifyEmail") { target = "verify.html"; message = "Verifying your account..."; }
-    else if (mode === "recoverEmail") { target = "recover.html"; message = "Recovering your account..."; }
-
-    // Intercept if not already on the target page
-    if (!window.location.pathname.includes(target)) {
-      // Inject high-priority loading UI
-      const overlay = document.createElement("div");
-      overlay.id = "priority-action-overlay";
-      overlay.style = "position:fixed; top:0; left:0; width:100%; height:100%; background:#020617; display:flex; flex-direction:column; justify-content:center; align-items:center; z-index:9999; font-family:'Outfit',sans-serif; color:white; text-align:center;";
-      overlay.innerHTML = `
-        <div class="spinner" style="width:48px; height:48px; border:4px solid rgba(59,130,246,0.1); border-top:4px solid #3b82f6; border-radius:50%; animation:spin 1s linear infinite; margin-bottom:20px;"></div>
-        <div style="font-size:20px; font-weight:600;">${message}</div>
-        <style>@keyframes spin { 0% { transform:rotate(0deg); } 100% { transform:rotate(360deg); } }</style>
-      `;
-      document.body.appendChild(overlay);
-
-      // Execute Immediate Redirect
-      window.location.replace(`${target}?oobCode=${encodeURIComponent(oobCode)}`);
-
-      // CRITICAL: Stop the rest of the script (bootstrap, auth guards, etc.) to prevent login redirection
-      throw new Error("FIREBASE_ACTION_INTERCEPTED: Halting initialization for redirection.");
-    }
-  }
-})();
-
-
-import {
-  createUserWithEmailAndPassword,
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  sendEmailVerification,
-  sendPasswordResetEmail,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  signOut,
-  updateProfile
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import {
-  Timestamp,
-  serverTimestamp,
-  orderBy,
-  addDoc,
-  collection,
-  deleteDoc,
-  doc,
-  getDoc,
-  getDocs,
-  onSnapshot,
-  query,
-  setDoc,
-  updateDoc,
-  where
-} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -92,10 +41,17 @@ const API_BASE_URL = window.location.hostname === "localhost"
 
 const page = document.body.dataset.page;
 const FLASH_TOAST_KEY = "studymate_flash_toast";
+const WELCOME_SEEN_KEY = "hasSeenWelcome";
 const GUEST_QUESTION_LIMIT = 5;
 const GUEST_USAGE_KEY = "studymate_guest_question_count";
 const STORAGE_KEYS = { theme: "theme", defaultMode: "defaultMode", hinglishDefault: "hinglishDefault", defaultNotesMode: "defaultNotesMode" };
-const AVAILABLE_MODES = ["General", "UPSC", "JEE", "NEET"];
+const MODES = ["general", "exam", "coding"];
+const MODE_LABELS = {
+  general: "🧠 General",
+  exam: "📚 Exam Mode",
+  coding: "💻 Coding Mode"
+};
+const AVAILABLE_MODES = MODES;
 const AVAILABLE_NOTES_MODES = ["normal", "bullet", "revision", "flashcards"];
 const AVAILABLE_THEMES = ["dark", "light", "blue", "purple"];
 const REALTIME_QUERY_REGEX = /(today|now|latest|news|current|recent|weather|price|score|stock|time)/i;
@@ -116,6 +72,11 @@ const state = {
 };
 
 let ui = null;
+let isHandlingOnboardingStart = false;
+let hasInitializedWelcomeBindings = false;
+let hasEvaluatedOnboardingForUser = false;
+let lastOnboardingEvalUid = null;
+let dashboardInitStartedForUid = null;
 const feedbackUi = {
   initialized: false, toastContainer: null, confirmModal: null,
   confirmLabel: null, confirmTitle: null, confirmMessage: null,
@@ -164,6 +125,13 @@ applySavedTheme();
 initializeFeedbackUi();
 consumeFlashToast();
 window.goToSettings = goToSettings;
+if (page === "dashboard") {
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", initWelcomeModalBindings, { once: true });
+  } else {
+    initWelcomeModalBindings();
+  }
+}
 bootstrap();
 
 function bootstrap() {
@@ -309,43 +277,11 @@ function initLoginPage() {
   googleLoginBtn.addEventListener("click", loginWithGoogle);
 }
 
-const disposableDomainSet = new Set(
-  DISPOSABLE_DOMAINS.map((domain) => String(domain || "").toLowerCase())
-);
-
-function isDisposableEmail(email) {
-  const domain = String(email || "").split("@")[1]?.toLowerCase();
-  return !!domain && disposableDomainSet.has(domain);
-}
-
-async function checkDisposableAPI(email, timeoutMs = 2500) {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
-
-  try {
-    const res = await fetch(`https://open.kickbox.com/v1/disposable/${encodeURIComponent(email)}`, {
-      signal: controller.signal
-    });
-    if (!res.ok) return false;
-    const data = await res.json();
-    return Boolean(data?.disposable);
-  } catch (error) {
-    if (error?.name !== "AbortError") {
-      console.warn("Disposable email API check skipped:", error?.message || error);
-    }
-    return false;
-  } finally {
-    clearTimeout(timeoutId);
-  }
-}
-
 async function validateSignupEmail(email) {
-  if (isDisposableEmail(email)) {
-    throw new Error("Disposable email addresses are not allowed. Please use a valid email.");
-  }
-  if (await checkDisposableAPI(email)) {
-    throw new Error("Temporary email addresses are not allowed.");
-  }
+  // Uses the robust disposableEmailValidator.js utility
+  // Performs local check (3000+ domains + suffix matching) + remote API fallback
+  // Throws with user-friendly message if disposable
+  await validateEmail(email);
 }
 
 function initSignupPage() {
@@ -534,16 +470,26 @@ async function ensureUserDocument(user) {
         email: user.email || "",
         photoURL: user.photoURL || "",
         onboardingDone: false,
+        hasSeenWelcome: false,
         createdAt: serverTimestamp()
       });
       state.userOnboardingDone = false;
+      // Fire-and-forget welcome notification for new users
+      sendWelcomeNotification(user.uid);
     } else {
       const data = snap.data();
-      state.userOnboardingDone = data.onboardingDone || false;
-      await updateDoc(userRef, {
+      const hasSeenWelcome = Boolean(data.hasSeenWelcome ?? data.onboardingDone ?? false);
+      state.userOnboardingDone = hasSeenWelcome;
+      const profilePatch = {
         name: user.displayName || data.name || "User",
         email: user.email || data.email || "",
         photoURL: user.photoURL || snap.data().photoURL || ""
+      };
+      if (data.hasSeenWelcome === undefined) {
+        profilePatch.hasSeenWelcome = hasSeenWelcome;
+      }
+      await updateDoc(userRef, {
+        ...profilePatch
       });
     }
   } catch (error) {
@@ -654,14 +600,26 @@ function initDashboardPage() {
     guestLaterBtn: document.getElementById("guestLaterBtn")
   };
 
+  hideOnboardingOverlay();
+
   bindDashboardEvents();
 
   onAuthStateChanged(auth, async (user) => {
     if (!user && !isFirebaseAction) {
+      stopNotifications();
+      hasEvaluatedOnboardingForUser = false;
+      lastOnboardingEvalUid = null;
+      dashboardInitStartedForUid = null;
       initializeGuestDashboard();
       return;
     }
-    if (!user) return;
+    if (!user) {
+      stopNotifications();
+      hasEvaluatedOnboardingForUser = false;
+      lastOnboardingEvalUid = null;
+      dashboardInitStartedForUid = null;
+      return;
+    }
 
     // Mandatory reload for real-time verification status
     await user.reload();
@@ -694,13 +652,11 @@ function initDashboardPage() {
     await ensureUserDocument(updatedUser);
     displayUserProfile(updatedUser.displayName || "User", updatedUser.email || "No email found", updatedUser.photoURL || "");
 
-    // Check for onboarding (Firestore sync)
-    if (state.userOnboardingDone === false) {
-      showOnboardingOverlay();
+    // Check onboarding before starting the main dashboard flow.
+    const canStartApp = await maybeHandleOnboardingForUser(updatedUser);
+    if (canStartApp) {
+      startDashboardApp(updatedUser);
     }
-
-    loadChats();
-    loadTrackerData();
   });
 }
 
@@ -783,11 +739,24 @@ function createGuestMessage(role, content, sources = []) {
 }
 
 function showOnboardingOverlay() {
-  const overlay = document.getElementById("onboarding");
-  const startBtn = document.getElementById("startBtn");
+  const overlay = document.querySelector(".welcome-modal") || document.getElementById("onboarding");
+  const startBtn = document.getElementById("getStartedBtn") || document.getElementById("startBtn");
   if (!overlay || !startBtn) return;
 
+  const uid = state.currentUser?.uid || "";
+  if (getLocalWelcomeSeen(uid) === "true") {
+    hideOnboardingOverlay();
+    state.userOnboardingDone = true;
+    return;
+  }
+
   overlay.classList.remove("hidden");
+  overlay.classList.add("open");
+  overlay.style.display = "flex";
+  overlay.style.pointerEvents = "auto";
+  overlay.setAttribute("aria-hidden", "false");
+  startBtn.disabled = false;
+  startBtn.textContent = "Get Started";
 
   // Highlight New Chat briefly
   const newChatBtn = document.getElementById("newChatBtn");
@@ -796,38 +765,181 @@ function showOnboardingOverlay() {
     setTimeout(() => { if (newChatBtn) newChatBtn.style.boxShadow = ""; }, 3000);
   }
 
-  startBtn.onclick = async () => {
+  bindOnboardingStartButton();
+}
+
+function hideOnboardingOverlay() {
+  const overlay = document.querySelector(".welcome-modal") || document.getElementById("onboarding");
+  if (!overlay) return;
+  overlay.classList.add("hidden");
+  overlay.classList.remove("open");
+  overlay.style.display = "none";
+  overlay.setAttribute("aria-hidden", "true");
+  overlay.style.pointerEvents = "none";
+  document.body.style.pointerEvents = "";
+}
+
+function initWelcomeModalBindings() {
+  if (hasInitializedWelcomeBindings) return;
+  hasInitializedWelcomeBindings = true;
+
+  if (shouldSkipOnboardingModal()) return;
+
+  const overlay = document.querySelector(".welcome-modal") || document.getElementById("onboarding");
+  const startBtn = document.getElementById("getStartedBtn");
+  if (!overlay || !startBtn) return;
+
+  bindOnboardingStartButton();
+  const hasSeen = getLocalWelcomeSeen(state.currentUser?.uid || "");
+  console.log("hasSeenWelcome:", hasSeen);
+  if (hasSeen === "true") {
+    hideOnboardingOverlay();
+  }
+}
+
+function bindOnboardingStartButton() {
+  const startBtn = document.getElementById("getStartedBtn");
+  if (startBtn && startBtn.dataset.onboardingBound !== "true") {
+    startBtn.dataset.onboardingBound = "true";
+    startBtn.setAttribute("type", "button");
+    const handleClick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      handleStart();
+    };
+    startBtn.addEventListener("click", handleClick);
+  }
+}
+
+function shouldSkipOnboardingModal() {
+  if (page !== "dashboard") return true;
+  const path = window.location.pathname.toLowerCase();
+  return path.includes("login.html");
+}
+
+function getWelcomeSeenStorageKey(uid = "") {
+  return uid ? `${WELCOME_SEEN_KEY}:${uid}` : WELCOME_SEEN_KEY;
+}
+
+function getLocalWelcomeSeen(uid = "") {
+  const key = getWelcomeSeenStorageKey(uid);
+  return localStorage.getItem(key);
+}
+
+function persistLocalWelcomeSeen(uid, seen = true) {
+  const value = seen ? "true" : "false";
+  localStorage.setItem(WELCOME_SEEN_KEY, value);
+  if (uid) {
+    localStorage.setItem(getWelcomeSeenStorageKey(uid), value);
+  }
+}
+
+function startDashboardApp(user) {
+  const uid = user?.uid;
+  if (!uid || dashboardInitStartedForUid === uid) return;
+  dashboardInitStartedForUid = uid;
+  loadChats();
+  loadTrackerData();
+  initNotifications(uid);
+}
+
+async function maybeHandleOnboardingForUser(user) {
+  const uid = user?.uid;
+  if (!uid || shouldSkipOnboardingModal()) return true;
+
+  if (lastOnboardingEvalUid !== uid) {
+    lastOnboardingEvalUid = uid;
+    hasEvaluatedOnboardingForUser = false;
+    dashboardInitStartedForUid = null;
+  }
+  if (hasEvaluatedOnboardingForUser) {
+    return state.userOnboardingDone === true;
+  }
+
+  const localHasSeen = getLocalWelcomeSeen(uid) === "true";
+  let firestoreHasSeen = false;
+  try {
+    const userSnap = await getDoc(doc(db, "users", uid));
+    if (userSnap.exists()) {
+      const userData = userSnap.data();
+      firestoreHasSeen = Boolean(userData.hasSeenWelcome ?? userData.onboardingDone ?? false);
+    }
+  } catch (error) {
+    console.error("Onboarding status read error:", error);
+  }
+
+  const hasSeenWelcome = firestoreHasSeen || localHasSeen;
+  console.log("hasSeenWelcome:", String(hasSeenWelcome));
+  state.userOnboardingDone = hasSeenWelcome;
+
+  if (hasSeenWelcome) {
+    persistLocalWelcomeSeen(uid, true);
+    hideOnboardingOverlay();
+    hasEvaluatedOnboardingForUser = true;
+    return true;
+  }
+
+  showOnboardingOverlay();
+  hasEvaluatedOnboardingForUser = true;
+  return false;
+}
+
+async function handleStart() {
+  const overlay = document.querySelector(".welcome-modal") || document.getElementById("onboarding");
+  const startBtn = document.getElementById("getStartedBtn") || document.getElementById("startBtn");
+  if (!overlay || !startBtn) return;
+  if (isHandlingOnboardingStart) return;
+  isHandlingOnboardingStart = true;
+
+  const activeUser = state.currentUser;
+  const activeUid = activeUser?.uid || "";
+
+  try {
+    console.log("Get Started clicked");
+    startBtn.disabled = true;
+    startBtn.textContent = "Setting up...";
+    persistLocalWelcomeSeen(activeUid, true);
+    hasEvaluatedOnboardingForUser = true;
+    state.userOnboardingDone = true;
+    hideOnboardingOverlay();
+
     try {
-      startBtn.disabled = true;
-      startBtn.textContent = "Setting up...";
-
       // Persistence: Update Firestore
-      const userRef = doc(db, "users", state.currentUser.uid);
-      await updateDoc(userRef, { onboardingDone: true });
-      state.userOnboardingDone = true;
-
-      overlay.classList.add("hidden");
-
-      // Welcome message in chat (Prevention of duplicates)
-      if (ui.chatMessages && !sessionStorage.getItem("welcomeMessageSent")) {
-        const welcomeMsg = document.createElement("div");
-        welcomeMsg.className = "message ai-message";
-        welcomeMsg.innerHTML = `<p>Hi! I'm StudyMate AI 👋 What would you like to learn today? I can help with UPSC, JEE, NEET subjects or any other study topic!</p>`;
-        ui.chatMessages.appendChild(welcomeMsg);
-        scrollMessagesToBottom();
-        sessionStorage.setItem("welcomeMessageSent", "true");
-      }
-
-      // Auto focus input
-      if (ui.userInput) {
-        ui.userInput.placeholder = "Ask anything... (e.g. Explain photosynthesis)";
-        ui.userInput.focus();
+      if (activeUid) {
+        const userRef = doc(db, "users", activeUid);
+        await updateDoc(userRef, {
+          onboardingDone: true,
+          hasSeenWelcome: true
+        });
       }
     } catch (err) {
       console.error("Onboarding setup error:", err);
-      overlay.classList.add("hidden"); // Proceed anyway but log error
     }
-  };
+
+    // Welcome message in chat (Prevention of duplicates)
+    if (ui.chatMessages && !sessionStorage.getItem("welcomeMessageSent")) {
+      const welcomeMsg = document.createElement("div");
+      welcomeMsg.className = "message ai-message";
+      welcomeMsg.innerHTML = `<p>Hi! I'm StudyMate AI 👋 What would you like to learn today? I can help with General, Exam, or Coding topics!</p>`;
+      ui.chatMessages.appendChild(welcomeMsg);
+      scrollMessagesToBottom();
+      sessionStorage.setItem("welcomeMessageSent", "true");
+    }
+
+    // Auto focus input
+    if (ui.userInput) {
+      ui.userInput.placeholder = "Ask anything... (e.g. Explain photosynthesis)";
+      ui.userInput.focus();
+    }
+
+    if (activeUser) {
+      startDashboardApp(activeUser);
+    }
+  } finally {
+    startBtn.disabled = false;
+    startBtn.textContent = "Get Started";
+    isHandlingOnboardingStart = false;
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1108,7 +1220,7 @@ function loadChats(preferredChatId = state.currentChatId) {
         const data = d.data({ serverTimestamps: "estimate" });
         return {
           id: d.id, userId: data.userId, title: data.title || "New Chat",
-          mode: data.mode || "General", hinglish: Boolean(data.hinglish),
+          mode: normalizeMode(data.mode), hinglish: Boolean(data.hinglish),
           notesMode: data.notesMode || "normal",
           messages: messagesMap[d.id] || [],
           createdAt: data.createdAt || null,
@@ -1200,7 +1312,7 @@ function renderHistory() {
     if (chat.id === state.editingChatId) {
       return `<article class="history-card ${isActive}"><div class="rename-form"><input class="rename-input" data-chat-id="${chat.id}" type="text" maxlength="50" value="${escapeAttribute(state.renameDraft)}" placeholder="Rename chat" /><div class="rename-actions"><button class="rename-btn" data-save-rename="${chat.id}" type="button">Save</button><button class="rename-btn" data-cancel-rename type="button">Cancel</button></div></div></article>`;
     }
-    return `<article class="history-card ${isActive}"><button class="history-open" data-open-chat="${chat.id}" type="button"><span class="history-title">${escapeHtml(chat.title)}</span><span class="history-meta">${escapeHtml(chat.mode || "General")}${chat.hinglish ? " | Hinglish" : ""}</span><span class="history-meta">${formatSidebarDate(chat.updatedAt)}</span></button><div class="history-actions"><button class="history-action" data-rename-chat="${chat.id}" type="button">Rename</button><button class="history-action danger" data-delete-chat="${chat.id}" type="button">Delete</button></div></article>`;
+    return `<article class="history-card ${isActive}"><button class="history-open" data-open-chat="${chat.id}" type="button"><span class="history-title">${escapeHtml(chat.title)}</span><span class="history-meta">${MODE_LABELS[chat.mode] || MODE_LABELS.general}${chat.hinglish ? " | Hinglish" : ""}</span><span class="history-meta">${formatSidebarDate(chat.updatedAt)}</span></button><div class="history-actions"><button class="history-action" data-rename-chat="${chat.id}" type="button">Rename</button><button class="history-action danger" data-delete-chat="${chat.id}" type="button">Delete</button></div></article>`;
   }).join("");
   focusRenameInput();
 }
@@ -1601,9 +1713,16 @@ async function deleteChat(chatId) {
 
 function syncHeaderWithActiveChat() {
   const activeChat = getCurrentChat();
-  if (!activeChat) { ui.chatTitle.textContent = "New Chat"; setSelectedMode(getSavedDefaultMode()); setSelectedNotesMode(getSavedDefaultNotesMode()); ui.hinglishToggle.checked = getSavedHinglishDefault(); return; }
-  ui.chatTitle.textContent = activeChat.title || "New Chat";
-  setSelectedMode(activeChat.mode || "General");
+  if (!activeChat) { 
+    ui.chatTitle.textContent = "New Chat"; 
+    setSelectedMode(getSavedDefaultMode()); 
+    setSelectedNotesMode(getSavedDefaultNotesMode()); 
+    ui.hinglishToggle.checked = getSavedHinglishDefault(); 
+    return; 
+  }
+  const currentMode = normalizeMode(activeChat.mode);
+  ui.chatTitle.textContent = `${MODE_LABELS[currentMode]} | ${activeChat.title || "New Chat"}`;
+  setSelectedMode(currentMode);
   setSelectedNotesMode(activeChat.notesMode || "normal");
   ui.hinglishToggle.checked = Boolean(activeChat.hinglish);
 }
@@ -1683,9 +1802,10 @@ function bindModeDropdown() {
 }
 
 function setSelectedMode(mode) {
-  const normalizedMode = normalizeMode(mode);
-  ui.selectedMode.textContent = normalizedMode; ui.selectedMode.dataset.value = normalizedMode;
-  ui.dropdownOptions.querySelectorAll(".option").forEach((o) => o.classList.toggle("active", o.dataset.value === normalizedMode));
+  const normalized = normalizeMode(mode);
+  ui.selectedMode.textContent = MODE_LABELS[normalized]; 
+  ui.selectedMode.dataset.value = normalized;
+  ui.dropdownOptions.querySelectorAll(".option").forEach((o) => o.classList.toggle("active", o.dataset.value === normalized));
 }
 
 function getSelectedMode() { return normalizeMode(ui.selectedMode.dataset.value || ui.selectedMode.textContent); }
@@ -1748,7 +1868,10 @@ function saveHinglishDefault(isEnabled) { localStorage.setItem(STORAGE_KEYS.hing
 function getSavedHinglishDefault() { return localStorage.getItem(STORAGE_KEYS.hinglishDefault) === "true"; }
 function saveDefaultNotesMode(mode) { localStorage.setItem(STORAGE_KEYS.defaultNotesMode, normalizeNotesMode(mode)); }
 function getSavedDefaultNotesMode() { return normalizeNotesMode(localStorage.getItem(STORAGE_KEYS.defaultNotesMode)); }
-function normalizeMode(mode) { return AVAILABLE_MODES.includes(mode) ? mode : "General"; }
+function normalizeMode(mode) { 
+  const m = String(mode || "").toLowerCase();
+  return MODES.includes(m) ? m : "general"; 
+}
 function normalizeNotesMode(mode) { return AVAILABLE_NOTES_MODES.includes(mode) ? mode : "normal"; }
 
 function renderSettingsPreferences() {
@@ -1763,7 +1886,7 @@ function renderSettingsPreferences() {
   if (ui.defaultHinglishToggle) ui.defaultHinglishToggle.checked = getSavedHinglishDefault();
 }
 
-function resetPreferences() { setTheme("dark"); saveDefaultMode("General"); saveDefaultNotesMode("normal"); saveHinglishDefault(false); renderSettingsPreferences(); showToast("Settings have been reset.", "success"); }
+function resetPreferences() { setTheme("dark"); saveDefaultMode("general"); saveDefaultNotesMode("normal"); saveHinglishDefault(false); renderSettingsPreferences(); showToast("Settings have been reset.", "success"); }
 
 async function clearCurrentUserChats() {
   if (!state.currentUser) { showToast("Please log in again to manage your chats.", "error"); return; }
@@ -1845,6 +1968,23 @@ function closeConfirmModal(result) {
   feedbackUi.confirmModal.classList.remove("show"); feedbackUi.confirmModal.setAttribute("aria-hidden", "true");
   feedbackUi.confirmOkBtn.classList.remove("danger-btn");
   if (feedbackUi.confirmResolver) { const resolve = feedbackUi.confirmResolver; feedbackUi.confirmResolver = null; resolve(result); }
+}
+
+/**
+ * Send a welcome notification when a user first creates their account.
+ * Called from ensureUserDocument when a new user doc is created.
+ */
+async function sendWelcomeNotification(userId) {
+  try {
+    await createNotification(
+      userId,
+      "Welcome to StudyMate AI! 🎉",
+      "Start a new chat and ask your first question. We support General, Exam, and Coding modes!",
+      "success"
+    );
+  } catch (err) {
+    console.error("Welcome notification error:", err);
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -1,7 +1,7 @@
 @import url("https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/styles/github-dark.min.css");
 
 /* ========================================================================
-   StudyMate AI — Style System
+   StudyMate AI â€” Style System
    Themes: dark (default) | light | blue | purple
    ================= Reset & Core ================= */
 
@@ -655,7 +655,7 @@ a:hover {
   -webkit-backdrop-filter: blur(10px);
 }
 
-/* Row 1 — Hamburger | Title | Profile */
+/* Row 1 â€” Hamburger | Title | Profile */
 .topbar-row {
   display: flex;
   align-items: center;
@@ -677,7 +677,7 @@ a:hover {
   text-overflow: ellipsis;
 }
 
-/* Row 2 — Mode, Notes, Hinglish controls */
+/* Row 2 â€” Mode, Notes, Hinglish controls */
 .header-controls {
   display: flex;
   align-items: center;
@@ -1751,7 +1751,7 @@ a:hover {
 }
 
 /* ========================================================================
-   Responsive — tablet
+   Responsive â€” tablet
    ======================================================================== */
 
 @media (max-width: 980px) {
@@ -1822,7 +1822,7 @@ a:hover {
 }
 
 /* ========================================================================
-   Responsive — mobile
+   Responsive â€” mobile
    ======================================================================== */
 
 @media (max-width: 768px) {
@@ -1859,7 +1859,7 @@ a:hover {
     gap: 10px;
   }
 
-  /* Hamburger left, title center, profile right — clean row */
+  /* Hamburger left, title center, profile right â€” clean row */
   .topbar-row {
     gap: 10px;
   }
@@ -2268,6 +2268,7 @@ body.sidebar-open {
 
 .hidden {
   display: none !important;
+  pointer-events: none !important;
 }
 
 /* ========================================================================
@@ -2775,6 +2776,15 @@ body.auth-page .modal {
 }
 
 /* Onboarding Overlay */
+.welcome-modal {
+  z-index: 20000;
+  pointer-events: auto;
+}
+
+.welcome-modal * {
+  pointer-events: auto;
+}
+
 .onboarding {
   position: fixed;
   top: 0;
@@ -2783,7 +2793,7 @@ body.auth-page .modal {
   height: 100%;
   background: rgba(0, 0, 0, 0.85);
   backdrop-filter: blur(8px);
-  display: flex !important;
+  display: flex;
   justify-content: center;
   align-items: center;
   z-index: 20000;
@@ -2915,9 +2925,4 @@ body.auth-page .modal {
   50% {
     opacity: 0.6;
   }
-}
-
-/* Utility to hide elements */
-.hidden {
-  display: none !important;
 }

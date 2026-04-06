@@ -1,28 +1,28 @@
 import { auth, db } from "./firebase.js";
 import { validateEmail, isDisposableEmailSync } from "./disposableEmailValidator.js";
-import { 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut, 
-  onAuthStateChanged, 
-  sendPasswordResetEmail, 
-  updateProfile, 
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  sendPasswordResetEmail,
+  updateProfile,
   sendEmailVerification,
   GoogleAuthProvider,
-  signInWithPopup 
+  signInWithPopup
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
-import { 
-  doc, 
-  setDoc, 
-  getDoc, 
-  updateDoc, 
-  collection, 
-  addDoc, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot, 
-  serverTimestamp, 
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  collection,
+  addDoc,
+  query,
+  where,
+  orderBy,
+  onSnapshot,
+  serverTimestamp,
   deleteDoc,
   getDocs,
   Timestamp
@@ -1713,12 +1713,12 @@ async function deleteChat(chatId) {
 
 function syncHeaderWithActiveChat() {
   const activeChat = getCurrentChat();
-  if (!activeChat) { 
-    ui.chatTitle.textContent = "New Chat"; 
-    setSelectedMode(getSavedDefaultMode()); 
-    setSelectedNotesMode(getSavedDefaultNotesMode()); 
-    ui.hinglishToggle.checked = getSavedHinglishDefault(); 
-    return; 
+  if (!activeChat) {
+    ui.chatTitle.textContent = "New Chat";
+    setSelectedMode(getSavedDefaultMode());
+    setSelectedNotesMode(getSavedDefaultNotesMode());
+    ui.hinglishToggle.checked = getSavedHinglishDefault();
+    return;
   }
   const currentMode = normalizeMode(activeChat.mode);
   ui.chatTitle.textContent = `${MODE_LABELS[currentMode]} | ${activeChat.title || "New Chat"}`;
@@ -1803,7 +1803,7 @@ function bindModeDropdown() {
 
 function setSelectedMode(mode) {
   const normalized = normalizeMode(mode);
-  ui.selectedMode.textContent = MODE_LABELS[normalized]; 
+  ui.selectedMode.textContent = MODE_LABELS[normalized];
   ui.selectedMode.dataset.value = normalized;
   ui.dropdownOptions.querySelectorAll(".option").forEach((o) => o.classList.toggle("active", o.dataset.value === normalized));
 }
@@ -1868,9 +1868,9 @@ function saveHinglishDefault(isEnabled) { localStorage.setItem(STORAGE_KEYS.hing
 function getSavedHinglishDefault() { return localStorage.getItem(STORAGE_KEYS.hinglishDefault) === "true"; }
 function saveDefaultNotesMode(mode) { localStorage.setItem(STORAGE_KEYS.defaultNotesMode, normalizeNotesMode(mode)); }
 function getSavedDefaultNotesMode() { return normalizeNotesMode(localStorage.getItem(STORAGE_KEYS.defaultNotesMode)); }
-function normalizeMode(mode) { 
+function normalizeMode(mode) {
   const m = String(mode || "").toLowerCase();
-  return MODES.includes(m) ? m : "general"; 
+  return MODES.includes(m) ? m : "general";
 }
 function normalizeNotesMode(mode) { return AVAILABLE_NOTES_MODES.includes(mode) ? mode : "normal"; }
 
@@ -2024,7 +2024,7 @@ function formatMessage(content, role = "ai") {
   if (role !== "ai") return escapeHtml(text).replace(/\n/g, "<br>");
 
   // 1. Identify the quiz portion BEFORE markdown parsing for cleaner structure
-  const quizMarker = "Quiz:";
+  const quizMarker = "➤";
   const quizIndex = text.lastIndexOf(quizMarker);
 
   let mainText = text;

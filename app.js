@@ -1346,7 +1346,7 @@ function renderMessages() {
 
   const messageMarkup = activeChat.messages.map((message, index) => {
     const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
-    const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content, message.role)}</div>`;
+    const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content, message.role, message.intent, message.doubt)}</div>`;
     const sourcesMarkup = renderMessageSources(message);
     const actionMarkup = renderMessageActions(activeChat.messages, message, index);
     return `<div class="message-row ${message.role}"><div class="message-bubble"><div class="message-meta"><strong>${roleLabel}</strong></div>${contentMarkup}${sourcesMarkup}${actionMarkup}</div></div>`;
@@ -1474,13 +1474,18 @@ async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
           aiResponse = "Sorry, I couldn't generate a proper response. Please try again.";
         }
         const sources = normalizeSources(data?.sources);
+        const intent = data?.intent || "GENERAL";
+        const doubt = data?.doubt || false;
+
         console.log({
           query: latestUserMessage,
           realtime: isRealtimeQuery,
           sourcesCount: sources.length,
+          intent,
+          doubt,
           timestamp: new Date().toISOString()
         });
-        return { text: aiResponse, sources };
+        return { text: aiResponse, sources, intent, doubt };
       } finally {
         window.clearTimeout(timeoutId);
       }
@@ -1528,12 +1533,17 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
     const aiResult = await fetchAIResponse(finalApiMessages, chat.mode, chat.hinglish, chat.notesMode);
     const aiContent = aiResult?.text || "Sorry, I couldn't generate a proper response. Please try again.";
     const aiSources = normalizeSources(aiResult?.sources);
+    const aiIntent = aiResult?.intent || "GENERAL";
+    const aiDoubt = aiResult?.doubt || false;
 
     state.showTypingIndicator = false;
     await streamAssistantMessage(chat.id, aiContent);
 
     if (state.isGuestMode) {
-      chat.messages.push(createGuestMessage("ai", aiContent, aiSources));
+      const msg = createGuestMessage("ai", aiContent, aiSources);
+      msg.intent = aiIntent;
+      msg.doubt = aiDoubt;
+      chat.messages.push(msg);
       chat.updatedAt = Timestamp.now();
       if (chat.title === "New Chat" && titleSource && finalApiMessages.filter((m) => m.role === "ai").length === 0) {
         chat.title = generateChatTitle(titleSource);
@@ -1543,6 +1553,8 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
         role: "ai",
         content: aiContent,
         sources: aiSources,
+        intent: aiIntent,
+        doubt: aiDoubt,
         createdAt: serverTimestamp()
       });
 
@@ -2019,40 +2031,39 @@ function renderMessageSources(message) {
   )).join("");
   return `<div class="sources"><p>Sources:</p>${linksMarkup}</div>`;
 }
-function formatMessage(content, role = "ai") {
-  let text = String(content ?? "");
+function generateFollowUp(intent, doubt) {
+  if (doubt === true) return "Want me to simplify this further or give an analogy?";
+  if (intent === "CODING") return "I can also optimize this code or explain it line-by-line.";
+  if (intent === "EXAM") return "Want a quick revision summary or key points?";
+  return "Want examples, a simpler explanation, or practice questions?";
+}
+
+function formatMessage(content, role = "ai", intent = "GENERAL", doubt = false) {
+  let text = String(content ?? "").trim();
   if (role !== "ai") return escapeHtml(text).replace(/\n/g, "<br>");
 
-  // 1. Identify the quiz portion BEFORE markdown parsing for cleaner structure
-  const quizMarker = "➤";
-  const quizIndex = text.lastIndexOf(quizMarker);
+  // 1. Remove "Quiz:" if present in the raw text (backend safety)
+  text = text.replace(/Quiz:\s*.*$/is, "").trim();
 
-  let mainText = text;
-  let quizText = "";
-
-  if (quizIndex !== -1) {
-    mainText = text.substring(0, quizIndex).trim();
-    quizText = text.substring(quizIndex + quizMarker.length).trim();
-  }
-
-  // 2. Parse main content normally
+  // 2. Parse main content
   let html = "";
   try {
-    html = sanitizeRenderedHtml(String(marked.parse(mainText)));
+    html = sanitizeRenderedHtml(String(marked.parse(text)));
   } catch (err) {
     console.error("Markdown render error:", err);
-    html = escapeHtml(mainText).replace(/\n/g, "<br>");
+    html = escapeHtml(text).replace(/\n/g, "<br>");
   }
 
-  // 3. Append styled quiz box if quiz exists
-  if (quizText) {
-    const quizHtml = `
-      <div class="quiz-box">
-        <span class="quiz-arrow">➤</span>
-        <span class="quiz-text">${escapeHtml(quizText)}</span>
+  // 3. Append styled follow-up box if applicable
+  if (intent !== "IDENTITY" && text.length > 0) {
+    const followupText = generateFollowUp(intent, doubt);
+    const followupHtml = `
+      <div class="followup-box">
+        <span class="followup-arrow">➤</span>
+        <span class="followup-text">${escapeHtml(followupText)}</span>
       </div>
     `.trim();
-    html += quizHtml;
+    html += followupHtml;
   }
 
   return html;

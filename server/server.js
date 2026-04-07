@@ -137,19 +137,21 @@ app.post("/api/chat", async (req, res) => {
     const limitedMessages = messages.slice(-10);
     const latestUserMessage = getLatestUserMessage(limitedMessages);
 
-    // 1. Identity check (Keep existing logic unchanged)
+    // 1. Identity check (CRITICAL — Runs before cache, intent, model routing)
     const identityResponse = await handleIdentityQuery(apiKey, latestUserMessage);
     if (identityResponse) {
       return res.json({
         text: identityResponse.text,
         reply: identityResponse.text,
-        sources: identityResponse.sources
+        sources: [],
+        intent: "IDENTITY",
+        doubt: false
       });
     }
 
     // 2. Detect intent
     let intent = detectIntent(latestUserMessage);
-    
+
     // 3. Mode Normalization
     let normalizedMode = (mode || "general").toLowerCase();
     const validModes = ["general", "coding", "exam"];
@@ -277,7 +279,9 @@ app.post("/api/chat", async (req, res) => {
       reply: finalReply,
       quiz: quizContent,
       sources: sources || [],
-      model_used: modelUsed
+      model_used: modelUsed,
+      intent: intent,
+      doubt: doubt
     });
 
   } catch (error) {
@@ -304,9 +308,9 @@ function detectIntent(query) {
     return "CODING";
   }
 
-    // REASONING: Math, logic, step-by-step solving keywords
-    const reasoningKeywords = ["math", "calculate", "solve", "logic", "reasoning", "prove", "derivation", "formula"];
-    if (reasoningKeywords.some(kw => text.includes(kw)) || /[\d+\-*/=]{3,}/.test(text)) {
+  // REASONING: Math, logic, step-by-step solving keywords
+  const reasoningKeywords = ["math", "calculate", "solve", "logic", "reasoning", "prove", "derivation", "formula"];
+  if (reasoningKeywords.some(kw => text.includes(kw)) || /[\d+\-*/=]{3,}/.test(text)) {
     return "REASONING";
   }
 
@@ -364,23 +368,28 @@ function setCachedIdentityResult(message, value) {
 }
 
 function quickIdentityCheck(message) {
-  const text = String(message || "").toLowerCase();
-  return (
-    text.includes("who") ||
-    text.includes("developer") ||
-    text.includes("creator") ||
-    text.includes("built") ||
-    text.includes("made") ||
-    text.includes("owner") ||
-    text.includes("banaya") ||
-    text.includes("kisne") ||
-    text.includes("kaun") ||
-    text.includes("develop kiya") ||
-    text.includes("किसने") ||
-    text.includes("कौन") ||
-    text.includes("बनाया") ||
-    text.includes("डेवलपर")
-  );
+  const text = String(message || "")
+    .toLowerCase()
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!text) return false;
+
+  const groups = [
+    ["who", "made"],
+    ["who", "created"],
+    ["who", "built"],
+    ["who", "developed"],
+    ["your", "creator"],
+    ["your", "developer"],
+    ["your", "owner"],
+    ["who", "is", "behind"],
+    ["kisne", "banaya"],
+    ["kaun", "hai", "developer"]
+  ];
+
+  return groups.some(group => group.every(word => text.includes(word)));
 }
 
 async function isIdentityQuery(apiKey, userMessage) {
@@ -425,8 +434,12 @@ Message:
 }
 
 async function handleIdentityQuery(apiKey, userMessage) {
-  if (!quickIdentityCheck(userMessage)) return null;
+  // 1. Robust normalized check first
+  if (quickIdentityCheck(userMessage)) {
+    return { text: getRandomIdentityResponse(), sources: [] };
+  }
 
+  // 2. Fallback to AI classifier for ambiguous cases
   const cached = getCachedIdentityResult(userMessage);
   if (cached === true) {
     return { text: getRandomIdentityResponse(), sources: [] };
@@ -555,7 +568,7 @@ function buildContextLayer({ userProfile, intent, doubt }) {
   const grade = userProfile?.grade || "Unknown";
   const goal = userProfile?.goal || "General Learning";
   const style = userProfile?.preferred_style || "Simple";
-  
+
   return `
 STUDENT CONTEXT:
 - Level: ${grade}
@@ -577,7 +590,7 @@ function buildPrompt({ message, intent, userProfile, externalContext, doubt, mod
   const modeInstructions = mode === "exam" ? PROMPT_TEMPLATES.EXAM.trim() : "";
   const base = (intent === "FAST" || mode === "coding") ? "" : PROMPT_TEMPLATES.BASE.trim();
   const specific = PROMPT_TEMPLATES[intent] || PROMPT_TEMPLATES.GENERAL;
-  
+
   return `You are StudyMate AI, a smart and friendly tutor.
 
 ${THINKING_PROMPT.trim()}

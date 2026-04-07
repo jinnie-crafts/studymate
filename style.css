@@ -2971,3 +2971,25 @@ body.auth-page .modal {
     opacity: 0.6;
   }
 }
+
+/* Follow-up Prompt Styles */
+.followup-box {
+  margin-top: 10px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fade-up 0.3s ease forwards;
+}
+
+.followup-arrow {
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+.followup-text {
+  color: var(--text-soft);
+  font-size: 0.92rem;
+}

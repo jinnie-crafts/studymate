@@ -1,4 +1,4 @@
-﻿/* ========================================================================
+/* ========================================================================
    Notification System - Premium (Scoped)
    ======================================================================== */
 
@@ -563,21 +563,31 @@ body.light .notification-root .error-state {
 
 @media (max-width: 768px) {
   .notification-root .notification-dropdown {
-    right: 10px;
-    left: 10px;
+    position: fixed;
+    top: 70px;
+    right: 12px;
+    left: 12px;
     width: auto;
     max-width: none;
+    max-height: calc(100dvh - 90px);
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top right;
+    border-radius: 20px;
+  }
+
+  .notification-root .notification-dropdown.open {
+    transform: translateY(0) scale(1);
   }
 
   .notification-root .notification-panel-header {
-    padding: 16px 18px 12px;
+    padding: 18px 20px 14px;
   }
 
   .notification-root .notification-filters {
-    padding: 0 18px 8px;
+    padding: 0 16px 8px;
   }
 
   .notification-root .notification-panel-footer {
-    padding: 9px 18px;
+    padding: 10px 18px;
   }
 }

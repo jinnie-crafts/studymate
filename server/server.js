@@ -11,29 +11,48 @@ const cors = require("cors");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const AgentRunner = require("./agents");
+
+if (!process.env.OPENROUTER_API_KEY) {
+  console.error("❌ CRITICAL: Missing OPENROUTER_API_KEY in environment.");
+}
+
 const REALTIME_QUERY_REGEX = /(today|now|latest|news|current|recent|weather|price|score|stock|time)/i;
 const NEWS_QUERY_REGEX = /(news|headlines|breaking|latest news|current affairs)/i;
-const CODE_QUERY_REGEX = /code|programming|debug/i;
-const MATH_QUERY_REGEX = /math|calculate|solve/i;
-const DEFAULT_MODEL = "deepseek/deepseek-chat";
-const IDENTITY_CLASSIFIER_MODEL = "deepseek/deepseek-chat";
+const CODE_QUERY_REGEX = /code|program|example|debug|script|function|snippet|coding/i;
+const MATH_QUERY_REGEX = /math|calculate|solve|equation/i;
+const DIAGRAM_QUERY_REGEX = /diagram|chart|graph|flow|flowchart|structure|architecture/i;
+const DEFAULT_MODEL = "deepseek/deepseek-chat:free";
+const IDENTITY_CLASSIFIER_MODEL = "openrouter/free";
+
+const MODEL_POOL = [
+  "minimax/minimax-m2.5:free",
+  "meta-llama/llama-3-8b-instruct:free",
+  "google/gemma-7b-it:free",
+  "nousresearch/nous-capybara-7b:free",
+  "openchat/openchat-7b:free",
+  "nvidia/nemotron-3-nano-30b-a3b:free"
+];
 
 // Model Strategy Constants
 const MODELS = {
-  GENERAL: "deepseek/deepseek-chat",
-  LONG_EXPLANATION: "qwen/qwen3.6-plus",
-  CODING: "google/gemini-flash-1.5",
-  REASONING: "deepseek/deepseek-r1-distill",
-  FAST: "google/gemini-flash-1.5",
-  FALLBACK: "mistralai/mistral-small"
+  GENERAL: "minimax/minimax-m2.5:free",
+  LONG_EXPLANATION: "meta-llama/llama-3-8b-instruct:free",
+  CODING: "nousresearch/nous-capybara-7b:free",
+  REASONING: "openchat/openchat-7b:free",
+  FAST: "minimax/minimax-m2.5:free",
+  FALLBACK: "nvidia/nemotron-3-nano-30b-a3b:free"
 };
 
+const failureTracker = new Map(); // model -> cooldownExpiry
+const COOLDOWN_MS = 5 * 60 * 1000;
+
+let lastIdentityIndex = -1;
 const IDENTITY_RESPONSES = [
-  "I was created by Harsh Maurya, the developer of StudyMate AI. The UI is designed by Komal Sharma",
-  "StudyMate AI was built by Harsh Maurya and Komal Sharma",
-  "I’m a project developed by Harsh Maurya and designed by Komal Sharma to help students learn better.",
-  "Harsh Maurya and Komal Sharma are the creators behind me.",
-  "I was designed by Komal Sharma and developed by Harsh Maurya."
+  "StudyMate-AI is developed by Rishu Maurya and UI/UX designed by Komal Sharma.",
+  "This application is created by Rishu Maurya and UI/UX designed by Komal Sharma.",
+  "Rishu Maurya is the developer behind StudyMate-AI and Komal Sharma is the UI/UX designer.",
+  "StudyMate-AI is built by Rishu Maurya and UI/UX designed by Komal Sharma."
 ];
 const REALTIME_CACHE_TTL_MS = 5 * 60 * 1000;
 const IDENTITY_CACHE_TTL_MS = 30 * 60 * 1000;
@@ -49,39 +68,20 @@ const MAX_CACHE_SIZE = 500;
 // ---------------------------------------------------------------------------
 
 const PROMPT_TEMPLATES = {
-  BASE: `
-Structure:
-1. Explanation: Clear, simple, and step-by-step.
-2. Example: Practical or theoretical.
-3. Key Points: Bulleted list of core concepts.
-4. Quiz: Exactly one simple question to test understanding.
-5. Use simple language
-6. Avoid jargon
-7. Teach like a friendly tutor
-
-Quiz Rule: Always end with 'Quiz:' followed by a question. Do not include the answer.
+  CHAT: `
+[System: You are StudyMate-AI, a AI developed by Rishu Maurya and Komal Sharma. Use Markdown for formatting.]
+[Role: Professional Tutor]
+[Guidelines:
+ - If Intent is DIAGRAM: Start with the Mermaid block ( \`\`\`mermaid ). Follow with a brief 1-2 line explanation.
+ - If Intent is CODING: Provide full, usable code first ( \`\`\`language ). Follow with key points. No generic definitions.
+ - If Intent is EXPLANATION: Use structure: **Definition:** (substantial), **Key Points:** (bulleted), **Example:** (simple).
+ - If Intent is GENERAL: Answer directly and clearly. No fluff.
+ - Use exactly ONE natural, contextual follow-up question at the end for all intents.
+]
+[Goal: High-quality, polished educational response. Do not truncate useful code.]
 `,
-  CODING: "Goal: Provide clean, working code with a short, concise explanation. Focus on best practices.",
-  FAST: "Goal: Provide a very concise and direct answer. No fluff or extra explanations.",
-  REASONING: "Goal: Focus on logical steps, mathematical derivations, or analytical reasoning. Be precise.",
-  LONG_EXPLANATION: "Goal: Provide a comprehensive, in-depth breakdown. Cover background, mechanics, and implications.",
-  DOUBT: `
-The student did not understand the previous explanation.
-Your task:
-- Explain in a MUCH simpler way
-- Use analogies or real-life examples
-- Break it down step-by-step
-- Avoid technical jargon
-- Keep it shorter and clearer
-`,
-  GENERAL: "Goal: Provide clear, simple, structured explanation.",
-  EXAM: `
-Goal: Provide exam-oriented answers.
-- Be concise and clear
-- Focus on important concepts
-- Highlight key points for revision
-- Avoid unnecessary detail
-`
+  QUIZ_GEN: `[Role:QuizMaster][Task:1MCQ][Format:Q: | A) | B) | C) | D)] Based on topic.`,
+  QUIZ_EVAL: `[Task:EvalAns][Rule:IfOk:Correct!+NextQ.Else:Explain+Retry][Limit:4Lines]`
 };
 
 const THINKING_PROMPT = `
@@ -110,47 +110,48 @@ app.get("/", (_req, res) => {
 // ---------------------------------------------------------------------------
 
 const MODEL_FALLBACKS = [
-  "qwen/qwen3.6-plus",
-  "qwen/qwen-2.5-72b-instruct",
-  "mistralai/mistral-small"
+  "minimax/minimax-m2.5:free",
+  "meta-llama/llama-3-8b-instruct:free",
+  "google/gemma-7b-it:free",
+  "nousresearch/nous-capybara-7b:free",
+  "openchat/openchat-7b:free",
+  "nvidia/nemotron-3-nano-30b-a3b:free"
 ];
+
+const MODEL_TIMEOUT_MS = 25000;
 
 app.post("/api/chat", async (req, res) => {
   const start = Date.now();
   try {
     const apiKey = process.env.OPENROUTER_API_KEY;
-
-
     if (!apiKey) {
-      console.error("OPENROUTER_API_KEY is not set.");
-      return res.status(500).json({ error: "AI Service is currently unavailable." });
+      console.error("[Configuration Error] OPENROUTER_API_KEY is missing from environment.");
+      return res.status(500).json({ error: "AI Service is not configured. Please check server logs." });
     }
 
-    const { messages, mode, hinglish, notesMode, userId, doubt = false } = req.body;
-    if (userId) console.log(`[AI Request] User: ${userId} | Mode: ${mode || "General"} | Doubt: ${doubt}`);
+    const { messages, mode, hinglish, notesMode, userId, doubt = false, currentQuestion = null } = req.body;
+    if (userId) console.log(`[AI Request] User: ${userId} | Mode: ${mode || "General"} | Messages: ${Array.isArray(messages) ? messages.length : 'NOT_ARRAY'}`);
 
     if (!Array.isArray(messages) || messages.length === 0) {
+      console.warn("[Validation Error] No messages or invalid format:", JSON.stringify(req.body, null, 2));
       return res.status(400).json({ error: "No messages provided." });
     }
 
-    // Performance: Limit history to last 10 messages
-    const limitedMessages = messages.slice(-10);
-    const latestUserMessage = getLatestUserMessage(limitedMessages);
+    const latestUserMessage = getLatestUserMessage(messages);
+    const context = { req, res, userId, mode, doubt, currentQuestion, messages };
 
-    // 1. Identity check (CRITICAL — Runs before cache, intent, model routing)
-    const identityResponse = await handleIdentityQuery(apiKey, latestUserMessage);
-    if (identityResponse) {
+    // 1. Identity check (CRITICAL — Hardcoded, bypassing AI)
+    if (isIdentityQueryMatch(latestUserMessage)) {
+      const responseText = getRandomIdentityResponse();
       return res.json({
-        text: identityResponse.text,
-        reply: identityResponse.text,
-        sources: [],
-        intent: "IDENTITY",
-        doubt: false
+        text: responseText,
+        reply: responseText,
+        intent: "identity"
       });
     }
 
-    // 2. Detect intent
-    let intent = detectIntent(latestUserMessage);
+    // 2. Detect intent (Keyword based)
+    let intent = detectIntent(latestUserMessage, mode);
 
     // 3. Mode Normalization
     let normalizedMode = (mode || "general").toLowerCase();
@@ -220,69 +221,177 @@ app.post("/api/chat", async (req, res) => {
       url: src.url
     }));
 
-    // 5. Build prompt (Optimized context)
-    const optimizedHistory = getRecentHistory(messages);
-    const systemPrompt = buildPrompt({
-      message: latestUserMessage,
-      intent,
-      userProfile: req.body.userProfile,
-      externalContext,
-      doubt,
-      mode: normalizedMode
-    });
+    // 5. Build prompt with History Context (Last 5 messages)
+    const autoQuestionEnabled = req.body.autoQuestion !== false;
+    const systemPrompt = `${buildAgentPrompt(latestUserMessage, intent, normalizedMode, currentQuestion, autoQuestionEnabled)}\n[User Intent: ${intent}]`;
 
     const finalMessages = [
-      { role: "system", content: systemPrompt },
-      ...optimizedHistory
+      { role: "system", content: systemPrompt }
     ];
 
-    const modelCandidates = buildModelCandidates(selectedModel);
+    // Add session history context (last 5 messages)
+    const historyContext = messages.slice(-6, -1); // Exclude the latest user message which we add below
+    historyContext.forEach(msg => {
+      finalMessages.push({ role: "user", content: msg.content, name: msg.role === "user" ? "User" : "StudyMate" });
+    });
+
+    // If evaluating, include the question being answered
+    if (intent === "quiz" && currentQuestion) {
+      finalMessages.push({ role: "assistant", content: `Q: ${currentQuestion}` });
+    }
+
+    finalMessages.push({ role: "user", content: latestUserMessage });
+
+    // 6. Build model chain with cooldown awareness
+    const now = Date.now();
+    const candidateChain = buildModelCandidates(selectedModel).filter(model => {
+      const expiry = failureTracker.get(model);
+      if (expiry && now < expiry) {
+        console.log(`[Zero-Failure] Skipping benched model: ${model} (Cooling down)`);
+        return false;
+      }
+      return true;
+    });
+
+    // 7. Support Streaming if requested
+    if (req.body.stream) {
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no" // Disable buffering for Nginx
+      });
+      res.flushHeaders();
+      // If compression or a proxy is used, they might need an explicit flush
+      if (typeof res.flush === "function") res.flush();
+
+      let fullText = "";
+      let success = false;
+      let usedModel = "";
+
+      for (const model of candidateChain) {
+        try {
+          console.log(`[Zero-Failure Streaming] Attempting: ${model}`);
+          const streamResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+              "HTTP-Referer": "https://aadirishi.in/",
+              "X-Title": "StudyMate AI"
+            },
+            body: JSON.stringify({
+              model,
+              messages: finalMessages,
+              stream: true,
+              provider: { allow_fallbacks: false }
+            })
+          });
+
+          if (!streamResponse.ok) throw new Error(`HTTP ${streamResponse.status}`);
+
+          const reader = streamResponse.body;
+          const decoder = new TextDecoder();
+          const streamReader = reader.getReader();
+          let firstChunk = true;
+
+          while (true) {
+            const { done, value } = await streamReader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+            for (const line of lines) {
+              const cleanedLine = line.trim();
+              if (cleanedLine.startsWith("data: ")) {
+                const dataStr = cleanedLine.slice(6).trim();
+                if (dataStr === "[DONE]") break;
+                try {
+                  const data = JSON.parse(dataStr);
+                  const content = data.choices[0]?.delta?.content || "";
+                  if (content) {
+                    if (firstChunk) {
+                      firstChunk = false;
+                      success = true;
+                      usedModel = model;
+                    }
+                    fullText += content;
+                    res.write(`data: ${JSON.stringify({ content })}\n\n`);
+                  }
+                } catch (e) {}
+              }
+            }
+          }
+
+          if (success) break;
+        } catch (error) {
+          console.error(`[Zero-Failure Streaming] FAILURE with ${model}: ${error.message}`);
+          failureTracker.set(model, now + COOLDOWN_MS);
+        }
+      }
+
+      if (!success) {
+        console.warn("[Zero-Failure Streaming] CRITICAL: All models failed. Using safe fallback.");
+        const fallback = getSafeFallbackReply(latestUserMessage, intent);
+        fullText = fallback;
+        usedModel = "safe-fallback";
+        res.write(`data: ${JSON.stringify({ content: fallback, success: false })}\n\n`);
+      }
+
+      // 8. Run Agents Post-processing (Quiz & UI Metadata)
+      const finalResult = await AgentRunner.postProcess(context, {
+        text: fullText,
+        reply: fullText,
+        sources: sources || [],
+        model_used: usedModel,
+        intent: intent,
+        doubt: doubt,
+        success: usedModel !== "safe-fallback"
+      });
+
+      res.write(`data: ${JSON.stringify({ metadata: finalResult })}\n\n`);
+      res.write("data: [DONE]\n\n");
+      return res.end();
+    }
+
+    // --- Legacy JSON Path (Internal fallback or non-stream clients) ---
     let aiResponse = "";
     let modelUsed = "";
 
-    console.log(`[Intent] ${intent} | [Model] ${selectedModel}`);
-
-    // 6. Call AI with fallback
-    for (const model of modelCandidates) {
+    for (const model of candidateChain) {
       try {
-        aiResponse = await fetchWithRetry(
-          () => callAIModel(apiKey, model, finalMessages),
-          1
-        );
-        modelUsed = model;
-        break;
+        console.log(`[Zero-Failure] Attempting: ${model}`);
+        const responseData = await callAIModel(apiKey, model, finalMessages);
+        
+        if (isValidAIResponse(responseData)) {
+          aiResponse = responseData;
+          modelUsed = model;
+          break;
+        } else {
+          failureTracker.set(model, now + COOLDOWN_MS);
+        }
       } catch (error) {
-        console.error(`[AI Error] ${model} failed:`, error.message);
+        failureTracker.set(model, now + COOLDOWN_MS);
       }
     }
 
     if (!aiResponse) {
-      return res.status(503).json({ error: "AI is busy right now. Please try again." });
+      aiResponse = getSafeFallbackReply(latestUserMessage, intent);
+      modelUsed = "safe-fallback";
     }
 
     const answerBody = String(aiResponse).trim();
-    const finalReply = answerBody;
-
-    // Extract Quiz if present
-    const quizContent = extractQuiz(answerBody);
-
-    // 7. Store response in cache (if eligible)
-    if (!isRealtime && !doubt && latestUserMessage.length <= 300) {
-      setCache(cacheKey, { reply: finalReply, quiz: quizContent, model_used: modelUsed });
-    }
-
-    console.log("Response time:", Date.now() - start, "ms");
-
-    // 8. Return response
-    return res.json({
-      text: finalReply,
-      reply: finalReply,
-      quiz: quizContent,
+    const finalResult = await AgentRunner.postProcess(context, {
+      text: answerBody,
+      reply: answerBody,
       sources: sources || [],
       model_used: modelUsed,
       intent: intent,
-      doubt: doubt
+      doubt: doubt,
+      success: modelUsed !== "safe-fallback"
     });
+
+    return res.json(finalResult);
 
   } catch (error) {
     console.log("Response time (error):", Date.now() - start, "ms");
@@ -291,47 +400,24 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+function getSafeFallbackReply(query, intent) {
+  const base = "I'm currently optimizing my specialized learning modules. In the meantime, here is a general overview:";
+  
+  if (intent === "CODING") {
+    return `${base}\n\nTo help with your coding request, please ensure your syntax is correct. I am syncing my developer tools and will be able to provide deep code analysis in a moment. What specific language or error are you working with?`;
+  }
+  
+  if (intent === "DIAGRAM") {
+    return `${base}\n\nI am refreshing my visual engine to generate a clear diagram for you. Please try asking for the specific structure or flow again in a minute.`;
+  }
+
+  return `${base}\n\nI'm StudyMate AI, and I'm here to help you learn effectively. My high-performance engines are currently under heavy load, but I'm ready to discuss your topic. Could you please provide more context or rephrase your question?`;
+}
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-/**
- * detectIntent(query)
- * Classifies the query intent to route to the optimal model.
- */
-function detectIntent(query) {
-  const text = String(query || "").toLowerCase();
-
-  // CODING: Programming, debugging, and code generation keywords
-  const codingKeywords = ["code", "programming", "debug", "function", "script", "syntax", "develop", "api", "json", "html", "css", "javascript"];
-  if (codingKeywords.some(kw => text.includes(kw)) || /`{3,}/.test(text)) {
-    return "CODING";
-  }
-
-  // REASONING: Math, logic, step-by-step solving keywords
-  const reasoningKeywords = ["math", "calculate", "solve", "logic", "reasoning", "prove", "derivation", "formula"];
-  if (reasoningKeywords.some(kw => text.includes(kw)) || /[\d+\-*/=]{3,}/.test(text)) {
-    return "REASONING";
-  }
-
-  // LONG_EXPLANATION: In-depth or long request markers
-  const longExpKeywords = ["explain in detail", "long", "detailed", "comprehensive", "background", "history", "essay", "article", "thesis"];
-  if (longExpKeywords.some(kw => text.includes(kw)) || text.length > 300) {
-    return "LONG_EXPLANATION";
-  }
-
-  const greetings = ["hi", "hello", "thanks", "ok", "yes", "no"];
-  if (text.length < 20 && greetings.includes(text.trim())) {
-    return "FAST";
-  }
-
-  return "GENERAL";
-}
-
-/**
- * selectModel(intent)
- * Maps detected intent to the specific model string.
- */
 function selectModel(intent) {
   return MODELS[intent] || MODELS.GENERAL;
 }
@@ -341,8 +427,96 @@ function buildModelCandidates(selectedModel) {
   return [...new Set(ordered.filter(Boolean))];
 }
 
+function isValidAIResponse(text) {
+  if (!text || typeof text !== "string") return false;
+  const t = text.trim();
+  
+  // 1. Minimum length validation
+  if (t.length < 20) return false;
+  
+  // 2. Refusal phrase detection
+  const refusalPhrases = [
+    "i am an ai model",
+    "i cannot assist",
+    "i am unable to",
+    "my purpose is",
+    "sorry, i don't know",
+    "limit reached",
+    "internal server error",
+    "as an ai",
+    "my programming",
+    "contact support"
+  ];
+  const lower = t.toLowerCase();
+  return !refusalPhrases.some(p => lower.includes(p));
+}
+
+/**
+ * detectIntent(query)
+ * Classifies the query intent to route to the optimal model.
+ */
+function detectIntent(query, mode) {
+  const text = String(query || "").toLowerCase();
+
+  if (isIdentityQueryMatch(text)) return "identity";
+
+  if (DIAGRAM_QUERY_REGEX.test(text)) return "DIAGRAM";
+  if (CODE_QUERY_REGEX.test(text) || mode === "coding") return "CODING";
+
+  const explanationKeywords = ["explain", "how", "why", "what is", "define", "concept", "theory"];
+  if (explanationKeywords.some(kw => text.includes(kw))) return "EXPLANATION";
+
+  return "GENERAL";
+}
+
+function isIdentityQueryMatch(query) {
+  const text = String(query || "").toLowerCase();
+  const identityKeywords = [
+    "who made", "who created", "who built", "who developed", "who coded",
+    "who is the owner", "who is the creator", "your developer", "your owner",
+    "who built this app", "anthropic", "openai", "google", "meta"
+  ];
+  return identityKeywords.some(kw => text.includes(kw));
+}
+
+function shouldSuggestQuiz(text, intent) {
+  // Temporarily disabled to prevent legacy quiz CTA
+  return false;
+}
+
+function buildAgentPrompt(message, intent, mode, currentQuestion, autoQuestionEnabled = true) {
+  if (intent === "quiz") {
+    return currentQuestion ? PROMPT_TEMPLATES.QUIZ_EVAL : PROMPT_TEMPLATES.QUIZ_GEN;
+  }
+
+  let chatPrompt = PROMPT_TEMPLATES.CHAT;
+  const lowerMsg = String(message || "").toLowerCase();
+
+  // Enforce code blocks for coding queries
+  if (CODE_QUERY_REGEX.test(lowerMsg) || mode === "coding") {
+    chatPrompt += "\n[CRITICAL: User is asking for code. You MUST provide a complete, working code block with proper syntax highlighting. Do NOT just give theory.]";
+  }
+
+  // Encourage Mermaid for diagrams
+  if (DIAGRAM_QUERY_REGEX.test(lowerMsg)) {
+    chatPrompt += "\n[CRITICAL: User is asking for a diagram. You MUST use Mermaid syntax ( \`\`\`mermaid ) to draw a clear visual structure.]";
+  }
+
+  if (!autoQuestionEnabled) {
+    chatPrompt = chatPrompt.replace(/Follow-up: \(Ask exactly ONE natural, contextual, related question\. Do NOT mention quizzes\.\)/g, "");
+    chatPrompt += "\n[Do NOT ask any follow-up questions.]";
+  }
+  return chatPrompt;
+}
+
+
 function getRandomIdentityResponse() {
-  return IDENTITY_RESPONSES[Math.floor(Math.random() * IDENTITY_RESPONSES.length)];
+  let index;
+  do {
+    index = Math.floor(Math.random() * IDENTITY_RESPONSES.length);
+  } while (index === lastIdentityIndex && IDENTITY_RESPONSES.length > 1);
+  lastIdentityIndex = index;
+  return IDENTITY_RESPONSES[index];
 }
 
 function normalizeIdentityCacheKey(message) {
@@ -455,23 +629,27 @@ async function handleIdentityQuery(apiKey, userMessage) {
   return { text: getRandomIdentityResponse(), sources: [] };
 }
 
-async function fetchWithRetry(fn, retries = 2) {
-  try {
-    return await fn();
-  } catch (error) {
-    if (retries > 0) return fetchWithRetry(fn, retries - 1);
-    throw error;
-  }
-}
+// fetchWithRetry removed (moved to primary helper section)
 
 async function callAIModel(apiKey, model, messages) {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const timeoutId = setTimeout(() => controller.abort(), 8000); // Strict 8s timeout
+
+  // PRE-FLIGHT SAFETY CHECK (CRITICAL: 100% Free enforcement)
+  const isAuthorized = MODEL_POOL.includes(model) && model.endsWith(":free");
+  if (!isAuthorized) {
+    throw new Error(`CRITICAL BLOCKED: Model ${model} is not authorized or not free.`);
+  }
 
   try {
-    if (process.env.NODE_ENV !== "production") {
-      console.log("Trying model:", model);
-    }
+    const requestBody = {
+      model,
+      messages,
+      provider: {
+        allow_fallbacks: false // Disable provider-level paid fallbacks
+      }
+    };
+
     const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -480,22 +658,24 @@ async function callAIModel(apiKey, model, messages) {
         "HTTP-Referer": "https://aadirishi.in/",
         "X-Title": "StudyMate AI"
       },
-      body: JSON.stringify({ model, messages }),
+      body: JSON.stringify(requestBody),
       signal: controller.signal
     });
 
     if (!response.ok) {
       const rawError = await response.text();
-      throw new Error(`OpenRouter ${response.status}: ${rawError}`);
+      throw new Error(`OpenRouter HTTP ${response.status}: ${rawError}`);
     }
 
     const data = await response.json();
     const content = data?.choices?.[0]?.message?.content;
-    if (!content) throw new Error("Empty response from OpenRouter");
+    
+    if (!content) throw new Error("Empty response from provider.");
+    
     return String(content);
   } catch (error) {
-    if (error?.name === "AbortError") {
-      throw new Error("Timeout");
+    if (error.name === "AbortError") {
+      throw new Error("Timeout: AI model took too long (>8s).");
     }
     throw error;
   } finally {

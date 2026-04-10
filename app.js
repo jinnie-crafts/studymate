@@ -32,6 +32,49 @@ import { marked } from "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js";
 import hljs from "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/+esm";
 
 // ---------------------------------------------------------------------------
+// Network Layer Hardening (Safe Fetch Wrapper)
+// ---------------------------------------------------------------------------
+
+const DEBUG_FETCH = false;
+const originalFetch = window.fetch;
+
+window.fetch = async function (...args) {
+  try {
+    // 1. Safely extract URL (Handle string, Request object, and nulls)
+    let url = "";
+    if (typeof args[0] === "string") {
+      url = args[0];
+    } else if (args[0] instanceof Request) {
+      url = args[0].url;
+    } else {
+      url = (args[0] && typeof args[0] === "object" && "url" in args[0]) ? args[0].url : String(args[0] || "");
+    }
+
+    // 2. Safe debugging
+    if (DEBUG_FETCH && url.includes("/api/chat")) {
+      console.log("[FETCH DEBUG] Intercepting AI request:", url);
+    }
+
+    // 3. Scoped Agent Logic (Strictly /api/chat only)
+    if (url.includes("/api/chat")) {
+      // Future agent logic goes here (Read-only for now)
+      // Do NOT mutate headers or body at this stage
+    }
+
+    // 4. Transparent pass-through
+    return await originalFetch(...args);
+  } catch (err) {
+    // 5. Fail-soft: Never block the request if the wrapper crashed
+    console.error("[FETCH WRAPPER ERROR]", err);
+    try {
+      return await originalFetch(...args);
+    } catch (criticalErr) {
+      throw criticalErr; // Re-throw the actual network error if original fetch fails
+    }
+  }
+};
+
+// ---------------------------------------------------------------------------
 // Constants
 // ---------------------------------------------------------------------------
 
@@ -68,7 +111,15 @@ const state = {
   preferredChatId: null, streamingResponse: null,
   trackerData: { questionsToday: 0, streakCount: 0 },
   isGuestMode: false,
-  guestQuestionsUsed: 0
+  guestQuestionsUsed: 0,
+  currentQuestion: null,
+  userSettings: { 
+    aiModel: "auto", 
+    aiStyle: "detailed", 
+    aiTone: "professional", 
+    autoQuestion: true, 
+    fontSize: 16 
+  }
 };
 
 let ui = null;
@@ -91,6 +142,12 @@ markdownRenderer.code = (code, language) => {
     ? language
     : String(code?.lang || "");
   const lang = rawLanguage.trim().split(/\s+/)[0].toLowerCase();
+
+  // Handle Mermaid diagrams
+  if (lang === "mermaid") {
+    return `<div class="mermaid-container"><div class="mermaid">${escapeHtml(rawCode)}</div></div>`;
+  }
+
   const hasLang = lang && hljs.getLanguage(lang);
   const highlighted = hasLang
     ? hljs.highlight(rawCode, { language: lang }).value
@@ -110,35 +167,13 @@ marked.setOptions({
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 function getCurrentUserId() {
   const user = auth.currentUser;
   if (!user) throw new Error("User not authenticated");
   return user.uid;
-}
-
-// ---------------------------------------------------------------------------
-// Boot
-// ---------------------------------------------------------------------------
-
-applySavedTheme();
-initializeFeedbackUi();
-consumeFlashToast();
-window.goToSettings = goToSettings;
-if (page === "dashboard") {
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", initWelcomeModalBindings, { once: true });
-  } else {
-    initWelcomeModalBindings();
-  }
-}
-bootstrap();
-
-function bootstrap() {
-  if (page === "login") return initLoginPage();
-  if (page === "signup") return initSignupPage();
-  if (page === "dashboard") return initDashboardPage();
-  if (page === "settings") return initSettingsPage();
 }
 
 // ---------------------------------------------------------------------------
@@ -150,12 +185,6 @@ function initLoginPage() {
   const authMessage = document.getElementById("authMessage");
   const googleLoginBtn = document.getElementById("googleLoginBtn");
   const forgotPasswordLink = document.getElementById("forgotPasswordLink");
-
-  onAuthStateChanged(auth, (user) => {
-    if (user && (user.emailVerified || user.providerData[0]?.providerId === 'google.com')) {
-      window.location.replace("index.html");
-    }
-  });
 
   loginForm.addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -288,10 +317,6 @@ function initSignupPage() {
   const signupForm = document.getElementById("signupForm");
   const authMessage = document.getElementById("authMessage");
   const googleLoginBtn = document.getElementById("googleLoginBtn");
-
-  onAuthStateChanged(auth, (user) => {
-    if (user && user.emailVerified) window.location.replace("index.html");
-  });
 
   let isSubmitting = false;
   signupForm.addEventListener("submit", async (e) => {
@@ -601,63 +626,11 @@ function initDashboardPage() {
   };
 
   hideOnboardingOverlay();
-
   bindDashboardEvents();
-
-  onAuthStateChanged(auth, async (user) => {
-    if (!user && !isFirebaseAction) {
-      stopNotifications();
-      hasEvaluatedOnboardingForUser = false;
-      lastOnboardingEvalUid = null;
-      dashboardInitStartedForUid = null;
-      initializeGuestDashboard();
-      return;
-    }
-    if (!user) {
-      stopNotifications();
-      hasEvaluatedOnboardingForUser = false;
-      lastOnboardingEvalUid = null;
-      dashboardInitStartedForUid = null;
-      return;
-    }
-
-    // Mandatory reload for real-time verification status
-    await user.reload();
-    const updatedUser = auth.currentUser;
-
-    // Check for email verification, skip if Google user
-    const isGoogle = updatedUser.providerData[0]?.providerId === 'google.com';
-    if (!updatedUser.emailVerified && !isGoogle && !isFirebaseAction) {
-      window.location.replace("login.html");
-      return;
-    }
-
-    closeGuestLimitModal();
-    cleanupChatSubscription();
-    state.isGuestMode = false;
-    state.currentUser = null;
-    state.chats = [];
-    state.currentChatId = null;
-    state.preferredChatId = null;
-    state.editingChatId = null;
-    state.renameDraft = "";
-    state.guestQuestionsUsed = loadGuestQuestionUsage();
-    if (ui.logoutBtn) ui.logoutBtn.textContent = "Logout";
-    if (ui.editNameBtn) {
-      ui.editNameBtn.disabled = false;
-      ui.editNameBtn.removeAttribute("title");
-    }
-
-    state.currentUser = updatedUser;
-    await ensureUserDocument(updatedUser);
-    displayUserProfile(updatedUser.displayName || "User", updatedUser.email || "No email found", updatedUser.photoURL || "");
-
-    // Check onboarding before starting the main dashboard flow.
-    const canStartApp = await maybeHandleOnboardingForUser(updatedUser);
-    if (canStartApp) {
-      startDashboardApp(updatedUser);
-    }
-  });
+  
+  if (state.isGuestMode) {
+    initializeGuestDashboard();
+  }
 }
 
 function initializeGuestDashboard() {
@@ -948,32 +921,300 @@ async function handleStart() {
 
 function initSettingsPage() {
   ui = {
+    settingsNameInput: document.getElementById("settingsNameInput"),
+    settingsEmailInput: document.getElementById("settingsEmailInput"),
+    settingsAvatarUrlInput: document.getElementById("settingsAvatarUrlInput"),
+    settingsAvatarPreview: document.getElementById("settingsAvatarPreview"),
+    settingsDisplayHeader: document.getElementById("settingsDisplayHeader"),
+    settingsEmailHeader: document.getElementById("settingsEmailHeader"),
+    saveAccountBtn: document.getElementById("saveAccountBtn"),
+    
+    changePasswordBtn: document.getElementById("changePasswordBtn"),
+    logoutAllSessionsBtn: document.getElementById("logoutAllSessionsBtn"),
+    
+    aiModelSelect: document.getElementById("aiModelSelect"),
+    aiStyleSelect: document.getElementById("aiStyleSelect"),
+    aiToneSelect: document.getElementById("aiToneSelect"),
+    autoQuestionToggle: document.getElementById("autoQuestionToggle"),
+    
+    statsTotalRequests: document.getElementById("statsTotalRequests"),
+    statsTokensUsed: document.getElementById("statsTokensUsed"),
+    
     themeSelector: document.getElementById("themeSelector"),
-    defaultModeSelect: document.getElementById("defaultModeSelect"),
-    defaultNotesModeSelect: document.getElementById("defaultNotesModeSelect"),
-    defaultHinglishToggle: document.getElementById("defaultHinglishToggle"),
-    settingsUserName: document.getElementById("settingsUserName"),
-    settingsUserEmail: document.getElementById("settingsUserEmail"),
-    resetSettingsBtn: document.getElementById("resetSettingsBtn"),
-    clearHistoryBtn: document.getElementById("clearHistoryBtn")
+    appLanguageSelect: document.getElementById("appLanguageSelect"),
+    fontSizeRange: document.getElementById("fontSizeRange"),
+    
+    fullLogoutBtn: document.getElementById("fullLogoutBtn"),
+    clearAllHistoryBtn: document.getElementById("clearAllHistoryBtn"),
+    downloadDataBtn: document.getElementById("downloadDataBtn"),
+    deleteAccountBtn: document.getElementById("deleteAccountBtn"),
+    googleAccountStatus: document.getElementById("googleAccountStatus")
   };
 
   bindSettingsEvents();
   renderSettingsPreferences();
 
-  onAuthStateChanged(auth, async (user) => {
-    if (!user && !isFirebaseAction) { window.location.replace("login.html"); return; }
-    if (!user) return;
+  // Initialize Category Navigation Logic
+  const nav = document.getElementById("settingsNav");
+  if (nav) {
+    const navItems = nav.querySelectorAll(".nav-item");
+    const sections = document.querySelectorAll(".settings-card");
 
-    const isGoogle = user.providerData[0]?.providerId === 'google.com';
-    if (!user.emailVerified && !isGoogle && !isFirebaseAction) {
-      window.location.replace("login.html");
-      return;
+    navItems.forEach(item => {
+      item.addEventListener("click", () => {
+        const target = item.dataset.section;
+        
+        // Update nav active state
+        navItems.forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
+
+        // Toggle sections visibility
+        sections.forEach(sec => {
+          if (sec.id === target + "-section") {
+            sec.classList.remove("hidden");
+          } else {
+            sec.classList.add("hidden");
+          }
+        });
+
+        // Scroll to top on navigation (especially important for mobile)
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      });
+    });
+  }
+}
+
+function bindSettingsEvents() {
+  if (ui.saveAccountBtn) ui.saveAccountBtn.addEventListener("click", () => saveAccountProfile());
+  if (ui.changePasswordBtn) ui.changePasswordBtn.addEventListener("click", () => handlePasswordResetRequest());
+  if (ui.logoutAllSessionsBtn) ui.logoutAllSessionsBtn.addEventListener("click", () => confirmLogoutAll());
+  if (ui.fullLogoutBtn) ui.fullLogoutBtn.addEventListener("click", () => confirmLogoutAll());
+  
+  if (ui.aiModelSelect) ui.aiModelSelect.addEventListener("change", () => saveUserSettings());
+  if (ui.aiStyleSelect) ui.aiStyleSelect.addEventListener("change", () => saveUserSettings());
+  if (ui.aiToneSelect) ui.aiToneSelect.addEventListener("change", () => saveUserSettings());
+  if (ui.autoQuestionToggle) ui.autoQuestionToggle.addEventListener("change", () => saveUserSettings());
+  
+  if (ui.themeSelector) {
+    ui.themeSelector.addEventListener("click", (e) => {
+      const btn = e.target.closest(".theme-btn-card");
+      if (!btn) return;
+      setTheme(btn.dataset.theme);
+      renderSettingsPreferences();
+    });
+  }
+  
+  if (ui.appLanguageSelect) ui.appLanguageSelect.addEventListener("change", () => saveUserSettings());
+  if (ui.fontSizeRange) {
+    ui.fontSizeRange.addEventListener("input", (e) => applyFontSize(e.target.value));
+    ui.fontSizeRange.addEventListener("change", () => saveUserSettings());
+  }
+
+  if (ui.clearAllHistoryBtn) ui.clearAllHistoryBtn.addEventListener("click", () => clearCurrentUserChats());
+  if (ui.downloadDataBtn) ui.downloadDataBtn.addEventListener("click", () => exportUserData());
+  if (ui.deleteAccountBtn) ui.deleteAccountBtn.addEventListener("click", () => handleDeleteAccount());
+}
+
+async function loadUserSettings() {
+  if (!state.currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, "users", state.currentUser.uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      const settings = data.settings || {};
+      
+      state.userSettings = {
+        aiModel: settings.aiModel || "auto",
+        aiStyle: settings.aiStyle || "detailed",
+        aiTone: settings.aiTone || "professional",
+        autoQuestion: settings.autoQuestion !== false,
+        language: settings.language || "en",
+        fontSize: settings.fontSize || 16
+      };
+      
+      if (ui.aiModelSelect) ui.aiModelSelect.value = state.userSettings.aiModel;
+      if (ui.aiStyleSelect) ui.aiStyleSelect.value = state.userSettings.aiStyle;
+      if (ui.aiToneSelect) ui.aiToneSelect.value = state.userSettings.aiTone;
+      if (ui.autoQuestionToggle) ui.autoQuestionToggle.checked = state.userSettings.autoQuestion;
+      if (ui.appLanguageSelect) ui.appLanguageSelect.value = state.userSettings.language;
+      if (ui.fontSizeRange) {
+        ui.fontSizeRange.value = state.userSettings.fontSize;
+        applyFontSize(state.userSettings.fontSize);
+      }
     }
+  } catch (err) {
+    console.error("Load settings error:", err);
+  }
+}
 
-    state.currentUser = user;
-    renderSettingsAccount(user);
+async function saveUserSettings() {
+  if (!state.currentUser) return;
+  const settings = {
+    aiModel: ui.aiModelSelect?.value || "auto",
+    aiStyle: ui.aiStyleSelect?.value || "detailed",
+    aiTone: ui.aiToneSelect?.value || "professional",
+    autoQuestion: ui.autoQuestionToggle?.checked ?? true,
+    language: ui.appLanguageSelect?.value || "en",
+    fontSize: Number(ui.fontSizeRange?.value || 16)
+  };
+  
+  state.userSettings = settings;
+  
+  try {
+    await updateDoc(doc(db, "users", state.currentUser.uid), { 
+      settings,
+      updatedAt: serverTimestamp() 
+    });
+    localStorage.setItem("appSettings", JSON.stringify(settings));
+    showToast("Preferences updated", "success");
+  } catch (err) {
+    console.error("Save settings error:", err);
+    showToast("Failed to sync settings", "error");
+  }
+}
+
+async function saveAccountProfile() {
+  if (!state.currentUser) return;
+  const newName = ui.settingsNameInput.value.trim();
+  const newPhoto = ui.settingsAvatarUrlInput.value.trim();
+  
+  try {
+    ui.saveAccountBtn.disabled = true;
+    ui.saveAccountBtn.textContent = "Saving...";
+    
+    await updateProfile(state.currentUser, {
+      displayName: newName,
+      photoURL: newPhoto
+    });
+    
+    await updateDoc(doc(db, "users", state.currentUser.uid), {
+      displayName: newName,
+      photoURL: newPhoto,
+      updatedAt: serverTimestamp()
+    });
+    
+    if (ui.settingsDisplayHeader) ui.settingsDisplayHeader.textContent = newName;
+    if (ui.settingsAvatarPreview && newPhoto) ui.settingsAvatarPreview.src = newPhoto;
+    
+    showToast("Profile updated successfully", "success");
+  } catch (err) {
+    console.error("Profile update error:", err);
+    showToast("Error updating profile", "error");
+  } finally {
+    ui.saveAccountBtn.disabled = false;
+    ui.saveAccountBtn.textContent = "Save Profile";
+  }
+}
+
+async function loadUsageStats() {
+  if (!state.currentUser) return;
+  try {
+    const snap = await getDoc(doc(db, "users", state.currentUser.uid));
+    if (snap.exists()) {
+      const data = snap.data();
+      if (ui.statsTotalRequests) ui.statsTotalRequests.textContent = data.questionsAsked || 0;
+      if (ui.statsTokensUsed) ui.statsTokensUsed.textContent = `~${(data.questionsAsked || 0) * 150}`; // Estimated tokens
+    }
+  } catch (err) {
+    console.error("Stats load error:", err);
+  }
+}
+
+function applyFontSize(size) {
+  document.documentElement.style.setProperty("--app-font-size", `${size}px`);
+  // If we were using raw CSS for font sizes, we'd adjust body/html
+  document.body.style.fontSize = `${size}px`;
+}
+
+async function handlePasswordResetRequest() {
+  const confirmed = await showConfirm({
+    label: "Security",
+    title: "Reset Password?",
+    message: "We will send a password reset link to your email address.",
+    confirmText: "Send Link"
   });
+  if (!confirmed) return;
+  
+  try {
+    await sendPasswordResetEmail(auth, state.currentUser.email);
+    showToast("Reset link sent to your email", "success");
+  } catch (err) {
+    showToast(err.message, "error");
+  }
+}
+
+async function exportUserData() {
+  try {
+    const userDoc = await getDoc(doc(db, "users", state.currentUser.uid));
+    const chatsQuery = query(collection(db, "chats"), where("userId", "==", state.currentUser.uid));
+    const chatsSnap = await getDocs(chatsQuery);
+    
+    const chats = [];
+    for (const d of chatsSnap.docs) {
+      const chatData = d.data();
+      const msgsSnap = await getDocs(collection(db, "chats", d.id, "messages"));
+      chatData.messages = msgsSnap.docs.map(m => m.data());
+      chats.push(chatData);
+    }
+    
+    const exportData = {
+      profile: userDoc.data(),
+      chats,
+      exportedAt: new Date().toISOString()
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `studymate_data_export_${state.currentUser.uid}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast("Data export successful", "success");
+  } catch (err) {
+    console.error("Export error:", err);
+    showToast("Export failed", "error");
+  }
+}
+
+async function handleDeleteAccount() {
+  const step1 = await showConfirm({
+    label: "Danger Zone",
+    title: "Delete Account Forever?",
+    message: "This will permanently delete your profile, all chats, and settings. This cannot be undone.",
+    confirmText: "Continue",
+    type: "danger"
+  });
+  if (!step1) return;
+  
+  const step2 = await showConfirm({
+    label: "Last Warning",
+    title: "Are you absolutely sure?",
+    message: "This is your LAST chance to go back. ALL data will be wiped.",
+    confirmText: "DELETE EVERYTHING",
+    type: "danger"
+  });
+  if (!step2) return;
+
+  try {
+    // 1. Delete Firestore Chats
+    const chatsQuery = query(collection(db, "chats"), where("userId", "==", state.currentUser.uid));
+    const snapshot = await getDocs(chatsQuery);
+    for (const d of snapshot.docs) {
+      await deleteDoc(doc(db, "chats", d.id));
+    }
+    
+    // 2. Delete User Doc
+    await deleteDoc(doc(db, "users", state.currentUser.uid));
+    
+    // 3. Delete Auth Account
+    await state.currentUser.delete();
+    
+    window.location.replace("signup.html");
+  } catch (err) {
+    console.error("Delete error:", err);
+    showToast("Error during deletion. Try logging in again first.", "error");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -1043,25 +1284,21 @@ function bindDashboardEvents() {
 // Settings events
 // ---------------------------------------------------------------------------
 
-function bindSettingsEvents() {
-  if (ui.themeSelector) {
-    ui.themeSelector.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-theme]");
-      if (!btn) return;
-      setTheme(btn.dataset.theme);
-      renderSettingsPreferences();
-    });
-  }
-  if (ui.defaultModeSelect) ui.defaultModeSelect.addEventListener("change", () => saveDefaultMode(ui.defaultModeSelect.value));
-  if (ui.defaultNotesModeSelect) ui.defaultNotesModeSelect.addEventListener("change", () => saveDefaultNotesMode(ui.defaultNotesModeSelect.value));
-  if (ui.defaultHinglishToggle) ui.defaultHinglishToggle.addEventListener("change", () => saveHinglishDefault(ui.defaultHinglishToggle.checked));
-  if (ui.resetSettingsBtn) ui.resetSettingsBtn.addEventListener("click", () => resetPreferences());
-  if (ui.clearHistoryBtn) ui.clearHistoryBtn.addEventListener("click", async () => await clearCurrentUserChats());
-}
 
 // ---------------------------------------------------------------------------
 // Logout / profile
 // ---------------------------------------------------------------------------
+
+async function confirmLogoutAll() {
+  const confirmed = await showConfirm({
+    label: "Confirm Logout",
+    title: "Log out from devices?",
+    message: "Are you sure you want to log out of your current session?",
+    confirmText: "Log Out",
+    type: "danger"
+  });
+  if (confirmed) await handleLogout();
+}
 
 async function handleLogout() {
   if (state.isGuestMode) {
@@ -1078,12 +1315,14 @@ function cleanupChatSubscription() {
 }
 
 function displayUserProfile(name, email, photo) {
+  if (!ui) return;
   const avatarUrl = photo || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}`;
   const shortName = getShortName(name);
-  ui.userAvatar.src = avatarUrl; ui.userAvatar.alt = `${name} avatar`;
-  ui.dropdownAvatar.src = avatarUrl; ui.dropdownAvatar.alt = `${name} avatar`;
-  ui.userShortName.textContent = shortName;
-  ui.dropdownUserName.innerText = name; ui.dropdownUserEmail.innerText = email;
+  if (ui.userAvatar) { ui.userAvatar.src = avatarUrl; ui.userAvatar.alt = `${name} avatar`; }
+  if (ui.dropdownAvatar) { ui.dropdownAvatar.src = avatarUrl; ui.dropdownAvatar.alt = `${name} avatar`; }
+  if (ui.userShortName) ui.userShortName.textContent = shortName;
+  if (ui.dropdownUserName) ui.dropdownUserName.innerText = name;
+  if (ui.dropdownUserEmail) ui.dropdownUserEmail.innerText = email;
 }
 
 function renderSettingsAccount(user) {
@@ -1272,6 +1511,8 @@ function loadMessages(chatId) {
       const activeChat = getChatById(chatId);
       if (!activeChat) return;
 
+      const isFirstLoad = activeChat.messages.length === 0 && snapshot.docs.length > 0;
+
       activeChat.messages = snapshot.docs.map((d) => ({
         id: d.id,
         ...d.data({ serverTimestamps: "estimate" })
@@ -1285,6 +1526,10 @@ function loadMessages(chatId) {
 
       if (state.currentChatId === chatId) {
         renderMessages();
+        // If this was the initial load, scroll to bottom
+        if (isFirstLoad) {
+          setTimeout(() => scrollMessagesToBottom(true), 50);
+        }
       }
     }, (error) => {
       console.error(error);
@@ -1336,8 +1581,9 @@ function syncStateWithLatestChats() {
 function renderMessages() {
   const activeChat = getCurrentChat();
   const showTyping = Boolean(state.showTypingIndicator);
+  const isStreaming = state.streamingResponse && state.streamingResponse.chatId === activeChat?.id;
 
-  if (!activeChat || (activeChat.messages.length === 0 && !showTyping && !(state.streamingResponse && state.streamingResponse.chatId === activeChat.id))) {
+  if (!activeChat || (activeChat.messages.length === 0 && !showTyping && !isStreaming)) {
     ui.chatTitle.textContent = activeChat?.title || "New Chat";
     ui.chatMessages.innerHTML = `<div class="empty-state"><h3>Start a new conversation &#128640;</h3><p>Create a chat from the sidebar and ask your first question.</p></div>`;
     return;
@@ -1352,23 +1598,45 @@ function renderMessages() {
     return `<div class="message-row ${message.role}"><div class="message-bubble"><div class="message-meta"><strong>${roleLabel}</strong></div>${contentMarkup}${sourcesMarkup}${actionMarkup}</div></div>`;
   }).join("");
 
-  const streamingMarkup = (state.streamingResponse && state.streamingResponse.chatId === activeChat.id)
-    ? `<div class="message-row ai"><div class="message-bubble"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content" data-stream-content>${formatMessage(state.streamingResponse.visibleText, "ai")}</div></div></div>`
-    : "";
+  let assistantBubbleMarkup = "";
+  if (isStreaming || showTyping) {
+    const text = isStreaming ? state.streamingResponse.visibleText : "";
+    const content = text 
+      ? formatMessage(text, "ai") 
+      : `<div class="thinking-dots"><span></span><span></span><span></span></div>`;
+    
+    assistantBubbleMarkup = `
+      <div class="message-row ai">
+        <div class="message-bubble">
+          <div class="message-meta"><strong>StudyMate AI</strong></div>
+          <div class="message-content" data-stream-content>${content}</div>
+        </div>
+      </div>
+    `.trim();
+  }
 
-  const typingMarkup = showTyping ? `<div class="message-row ai"><div class="message-bubble"><div class="message-meta"><strong>StudyMate AI</strong></div><div class="message-content loading-text"><div class="typing-indicator"><span></span><span></span><span></span></div></div></div></div>` : "";
-
-  ui.chatMessages.innerHTML = `${messageMarkup}${streamingMarkup}${typingMarkup}`;
+  ui.chatMessages.innerHTML = `${messageMarkup}${assistantBubbleMarkup}`;
+  renderMermaidDiagrams();
   focusMessageEditor();
-  scrollMessagesToBottom();
+  // Removed global auto-scroll from renderMessages to avoid jumping during streaming
 }
 
 function openChat(chatId) {
   if (state.streamingResponse && state.streamingResponse.chatId !== chatId) stopStreamingResponse();
   state.currentChatId = chatId; state.editingChatId = null; state.renameDraft = "";
   state.editingMessageIndex = null; state.messageDraft = "";
-  if (!state.isGuestMode) loadMessages(chatId);
-  syncHeaderWithActiveChat(); renderHistory(); renderMessages(); closeSidebar();
+  
+  if (!state.isGuestMode) {
+    loadMessages(chatId);
+  } else {
+    syncHeaderWithActiveChat(); 
+    renderHistory(); 
+    renderMessages(); 
+    // Force scroll to bottom on initial load
+    setTimeout(() => scrollMessagesToBottom(true), 100);
+  }
+  
+  closeSidebar();
 }
 
 // ---------------------------------------------------------------------------
@@ -1431,71 +1699,54 @@ async function fetchWithRetry(fn, retries = 2) {
 }
 
 async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
-  const latestUserMessage = getLatestUserMessageFromPayload(messages);
-  const isRealtimeQuery = REALTIME_QUERY_REGEX.test(latestUserMessage);
   const requestPayload = {
     messages,
     mode,
     hinglish: hinglishEnabled,
     notesMode: notesMode || "normal",
-    userId: state.currentUser?.uid || "guest"
+    userId: state.currentUser?.uid || "guest",
+    currentQuestion: state.currentQuestion,
+    stream: true, // Enable Real-Time Streaming
+    autoQuestion: state.userSettings.autoQuestion ?? true,
+    userProfile: {
+      preferred_style: state.userSettings.aiStyle || "detailed",
+      preferred_tone: state.userSettings.aiTone || "professional",
+      model_choice: state.userSettings.aiModel || "auto"
+    }
   };
 
   try {
-    return await fetchWithRetry(async () => {
-      const controller = new AbortController();
-      let timeoutId;
-      const timeoutPromise = new Promise((_, reject) => {
-        timeoutId = window.setTimeout(() => {
-          controller.abort();
-          reject(new Error("AI request timed out."));
-        }, 18000);
-      });
+    const controller = new AbortController();
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      signal: controller.signal,
+      body: JSON.stringify(requestPayload)
+    });
 
-      try {
-        const response = await Promise.race([
-          fetch(`${API_BASE_URL}/api/chat`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            signal: controller.signal,
-            body: JSON.stringify(requestPayload)
-          }),
-          timeoutPromise
-        ]);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || "AI service is currently unavailable.");
+    }
 
-        const data = await response.json().catch(() => ({}));
-        if (!response.ok) {
-          throw new Error(data.error || "AI service is currently unavailable.");
-        }
-        let aiResponse = typeof data?.text === "string"
-          ? data.text
-          : (typeof data?.reply === "string" ? data.reply : "No response received.");
-        if (!aiResponse || aiResponse.trim().length < 5) {
-          aiResponse = "Sorry, I couldn't generate a proper response. Please try again.";
-        }
-        const sources = normalizeSources(data?.sources);
-        const intent = data?.intent || "GENERAL";
-        const doubt = data?.doubt || false;
+    // Check if it's a stream
+    const contentType = response.headers.get("Content-Type");
+    if (contentType && contentType.includes("text/event-stream")) {
+      return { body: response.body, isStream: true, controller };
+    }
 
-        console.log({
-          query: latestUserMessage,
-          realtime: isRealtimeQuery,
-          sourcesCount: sources.length,
-          intent,
-          doubt,
-          timestamp: new Date().toISOString()
-        });
-        return { text: aiResponse, sources, intent, doubt };
-      } finally {
-        window.clearTimeout(timeoutId);
-      }
-    }, 2);
+    // Fallback for non-streaming response
+    const data = await response.json();
+    return { 
+      text: data.reply || data.text, 
+      sources: data.sources || [], 
+      intent: data.intent || "GENERAL", 
+      doubt: data.doubt || false,
+      metadata: data
+    };
   } catch (err) {
     console.error("Backend request failed:", err);
-    if (err?.name === "AbortError" || /timed out/i.test(err?.message || "")) {
-      return { text: "AI response timed out after multiple retries. Please try again.", sources: [] };
-    }
-    return { text: err?.message || "AI service is currently unavailable.", sources: [] };
+    throw err;
   }
 }
 
@@ -1514,15 +1765,18 @@ async function saveActiveChatSettings() {
 
 async function generateAssistantReply({ chat, apiMessages = null, userContent = null, titleSource = "", successMessage = "" }) {
   if (!chat || state.isSending) return;
-  state.isSending = true; state.showTypingIndicator = true;
-  state.editingMessageIndex = null; state.messageDraft = "";
+  state.isSending = true; 
+  state.showTypingIndicator = true;
+  state.editingMessageIndex = null; 
+  state.messageDraft = "";
   setComposerLoading(true);
 
   chat.mode = getSelectedMode();
   chat.hinglish = ui.hinglishToggle.checked;
   chat.notesMode = getSelectedNotesMode();
-  renderHistory(); renderMessages();
-  scrollMessagesToBottom(); // Centralized scroll after updating state
+  renderHistory(); 
+  renderMessages();
+  scrollMessagesToBottom(true); // Initial scroll
 
   let finalApiMessages = apiMessages || [...chat.messages].slice(-6);
   if (userContent && !finalApiMessages.some(m => m.content === userContent && m.role === "user")) {
@@ -1531,16 +1785,39 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
 
   try {
     const aiResult = await fetchAIResponse(finalApiMessages, chat.mode, chat.hinglish, chat.notesMode);
-    const aiContent = aiResult?.text || "Sorry, I couldn't generate a proper response. Please try again.";
-    const aiSources = normalizeSources(aiResult?.sources);
-    const aiIntent = aiResult?.intent || "GENERAL";
-    const aiDoubt = aiResult?.doubt || false;
+    
+    let finalContent = "";
+    let finalMetadata = null;
 
-    state.showTypingIndicator = false;
-    await streamAssistantMessage(chat.id, aiContent);
+    if (aiResult.isStream) {
+      // HANDLE REAL STREAMING
+      const streamData = await streamAssistantMessage(chat.id, aiResult.body, aiResult.controller);
+      finalContent = streamData.text;
+      finalMetadata = streamData.metadata;
+    } else {
+      // HANDLE LEGACY/SYNC RESPONSE
+      state.showTypingIndicator = false;
+      finalContent = aiResult.text;
+      finalMetadata = aiResult.metadata;
+      await streamAssistantMessage(chat.id, finalContent); // Fallback to simulated stream for sync responses
+    }
+
+    const aiSources = normalizeSources(finalMetadata?.sources || aiResult.sources);
+    const aiIntent = finalMetadata?.intent || aiResult.intent || "GENERAL";
+    const aiDoubt = finalMetadata?.doubt || aiResult.doubt || false;
+
+    if (finalMetadata?.ui) {
+      if (finalMetadata.ui.syncState?.currentQuestion) {
+        state.currentQuestion = finalMetadata.ui.syncState.currentQuestion;
+      }
+    }
+
+    if (finalMetadata?.success === false || aiResult?.metadata?.success === false) {
+      showToast("AI is temporarily busy. Showing fallback response.", "error");
+    }
 
     if (state.isGuestMode) {
-      const msg = createGuestMessage("ai", aiContent, aiSources);
+      const msg = createGuestMessage("ai", finalContent, aiSources);
       msg.intent = aiIntent;
       msg.doubt = aiDoubt;
       chat.messages.push(msg);
@@ -1551,7 +1828,7 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
     } else {
       await addDoc(collection(db, "chats", chat.id, "messages"), {
         role: "ai",
-        content: aiContent,
+        content: finalContent,
         sources: aiSources,
         intent: aiIntent,
         doubt: aiDoubt,
@@ -1569,14 +1846,10 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
     if (!state.isGuestMode) await incrementStudyTracker();
     if (successMessage) showToast(successMessage, "success");
 
-  } catch (error) {
-    console.error(error);
+  } catch (err) {
+    console.error("Reply error:", err);
     state.showTypingIndicator = false;
-    if (error.code === "permission-denied") {
-      showToast("Access denied");
-    } else {
-      showToast("Something went wrong");
-    }
+    showToast(err.message || "Failed to get AI response", "error");
   } finally {
     state.isSending = false;
     setComposerLoading(false);
@@ -1626,34 +1899,74 @@ async function copyMessageContent(messageIndex) {
   catch (err) { console.error("Copy message error:", err); showToast("Unable to copy right now.", "error"); }
 }
 
-async function streamAssistantMessage(chatId, text) {
+async function streamAssistantMessage(chatId, source, controller = null) {
   stopStreamingResponse();
-  const responseText = String(text ?? "");
   state.streamingResponse = { chatId, visibleText: "", isCancelled: false };
-  renderMessages();
-  if (!responseText.trim()) {
-    stopStreamingResponse();
-    renderMessages();
-    return;
-  }
-  const words = responseText.split(" ");
-  let current = "";
-
-  for (let i = 0; i < words.length; i++) {
-    if (!state.streamingResponse || state.streamingResponse.chatId !== chatId || state.streamingResponse.isCancelled) {
-      return;
+  
+  if (typeof source === "string") {
+    // Legacy simulated streaming
+    const words = source.split(" ");
+    let current = "";
+    for (let i = 0; i < words.length; i++) {
+       if (!state.streamingResponse || state.streamingResponse.isCancelled) return;
+       current += (i === 0 ? words[i] : ` ${words[i]}`);
+       state.streamingResponse.visibleText = current;
+       updateStreamUI(current);
+       await delay(STREAM_WORD_DELAY_MS);
     }
-
-    current += i === 0 ? words[i] : ` ${words[i]}`;
-    state.streamingResponse.visibleText = current;
-    const contentNode = ui.chatMessages.querySelector(`[data-stream-content]`);
-    if (contentNode) contentNode.innerHTML = formatMessage(state.streamingResponse.visibleText, "ai");
-    scrollMessagesToBottom();
-    await delay(STREAM_WORD_DELAY_MS);
+    stopStreamingResponse();
+    return { text: source };
   }
 
-  stopStreamingResponse();
-  renderMessages();
+  // Real Multi-Model Streaming
+  const reader = source.getReader();
+  const decoder = new TextDecoder();
+  let accumulatedText = "";
+  let metadata = null;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (state.streamingResponse?.isCancelled) {
+        controller?.abort();
+        break;
+      }
+
+      const chunk = decoder.decode(value, { stream: true });
+      const lines = chunk.split("\n");
+
+      for (const line of lines) {
+        const cleanLine = line.trim();
+        if (!cleanLine.startsWith("data: ")) continue;
+        const dataStr = cleanLine.slice(6);
+        if (dataStr === "[DONE]") break;
+
+        try {
+          const data = JSON.parse(dataStr);
+          if (data.content) {
+            if (state.showTypingIndicator) state.showTypingIndicator = false; 
+            accumulatedText += data.content;
+            state.streamingResponse.visibleText = accumulatedText;
+            updateStreamUI(accumulatedText);
+            // Auto-scroll removed during streaming loop as per strict request
+          } else if (data.metadata) {
+            metadata = data.metadata;
+          }
+        } catch (e) {}
+      }
+    }
+  } finally {
+    stopStreamingResponse();
+    // Handle graceful completion if stream was empty or broken
+    if (!accumulatedText || accumulatedText.length < 10) {
+      accumulatedText = (accumulatedText || "") + "\n\n" + generateSafeFallbackReply();
+    }
+    renderMessages();
+    renderMermaidDiagrams();
+  }
+
+  return { text: accumulatedText, metadata };
 }
 
 function stopStreamingResponse() {
@@ -1795,13 +2108,6 @@ function focusMessageEditor() {
   requestAnimationFrame(() => { autoResizeTextarea(messageEditor); messageEditor.focus(); messageEditor.setSelectionRange(messageEditor.value.length, messageEditor.value.length); });
 }
 
-function scrollMessagesToBottom() {
-  const el = document.querySelector(".chat-container");
-  if (!el) return;
-  requestAnimationFrame(() => {
-    el.scrollTop = el.scrollHeight;
-  });
-}
 function autoResizeTextarea(textarea) { textarea.style.height = "auto"; textarea.style.height = `${textarea.scrollHeight}px`; }
 
 // ---------------------------------------------------------------------------
@@ -2031,13 +2337,6 @@ function renderMessageSources(message) {
   )).join("");
   return `<div class="sources"><p>Sources:</p>${linksMarkup}</div>`;
 }
-function generateFollowUp(intent, doubt) {
-  if (doubt === true) return "Want me to simplify this further or give an analogy?";
-  if (intent === "CODING") return "I can also optimize this code or explain it line-by-line.";
-  if (intent === "EXAM") return "Want a quick revision summary or key points?";
-  return "Want examples, a simpler explanation, or practice questions?";
-}
-
 function formatMessage(content, role = "ai", intent = "GENERAL", doubt = false) {
   let text = String(content ?? "").trim();
   if (role !== "ai") return escapeHtml(text).replace(/\n/g, "<br>");
@@ -2054,19 +2353,39 @@ function formatMessage(content, role = "ai", intent = "GENERAL", doubt = false) 
     html = escapeHtml(text).replace(/\n/g, "<br>");
   }
 
-  // 3. Append styled follow-up box if applicable
-  if (intent !== "IDENTITY" && text.length > 0) {
-    const followupText = generateFollowUp(intent, doubt);
-    const followupHtml = `
+  // 3. Append Reactive UI buttons only if explicitly invited by AI
+  if (text.includes("Want a quiz on this?")) {
+    const buttonHtml = `
       <div class="followup-box">
         <span class="followup-arrow">➤</span>
-        <span class="followup-text">${escapeHtml(followupText)}</span>
+        <button class="quiz-trigger-btn" onclick="window.startQuizInteractive(this)">✍️ Take Quiz</button>
       </div>
     `.trim();
-    html += followupHtml;
+    html += buttonHtml;
   }
 
   return html;
+}
+
+/**
+ * renderMermaidDiagrams()
+ * Force Mermaid to re-scan the DOM for new .mermaid blocks.
+ */
+async function renderMermaidDiagrams() {
+  if (typeof mermaid === "undefined") return;
+  try {
+    await mermaid.run({
+      nodes: document.querySelectorAll(".mermaid")
+    });
+  } catch (err) {
+    console.error("Mermaid rendering failed:", err);
+    // Fallback: If mermaid fails, wrap it in a pre/code block for readability
+    document.querySelectorAll(".mermaid:not([data-processed])").forEach(node => {
+      node.style.whiteSpace = "pre";
+      node.style.fontFamily = "monospace";
+      node.style.color = "var(--text-soft)";
+    });
+  }
 }
 function formatSidebarDate(timestamp) { const date = timestamp?.toDate ? timestamp.toDate() : new Date(); return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
 function getTimestampValue(timestamp) { return timestamp?.toMillis ? timestamp.toMillis() : 0; }
@@ -2086,4 +2405,189 @@ function sanitizeRenderedHtml(rawHtml) {
     });
   });
   return template.innerHTML;
+}
+
+window.startQuizInteractive = function(button) {
+  // 1. Set mode to quiz
+  const quizModeBtn = document.querySelector('.mode-btn[data-mode="quiz"]');
+  if (quizModeBtn) {
+    quizModeBtn.click();
+  } else {
+    state.currentMode = 'quiz';
+    renderDashboard();
+  }
+  
+  // 2. Clear current question state for a fresh start
+  state.currentQuestion = null;
+  
+  // 3. Send a message to get the first question
+  ui.userInput.value = "Start the quiz please!";
+  handleSendMessage();
+};
+
+// ---------------------------------------------------------------------------
+// Initialization & Boot Sequence
+// ---------------------------------------------------------------------------
+
+/**
+ * initAuth()
+ * Centralized Firebase Auth listener that serves as the primary gatekeeper.
+ */
+async function initAuth() {
+  return new Promise((resolve) => {
+    onAuthStateChanged(auth, async (user) => {
+      state.currentUser = user;
+      const currentPage = document.body.dataset.page;
+      const isAuthPage = ["login", "signup", "forgot"].includes(currentPage);
+      const isProtectedPage = ["dashboard", "settings"].includes(currentPage);
+
+      if (!user) {
+        if (isProtectedPage) {
+          window.location.replace("login.html");
+          return;
+        }
+        resolve(null);
+        return;
+      }
+
+      // User is logged in
+      if (isAuthPage) {
+        window.location.replace("index.html");
+        return;
+      }
+
+      // Initialize Protected App Context for dashboard/settings
+      await initApp(user);
+      resolve(user);
+    });
+  });
+}
+
+/**
+ * initApp(user)
+ * Setup shared services for authenticated users.
+ */
+async function initApp(user) {
+  try {
+    await ensureUserDocument(user);
+    
+    // Core Shared Init
+    const page = document.body.dataset.page;
+    if (page === "dashboard" || page === "settings") {
+      await loadUserSettings();
+    }
+
+    if (page === "dashboard") {
+      populateUserInfo(user);
+      await maybeHandleOnboardingForUser(user);
+      startDashboardApp(user);
+    }
+
+    if (page === "settings") {
+      populateUserInfo(user);
+      await loadUsageStats();
+    }
+  } catch (err) {
+    console.error("App Initialization Error:", err);
+  }
+}
+
+/**
+ * populateUserInfo(user)
+ * Safely populates user-specific UI elements across different pages.
+ */
+function populateUserInfo(user) {
+  if (!user || !ui) return;
+  const name = user.displayName || "User";
+  const email = user.email || "No emailFound";
+  const photo = user.photoURL || "";
+  const isGoogle = user.providerData[0]?.providerId === 'google.com';
+
+  // Dashboard elements
+  if (document.body.dataset.page === "dashboard") {
+    displayUserProfile(name, email, photo);
+  }
+
+  // Settings elements
+  if (ui.settingsEmailInput) ui.settingsEmailInput.value = email;
+  if (ui.settingsNameInput) ui.settingsNameInput.value = name;
+  if (ui.settingsAvatarUrlInput) ui.settingsAvatarUrlInput.value = photo;
+  if (ui.settingsDisplayHeader) ui.settingsDisplayHeader.textContent = name;
+  if (ui.settingsEmailHeader) ui.settingsEmailHeader.textContent = email;
+  if (ui.settingsAvatarPreview && photo) ui.settingsAvatarPreview.src = photo;
+  if (ui.googleAccountStatus) ui.googleAccountStatus.textContent = isGoogle ? "Linked (Google)" : "Not Linked";
+}
+
+/**
+ * bootstrap()
+ * The main entry point. Runs basic UI setup then hands off to Auth.
+ */
+async function bootstrap() {
+  try {
+    // 1. Basic UI & Theme (Safe to run before auth)
+    initializeFeedbackUi();
+    applySavedTheme();
+    consumeFlashToast();
+
+    // 2. Initialize Mermaid (Lazy)
+    if (typeof mermaid !== "undefined") {
+      mermaid.initialize({
+        startOnLoad: false,
+        theme: document.body.classList.contains("light") ? "default" : "dark",
+        securityLevel: "loose",
+        flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis" }
+      });
+    }
+    
+    // 3. Initialize Page-Specific UI Bindings
+    const page = document.body.dataset.page;
+    if (page === "login") initLoginPage();
+    if (page === "signup") initSignupPage();
+    if (page === "settings") initSettingsPage();
+    if (page === "dashboard") initDashboardPage();
+
+    // 4. Auth Gatekeeper (Handles redirects and initApp)
+    await initAuth();
+    
+  } catch (err) {
+    console.error("StudyMate Bootstrap Error:", err);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Consolidated Page & Stream Utilities
+// ---------------------------------------------------------------------------
+
+function updateStreamUI(text) {
+  const streamContainer = document.querySelector("[data-stream-content]");
+  if (!streamContainer) return;
+  
+  // Directly update inner HTML of the active stream bubble
+  streamContainer.innerHTML = formatMessage(text, "ai");
+  renderMermaidDiagrams();
+}
+
+function generateSafeFallbackReply() {
+  return "I'm currently experiencing a high volume of requests, but I've processed your input. Please try refreshing or rephrasing your question if the response above seems incomplete.";
+}
+
+function scrollMessagesToBottom(force = false) {
+  const container = document.querySelector(".chat-container") || ui?.chatMessages;
+  if (!container) return;
+
+  // Strict: Only scroll if forced or if user is already at bottom
+  // However, user requested: "Only scroll on chat open. Do NOT scroll on chunks."
+  // So we only force scroll when specifically asked (force=true)
+  if (!force) return;
+
+  requestAnimationFrame(() => {
+    container.scrollTop = container.scrollHeight;
+  });
+}
+
+// Global start
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", bootstrap);
+} else {
+  bootstrap();
 }

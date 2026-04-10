@@ -1,30 +1,73 @@
-# Dependency directories
+# --- Dependency directories ---
 node_modules/
+**/node_modules/
+
+# --- Environment and Secret files ---
+.env
+.env.*
+.env.local
+**/ .env
+**/*.json
+!package.json
+!package-lock.json
+!firebase.json
+!firestore.indexes.json
+!firestore.rules
+!storage.rules
+serviceAccountKey.json
+**/serviceAccountKey.json
+**/serviceAccount*.json
+
+# --- Build and Dist ---
 dist/
 dist-ssr/
-*.local
+.next/
+out/
+build/
+bin/
+obj/
 
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# IDE / Editor
+# --- IDE and Editor files ---
 .vscode/
 .idea/
-*.swp
-*.swo
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.classpath
+.project
+.settings/
 
-# OS files
+# --- OS files ---
 .DS_Store
+.DS_Store?
+._*
 Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# Logs
+# --- Logs and Debugging ---
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+firebase-debug.log
+firebase-debug.*.log
+ui-debug.log
+logs/
+*.log
 
-# AI / Prompting artifacts (Internal)
+# --- Firebase specific ---
+.firebase/
+.firebaserc
+# Note: Keep .firebaserc and firebase.json in git unless you have specific reasons not to
+
+# --- AI and Helper artifacts ---
 .gemini/
 .antigravity/
 .antigravityignore
+scratch/
+
+# --- Other temporary files ---
+tmp/
+temp/

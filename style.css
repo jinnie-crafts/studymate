@@ -158,6 +158,7 @@ body[data-page="dashboard"] {
 
 body[data-page="settings"] {
   min-height: 100dvh;
+  overflow-x: hidden;
 }
 
 button,
@@ -1627,6 +1628,35 @@ a:hover {
   border: 1px solid var(--border);
 }
 
+.followup-box {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  padding: 12px 16px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.quiz-trigger-btn {
+  background: var(--accent);
+  color: #020617;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform var(--transition), opacity var(--transition);
+}
+
+.quiz-trigger-btn:hover {
+  transform: translateY(-1px);
+  opacity: 0.9;
+}
+
 .settings-section h2 {
   margin: 0 0 18px;
   font-size: 1.1rem;
@@ -1885,12 +1915,12 @@ a:hover {
   }
 
   .app-shell {
-    padding: 8px;
-    gap: 8px;
+    padding: 6px;
+    gap: 6px;
   }
 
   .main-panel {
-    gap: 8px;
+    gap: 6px;
   }
 
   .topbar,
@@ -1979,8 +2009,9 @@ a:hover {
 
   /* Message bubbles scale up on mobile for readability */
   .message-bubble {
-    max-width: 75% !important;
-    padding: 10px 14px;
+    max-width: 100% !important;
+    padding: 12px 14px;
+    margin: 0 !important;
   }
 
   .message-row.user .message-bubble {
@@ -2992,4 +3023,516 @@ body.auth-page .modal {
 .followup-text {
   color: var(--text-soft);
   font-size: 0.92rem;
+}
+
+/* ========================================================================
+   Settings Page Modern Styles
+   ======================================================================== */
+
+.settings-page {
+  background: var(--bg-deep);
+  min-height: 100vh;
+  padding: 40px 20px;
+}
+
+.settings-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 40px;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.settings-header h1 {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin-top: 5px;
+  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.settings-intro {
+  color: var(--text-soft);
+  font-size: 1.1rem;
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 480px), 1fr));
+  gap: 25px;
+}
+
+@media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+  .settings-container {
+    padding: 10px;
+    width: 100%;
+    overflow-x: hidden;
+  }
+  .settings-card {
+    padding: 15px;
+    width: 100%;
+    max-width: 100%;
+  }
+  .settings-row {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 15px;
+      width: 100%;
+  }
+  .settings-select {
+      width: 100%;
+  }
+}
+
+@media (max-width: 768px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.settings-card {
+  display: flex;
+  flex-direction: column;
+  padding: 30px;
+  height: 100%;
+}
+
+.card-header {
+  margin-bottom: 25px;
+}
+
+.card-header h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 5px;
+  color: var(--accent);
+}
+
+.card-header p {
+  color: var(--text-soft);
+  font-size: 0.95rem;
+}
+
+.card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  flex: 1;
+}
+
+/* Row Styling */
+.settings-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.settings-row:last-child {
+  border-bottom: none;
+}
+
+.row-info h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 3px;
+}
+
+.row-info p {
+  font-size: 0.85rem;
+  color: var(--text-soft);
+  max-width: 300px;
+}
+
+/* Profile Preview */
+.profile-preview-large {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 15px;
+}
+
+.profile-preview-large img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 3px solid var(--accent);
+  object-fit: cover;
+}
+
+.profile-info h3 {
+  font-size: 1.3rem;
+  font-weight: 700;
+}
+
+/* Forms & Inputs */
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input-group span {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-soft);
+}
+
+.input-group input {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 12px 15px;
+  border-radius: 12px;
+  color: white;
+  font-family: inherit;
+  font-size: 1rem;
+}
+
+.helper-text {
+  font-size: 0.8rem !important;
+  font-weight: 400 !important;
+  opacity: 0.6;
+}
+
+.settings-select {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: 10px 15px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  cursor: pointer;
+  min-width: 180px;
+  max-width: 100%;
+}
+
+.settings-select option {
+  background-color: #0f172a; /* Matches --bg-main */
+  color: white;
+}
+
+/* Theme Selector Modern */
+.theme-selector-modern {
+  display: flex;
+  gap: 12px;
+}
+
+.theme-btn-card {
+  width: 45px;
+  height: 45px;
+  border-radius: 12px;
+  border: 2px solid transparent;
+  padding: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.theme-btn-card.active {
+  border-color: var(--accent);
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.theme-btn-card .preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 8px;
+}
+
+.dark-preview { background: #0f172a; }
+.light-preview { background: #f8fafc; }
+.blue-preview { background: #1e3a8a; }
+.purple-preview { background: #4c1d95; }
+
+/* Usage Stats */
+.usage-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 15px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 15px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--text-soft);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.usage-info-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 15px;
+  background: rgba(16, 185, 129, 0.05);
+  border: 1px solid rgba(16, 185, 129, 0.1);
+  border-radius: 12px;
+  color: #10b981;
+  font-size: 0.85rem;
+}
+
+/* Danger Zone */
+.danger-section {
+  border: 1px solid rgba(239, 68, 68, 0.15);
+}
+
+.danger-text {
+  color: #ef4444 !important;
+}
+
+.danger-zone {
+  margin-top: 10px;
+  padding: 20px;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.1);
+  border-radius: 15px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+}
+
+.highlighted-row {
+  background: rgba(59, 130, 246, 0.05);
+  padding: 15px;
+  border-radius: 12px;
+  border-bottom: none;
+}
+
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  margin-left: 10px;
+}
+
+.success-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.flex-center {
+  display: flex;
+  align-items: center;
+}
+
+.range-container {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  width: 100%;
+  max-width: 250px;
+}
+
+.range-container input {
+  flex: 1;
+}
+
+.connected-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 15px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 50px;
+}
+
+.card-actions {
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.card-actions-minimal {
+  margin-top: 15px;
+}
+
+
+/* ======================================================================== 
+   Thinking Dots Animation 
+   ======================================================================== */ 
+.thinking-dots { 
+  display: flex; 
+  align-items: center; 
+  gap: 4px; 
+  padding: 4px 0; 
+} 
+
+.thinking-dots span { 
+  width: 8px; 
+  height: 8px; 
+  background-color: var(--accent); 
+  border-radius: 50%; 
+  opacity: 0.4; 
+  animation: thinking-bounce 1.4s infinite ease-in-out both; 
+} 
+
+.thinking-dots span:nth-child(1) { animation-delay: -0.32s; } 
+.thinking-dots span:nth-child(2) { animation-delay: -0.16s; } 
+
+@keyframes thinking-bounce { 
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 
+  40% { transform: scale(1); opacity: 1; } 
+} 
+
+/* ======================================================================== 
+   Settings Page Refactor - Navigation Style 
+   ======================================================================== */ 
+.settings-shell { 
+  max-width: 1200px; 
+  margin: 0 auto; 
+  padding: 40px 20px; 
+} 
+
+.settings-layout { 
+  display: grid; 
+  grid-template-columns: 280px 1fr; 
+  gap: 40px; 
+  margin-top: 30px; 
+} 
+
+/* Sidebar Nav (Desktop) */ 
+.settings-nav { 
+  display: flex; 
+  flex-direction: column; 
+  gap: 8px; 
+} 
+
+.nav-item { 
+  display: flex; 
+  align-items: center; 
+  gap: 12px; 
+  padding: 12px 18px; 
+  border-radius: 14px; 
+  color: var(--text-soft); 
+  font-weight: 500; 
+  cursor: pointer; 
+  transition: all var(--transition); 
+  background: transparent; 
+  border: 1px solid transparent; 
+} 
+
+.nav-item:hover { 
+  background: var(--surface-soft); 
+  color: var(--text-main); 
+} 
+
+.nav-item.active { 
+  background: var(--surface-strong); 
+  color: var(--accent); 
+  border-color: var(--border-strong); 
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.1); 
+} 
+
+.nav-item svg { 
+  opacity: 0.7; 
+  transition: opacity var(--transition); 
+} 
+
+.nav-item.active svg { 
+  opacity: 1; 
+} 
+
+/* Section Visibility */ 
+.settings-card.hidden { 
+  display: none !important; 
+} 
+
+/* Mobile Tabs (Override Sidebar) */ 
+@media (max-width: 768px) { 
+  .settings-shell { 
+    padding: 20px 15px; 
+  } 
+  
+  .settings-layout { 
+    grid-template-columns: 1fr; 
+    gap: 20px; 
+  } 
+  
+  .settings-nav { 
+    flex-direction: row; 
+    overflow-x: auto; 
+    padding-bottom: 10px; 
+    margin: 0 -15px; 
+    padding-left: 15px; 
+    padding-right: 15px; 
+    scrollbar-width: none; /* Hide scrollbar Firefox */ 
+  } 
+  
+  .settings-nav::-webkit-scrollbar { 
+    display: none; /* Hide scrollbar Chrome/Safari */ 
+  } 
+  
+  .nav-item { 
+    flex: 0 0 auto; 
+    padding: 10px 16px; 
+    font-size: 0.9rem; 
+    white-space: nowrap; 
+  } 
+  
+  .settings-header { 
+    text-align: center; 
+    flex-direction: column; 
+    gap: 20px; 
+  } 
+  
+  .settings-back { 
+    width: 100%; 
+    justify-content: center; 
+  } 
+  
+  .settings-card { 
+    padding: 20px; 
+  } 
+  
+  .stat-item .stat-value { 
+    font-size: 1.5rem; 
+  } 
+  
+  .card-actions { 
+    flex-direction: column; 
+  } 
+  
+  .primary-btn { 
+    width: 100%; 
+  } 
 }

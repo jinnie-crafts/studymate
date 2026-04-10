@@ -7,8 +7,8 @@
   <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate" />
   <meta http-equiv="Pragma" content="no-cache" />
   <meta http-equiv="Expires" content="0" />
-  <title>Settings | StudyMate AI</title>
-  <meta name="description" content="Customize your StudyMate AI experience — themes, defaults, and account settings." />
+  <title>Account Settings | StudyMate AI</title>
+  <meta name="description" content="Manage your StudyMate AI account, security, and preferences." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
@@ -18,107 +18,327 @@
 
 <body data-page="settings" class="settings-page">
   <main class="settings-shell">
-    <section class="settings-card glass-card">
-      <div class="settings-header">
-        <div>
-          <p class="panel-overline">StudyMate AI | karsh</p>
+    <div class="settings-container">
+      <header class="settings-header">
+        <div class="header-info">
+          <p class="panel-overline">Manage Your Account</p>
           <h1>Settings</h1>
-          <p class="settings-intro">Personalize your app experience and account defaults.</p>
+          <p class="settings-intro">Personalize your AI experience and secure your profile.</p>
         </div>
-        <a class="ghost-btn settings-back" href="index.html">Back to Chat</a>
+        <a class="ghost-btn settings-back" href="index.html">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+          </svg>
+          Back to Chat
+        </a>
+      </header>
+
+      <div class="settings-layout">
+        <!-- Sidebar / Mobile Tabs -->
+        <nav class="settings-nav" id="settingsNav">
+          <button class="nav-item active" data-section="account">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Account
+          </button>
+          <button class="nav-item" data-section="security">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+            Security
+          </button>
+          <button class="nav-item" data-section="ai">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2a10 10 0 1 0 10 10H12V2z"/><path d="M12 2a10 10 0 0 1 10 10h-7.5L12 2z"/><path d="M12 2v10"/></svg>
+            AI Settings
+          </button>
+          <button class="nav-item" data-section="usage">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20V10"/><path d="M18 20V4"/><path d="M6 20v-4"/></svg>
+            Usage
+          </button>
+          <button class="nav-item" data-section="preferences">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+            Preferences
+          </button>
+          <button class="nav-item" data-section="advanced">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
+            Advanced
+          </button>
+          <button class="nav-item" data-section="privacy">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            Privacy
+          </button>
+        </nav>
+
+        <div class="settings-content">
+          <!-- 1. Account (Profile & Identity) -->
+          <section class="settings-card glass-card" id="account-section">
+            <div class="card-header">
+              <h2>Account</h2>
+              <p>Update your personal information and profile picture.</p>
+            </div>
+            <div class="card-content">
+              <div class="profile-preview-large">
+                <img id="settingsAvatarPreview" src="https://api.dicebear.com/7.x/avataaars/svg?seed=User" alt="Avatar" />
+                <div class="profile-info">
+                  <h3 id="settingsDisplayHeader">User</h3>
+                  <p id="settingsEmailHeader">loading...</p>
+                </div>
+              </div>
+              <div class="settings-form">
+                <label class="input-group">
+                  <span>Display Name</span>
+                  <input type="text" id="settingsNameInput" placeholder="Your name" />
+                </label>
+                <label class="input-group">
+                  <span>Email Address</span>
+                  <input type="email" id="settingsEmailInput" disabled title="Email cannot be changed" />
+                  <span class="helper-text">Primary login email (read-only)</span>
+                </label>
+              </div>
+              <div class="card-actions">
+                <button class="primary-btn" id="saveAccountBtn">Save Profile</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 2. Security -->
+          <section class="settings-card glass-card hidden" id="security-section">
+            <div class="card-header">
+              <h2>Security</h2>
+              <p>Control your password and active sessions.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Password</h3>
+                  <p>Update your login credentials securely.</p>
+                </div>
+                <button class="ghost-btn" id="changePasswordBtn">Change Password</button>
+              </div>
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Active Sessions</h3>
+                  <p>Logout from all other browsers and devices.</p>
+                </div>
+                <button class="ghost-btn danger-btn" id="logoutAllSessionsBtn">Logout All Devices</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 3. AI Settings -->
+          <section class="settings-card glass-card hidden" id="ai-section">
+            <div class="card-header">
+              <h2>AI Settings</h2>
+              <p>Customize how StudyMate AI responds to your queries.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Preferred AI Model</h3>
+                  <p>Select your primary inference engine.</p>
+                </div>
+                <select class="settings-select" id="aiModelSelect">
+                  <option value="auto">Auto (Balanced - Free)</option>
+                  <option value="deepseek">DeepSeek R1 (Reasoning - Free)</option>
+                  <option value="qwen">Qwen 2.5 (Fast - Free)</option>
+                  <option value="llama">Llama 3 (Creative - Free)</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Response Style</h3>
+                  <p>Choose the level of detail in AI responses.</p>
+                </div>
+                <select class="settings-select" id="aiStyleSelect">
+                  <option value="detailed">Detailed & Structured (Default)</option>
+                  <option value="short">Concise & Direct</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Preferred Tone</h3>
+                  <p>Set a default voice for the assistant.</p>
+                </div>
+                <select class="settings-select" id="aiToneSelect">
+                  <option value="professional">Professional / Academic</option>
+                  <option value="casual">Casual / Friendly</option>
+                  <option value="telegrahpic">Telegraphic</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Auto Question Generation</h3>
+                  <p>Ask a follow-up question after every response.</p>
+                </div>
+                <label class="toggle-group" for="autoQuestionToggle">
+                  <span class="toggle-switch">
+                    <input id="autoQuestionToggle" type="checkbox" checked />
+                    <span class="toggle-slider"></span>
+                  </span>
+                </label>
+              </div>
+              <div class="settings-row highlighted-row">
+                <div class="row-info">
+                  <h3 class="flex-center">Cost Protection Mode <span class="badge success-badge">ACTIVE</span></h3>
+                  <p>Strictly enforces free-tier usage to prevent cost leaks.</p>
+                </div>
+                <label class="toggle-group" for="costProtectionToggle">
+                  <span class="toggle-switch">
+                    <input id="costProtectionToggle" type="checkbox" checked disabled />
+                    <span class="toggle-slider"></span>
+                  </span>
+                </label>
+              </div>
+            </div>
+          </section>
+
+          <!-- 4. Usage -->
+          <section class="settings-card glass-card hidden" id="usage-section">
+            <div class="card-header">
+              <h2>Usage</h2>
+              <p>Track your platform activity and resource consumption.</p>
+            </div>
+            <div class="card-content">
+              <div class="usage-stats-grid">
+                <div class="stat-item">
+                  <span class="stat-value" id="statsTotalRequests">0</span>
+                  <span class="stat-label">Total Requests</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value" id="statsTokensUsed">~0</span>
+                  <span class="stat-label">Tokens Used</span>
+                </div>
+                <div class="stat-item">
+                  <span class="stat-value">Free</span>
+                  <span class="stat-label">Current Plan</span>
+                </div>
+              </div>
+              <div class="usage-info-banner">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                <span>Your account is protected by hardware-level cost limits.</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- 5. App Preferences -->
+          <section class="settings-card glass-card hidden" id="preferences-section">
+            <div class="card-header">
+              <h2>App Preferences</h2>
+              <p>Customize the look and feel of your study space.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Theme</h3>
+                  <p>Select your favorite interface color palette.</p>
+                </div>
+                <div class="theme-selector-modern" id="themeSelector">
+                  <button class="theme-btn-card active" data-theme="dark" title="Dark theme">
+                    <span class="preview dark-preview"></span>
+                  </button>
+                  <button class="theme-btn-card" data-theme="light" title="Light theme">
+                    <span class="preview light-preview"></span>
+                  </button>
+                  <button class="theme-btn-card" data-theme="blue" title="Deep Blue theme">
+                    <span class="preview blue-preview"></span>
+                  </button>
+                  <button class="theme-btn-card" data-theme="purple" title="Royal Purple theme">
+                    <span class="preview purple-preview"></span>
+                  </button>
+                </div>
+              </div>
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Language</h3>
+                  <p>Interface and preferred AI communication language.</p>
+                </div>
+                <select class="settings-select" id="appLanguageSelect">
+                  <option value="en">English (US)</option>
+                  <option value="hi">Hindi (हिन्दी)</option>
+                  <option value="hinglish">Hinglish</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Font Size</h3>
+                  <p>Adjust text readability across the app.</p>
+                </div>
+                <div class="range-container">
+                  <span>A</span>
+                  <input type="range" id="fontSizeRange" min="14" max="20" step="1" value="16" />
+                  <span style="font-size: 1.2rem">A</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- 6. Advanced -->
+          <section class="settings-card glass-card hidden" id="advanced-section">
+            <div class="card-header">
+              <h2>Advanced</h2>
+              <p>Experimental settings and advanced account features.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>API Access</h3>
+                  <p>Generate keys to access the StudyMate API (coming soon).</p>
+                </div>
+                <button class="ghost-btn" disabled>Generate Key</button>
+              </div>
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Connected Accounts</h3>
+                  <p>Manage links to Google or other providers.</p>
+                </div>
+                <div class="connected-account">
+                  <svg viewBox="0 0 24 24" width="18" height="18">
+                    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285f4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34a853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="#fbbc05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#ea4335"/>
+                  </svg>
+                  <span id="googleAccountStatus">Linked</span>
+                </div>
+              </div>
+              <div class="card-actions-minimal">
+                <button class="ghost-btn" id="fullLogoutBtn">Logout of App</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- 7. Privacy & Data -->
+          <section class="settings-card glass-card danger-section hidden" id="privacy-section">
+            <div class="card-header">
+              <h2 class="danger-text">Privacy & Data</h2>
+              <p>Control your data footprints and account visibility.</p>
+            </div>
+            <div class="card-content">
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Clear Chat History</h3>
+                  <p>Permantly wipe all your conversations.</p>
+                </div>
+                <button class="ghost-btn danger-btn" id="clearAllHistoryBtn">Clear History</button>
+              </div>
+              <div class="settings-row">
+                <div class="row-info">
+                  <h3>Download My Data</h3>
+                  <p>Get a JSON backup of your chats and account info.</p>
+                </div>
+                <button class="ghost-btn" id="downloadDataBtn">Export Data</button>
+              </div>
+              <div class="danger-zone">
+                <div class="row-info">
+                  <h3 class="danger-text">Delete Account</h3>
+                  <p>Permanently remove your profile and all associated data.</p>
+                </div>
+                <button class="primary-btn danger-btn" id="deleteAccountBtn">Delete Forever</button>
+              </div>
+            </div>
+          </section>
+        </div>
       </div>
-
-      <section class="settings-section">
-        <h2>Appearance</h2>
-        <div class="settings-row">
-          <div>
-            <h3>Theme</h3>
-            <p>Choose a color theme for the app.</p>
-          </div>
-          <div class="theme-selector" id="themeSelector">
-            <button class="theme-btn active" data-theme="dark" type="button">
-              <span class="theme-preview dark-preview"></span>
-              <span>Dark</span>
-            </button>
-            <button class="theme-btn" data-theme="light" type="button">
-              <span class="theme-preview light-preview"></span>
-              <span>Light</span>
-            </button>
-            <button class="theme-btn" data-theme="blue" type="button">
-              <span class="theme-preview blue-preview"></span>
-              <span>Blue</span>
-            </button>
-            <button class="theme-btn" data-theme="purple" type="button">
-              <span class="theme-preview purple-preview"></span>
-              <span>Purple</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section class="settings-section">
-        <h2>Preferences</h2>
-        <div class="settings-row">
-          <div>
-            <h3>Default Mode</h3>
-            <p>Choose which study mode should be selected for new chats.</p>
-          </div>
-          <label class="control-group settings-select">
-            <span>Mode</span>
-            <select id="defaultModeSelect">
-              <option value="general">General</option>
-              <option value="exam">Exam</option>
-              <option value="coding">Coding</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="settings-row">
-          <div>
-            <h3>Default Notes Style</h3>
-            <p>Choose the default notes format for new chats.</p>
-          </div>
-          <label class="control-group settings-select">
-            <span>Notes</span>
-            <select id="defaultNotesModeSelect">
-              <option value="normal">Normal</option>
-              <option value="bullet">Bullet Notes</option>
-              <option value="revision">Revision Notes</option>
-              <option value="flashcards">Flashcards</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="settings-row">
-          <div>
-            <h3>Default Hinglish</h3>
-            <p>Turn Hinglish on automatically for every new chat.</p>
-          </div>
-          <label class="toggle-group settings-toggle" for="defaultHinglishToggle">
-            <span>Hinglish by default</span>
-            <span class="toggle-switch">
-              <input id="defaultHinglishToggle" type="checkbox" />
-              <span class="toggle-slider"></span>
-            </span>
-          </label>
-        </div>
-      </section>
-
-      <section class="settings-section">
-        <h2>Account</h2>
-        <div class="settings-account">
-          <p id="settingsUserName">User</p>
-          <p id="settingsUserEmail">Loading...</p>
-        </div>
-
-        <div class="settings-actions">
-          <button id="resetSettingsBtn" class="ghost-btn" type="button">Reset Settings</button>
-          <button id="clearHistoryBtn" class="ghost-btn danger-btn" type="button">Clear Chat History</button>
-        </div>
-      </section>
-    </section>
+    </div>
   </main>
 
+  <!-- Modals -->
   <div id="confirmModal" class="modal confirm-modal" aria-hidden="true">
     <div class="modal-content glass-card confirm-content">
       <p id="confirmModalLabel" class="panel-overline">Please Confirm</p>

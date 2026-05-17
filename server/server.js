@@ -103,7 +103,10 @@ app.use(express.json({ limit: "100kb" }));
 // Health check
 // ---------------------------------------------------------------------------
 
-app.get("/", (_req, res) => {
+const path = require("path");
+app.use(express.static(path.join(__dirname, "../")));
+
+app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", service: "StudyMate AI Backend" });
 });
 
@@ -207,7 +210,7 @@ app.post("/api/chat", async (req, res) => {
         src.title.trim()
       ))
       : [];
-    sources = dedupeSources(sources).slice(0, 5);
+    sources = sources.slice(0, 5);
     sources = sources.map((src, i) => ({
       title: `🔗 Source ${i + 1}`,
       url: src.url

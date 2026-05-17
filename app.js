@@ -79,8 +79,8 @@ window.fetch = async function (...args) {
 // ---------------------------------------------------------------------------
 
 const API_BASE_URL = window.location.hostname === "localhost"
-  ? "http://localhost:3001"
-  : "https://api.aadirishi.in";
+  ? (window.location.port === "3000" ? "http://localhost:3001" : "")
+  : (window.location.hostname.includes("onrender.com") ? "" : "https://api.aadirishi.in");
 
 const page = document.body.dataset.page;
 const FLASH_TOAST_KEY = "studymate_flash_toast";

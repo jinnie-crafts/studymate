@@ -31,7 +31,7 @@ const TEMPORAL_PATTERNS = [
   /\b(today|tonight|this morning|this evening)\b/i,
   /\b(yesterday|last night)\b/i,
   /\b(this week|this month|this year)\b/i,
-  /\b(right now|at the moment|currently)\b/i,
+  /\b(right now|at the moment|currently|current)\b/i,
   /\b(latest|newest|most recent|just released)\b/i,
   /\b(2025|2026|2027)\b/i,
   /\b(upcoming|ongoing|happening)\b/i
@@ -50,7 +50,8 @@ const ACTION_PATTERNS = [
   /\b(score|result|standing|ranking)\b.*\b(today|now|latest|current|live)\b/i,
   /\b(update|updates|news|headlines|breaking)\b/i,
   /\btell me about.*recent\b/i,
-  /\bcurrent (status|situation|state|affairs)\b/i
+  /\bcurrent (status|situation|state|affairs)\b/i,
+  /\bwhat is the (price|cost|score|weather)\b/i
 ];
 
 /**

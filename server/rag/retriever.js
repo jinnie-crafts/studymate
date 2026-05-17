@@ -74,35 +74,51 @@ async function fetchFromDuckDuckGo(query) {
   const tid = setTimeout(() => controller.abort(), CONFIG.FETCH_TIMEOUT_MS);
   try {
     const cq = cleanSearchQuery(query);
-    const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(cq)}&format=json&no_redirect=1&no_html=1`;
+    const url = `https://html.duckduckgo.com/html/?q=${encodeURIComponent(cq)}`;
     console.log(`[RAG Retriever] DuckDuckGo: Fetching "${cq.slice(0, 50)}"`);
     const res = await fetch(url, { 
       signal: controller.signal,
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "application/json"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
       }
     });
     if (!res.ok) throw new Error(`DuckDuckGo HTTP ${res.status}`);
-    const data = await res.json();
+    const html = await res.text();
     const sources = [];
-    if (data?.AbstractText && data?.AbstractURL) {
-      sources.push({
-        title: sanitizeText(data.Heading || data.AbstractText.slice(0, 80)),
-        url: data.AbstractURL,
-        snippet: sanitizeText(data.AbstractText).slice(0, 300),
-        provider: "duckduckgo", quality: 0.7
-      });
+    
+    // Parse HTML results
+    const blocks = html.split('class="result__snippet"');
+    for (let i = 1; i < blocks.length; i++) {
+        if (sources.length >= CONFIG.MAX_SOURCES_PER_PROVIDER) break;
+        
+        const block = blocks[i];
+        
+        // Extract URL
+        const urlMatch = block.match(/href="([^"]+)"/);
+        let actualUrl = urlMatch ? urlMatch[1] : "";
+        if (actualUrl.startsWith("//duckduckgo.com/l/?uddg=")) {
+            actualUrl = decodeURIComponent(actualUrl.split("uddg=")[1].split("&")[0]);
+        }
+        if (!/^https?:\/\//i.test(actualUrl) || actualUrl.includes("ad_domain") || actualUrl.includes("viagogo")) continue;
+        
+        // Extract Snippet
+        const snippetMatch = block.match(/>([\s\S]*?)<\/a>/);
+        let snippet = "";
+        if (snippetMatch) {
+            snippet = sanitizeText(snippetMatch[1]).slice(0, 300);
+        }
+        
+        if (snippet && actualUrl) {
+            sources.push({
+                title: actualUrl.split("/")[2] || "Web Result", // DDG HTML doesn't make title extraction as easy in this block split, so we use domain
+                url: actualUrl,
+                snippet: snippet,
+                provider: "duckduckgo",
+                quality: 0.8
+            });
+        }
     }
-    const flat = flattenDDGTopics(data?.RelatedTopics);
-    for (const item of flat.slice(0, CONFIG.MAX_SOURCES_PER_PROVIDER - sources.length)) {
-      sources.push({
-        title: sanitizeText(item.Text || "").slice(0, CONFIG.MAX_TITLE_LENGTH),
-        url: item.FirstURL,
-        snippet: sanitizeText(item.Text || "").slice(0, 300),
-        provider: "duckduckgo", quality: 0.5
-      });
-    }
+    
     console.log(`[RAG Retriever] DuckDuckGo: ${sources.length} results.`);
     return { sources, providerName: "duckduckgo" };
   } catch (e) {
@@ -161,10 +177,6 @@ function deduplicateSources(sources) {
 function rankSources(sources, category) {
   return [...sources].sort((a, b) => {
     let sa = a.quality || 0.5, sb = b.quality || 0.5;
-    if (["RECENT_NEWS","LIVE_INFO","TRENDING"].includes(category)) {
-      if (a.provider === "newsdata") sa += 0.2;
-      if (b.provider === "newsdata") sb += 0.2;
-    }
     if (a.snippet && a.snippet.length > 50) sa += 0.1;
     if (b.snippet && b.snippet.length > 50) sb += 0.1;
     return sb - sa;

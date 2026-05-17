@@ -24,7 +24,13 @@ async function fetchFromNewsData(query) {
     const cq = cleanSearchQuery(query);
     const url = `https://newsdata.io/api/1/news?apikey=${apiKey}&q=${encodeURIComponent(cq)}&language=en`;
     console.log(`[RAG Retriever] NewsData.io: Fetching "${cq.slice(0, 50)}"`);
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json"
+      }
+    });
     if (!res.ok) throw new Error(`NewsData HTTP ${res.status}`);
     const data = await res.json();
     if (!Array.isArray(data?.results) || !data.results.length) {
@@ -70,7 +76,13 @@ async function fetchFromDuckDuckGo(query) {
     const cq = cleanSearchQuery(query);
     const url = `https://api.duckduckgo.com/?q=${encodeURIComponent(cq)}&format=json&no_redirect=1&no_html=1`;
     console.log(`[RAG Retriever] DuckDuckGo: Fetching "${cq.slice(0, 50)}"`);
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { 
+      signal: controller.signal,
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json"
+      }
+    });
     if (!res.ok) throw new Error(`DuckDuckGo HTTP ${res.status}`);
     const data = await res.json();
     const sources = [];

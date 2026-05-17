@@ -126,7 +126,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1",
       "id": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_app_js",
-      "community": 2,
+      "community": 5,
       "norm_label": "app.js"
     },
     {
@@ -135,7 +135,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L174",
       "id": "app_getcurrentuserid",
-      "community": 18,
+      "community": 16,
       "norm_label": "getcurrentuserid()"
     },
     {
@@ -144,7 +144,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L184",
       "id": "app_initloginpage",
-      "community": 9,
+      "community": 10,
       "norm_label": "initloginpage()"
     },
     {
@@ -162,7 +162,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L317",
       "id": "app_initsignuppage",
-      "community": 9,
+      "community": 10,
       "norm_label": "initsignuppage()"
     },
     {
@@ -171,7 +171,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L403",
       "id": "app_showverificationmodal",
-      "community": 2,
+      "community": 5,
       "norm_label": "showverificationmodal()"
     },
     {
@@ -189,7 +189,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L487",
       "id": "app_ensureuserdocument",
-      "community": 10,
+      "community": 11,
       "norm_label": "ensureuserdocument()"
     },
     {
@@ -243,7 +243,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L589",
       "id": "app_initdashboardpage",
-      "community": 9,
+      "community": 10,
       "norm_label": "initdashboardpage()"
     },
     {
@@ -252,7 +252,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L637",
       "id": "app_initializeguestdashboard",
-      "community": 12,
+      "community": 9,
       "norm_label": "initializeguestdashboard()"
     },
     {
@@ -261,7 +261,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L667",
       "id": "app_loadguestquestionusage",
-      "community": 12,
+      "community": 9,
       "norm_label": "loadguestquestionusage()"
     },
     {
@@ -306,7 +306,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L699",
       "id": "app_closeguestlimitmodal",
-      "community": 12,
+      "community": 9,
       "norm_label": "closeguestlimitmodal()"
     },
     {
@@ -315,7 +315,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L705",
       "id": "app_createguestmessage",
-      "community": 11,
+      "community": 13,
       "norm_label": "createguestmessage()"
     },
     {
@@ -423,7 +423,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L923",
       "id": "app_initsettingspage",
-      "community": 9,
+      "community": 10,
       "norm_label": "initsettingspage()"
     },
     {
@@ -432,7 +432,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1054",
       "id": "app_bindsettingsevents",
-      "community": 9,
+      "community": 10,
       "norm_label": "bindsettingsevents()"
     },
     {
@@ -441,7 +441,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1085",
       "id": "app_loadusersettings",
-      "community": 10,
+      "community": 11,
       "norm_label": "loadusersettings()"
     },
     {
@@ -450,7 +450,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1117",
       "id": "app_loadusermemory",
-      "community": 10,
+      "community": 11,
       "norm_label": "loadusermemory()"
     },
     {
@@ -459,7 +459,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1129",
       "id": "app_saveusermemories",
-      "community": 11,
+      "community": 13,
       "norm_label": "saveusermemories()"
     },
     {
@@ -486,7 +486,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1209",
       "id": "app_loadusagestats",
-      "community": 10,
+      "community": 11,
       "norm_label": "loadusagestats()"
     },
     {
@@ -495,7 +495,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1223",
       "id": "app_applyfontsize",
-      "community": 10,
+      "community": 11,
       "norm_label": "applyfontsize()"
     },
     {
@@ -531,7 +531,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1324",
       "id": "app_binddashboardevents",
-      "community": 9,
+      "community": 10,
       "norm_label": "binddashboardevents()"
     },
     {
@@ -567,7 +567,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1417",
       "id": "app_displayuserprofile",
-      "community": 10,
+      "community": 11,
       "norm_label": "displayuserprofile()"
     },
     {
@@ -576,7 +576,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1428",
       "id": "app_rendersettingsaccount",
-      "community": 2,
+      "community": 5,
       "norm_label": "rendersettingsaccount()"
     },
     {
@@ -594,7 +594,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1444",
       "id": "app_closeeditnamemodal",
-      "community": 10,
+      "community": 11,
       "norm_label": "closeeditnamemodal()"
     },
     {
@@ -603,7 +603,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1446",
       "id": "app_savedisplayname",
-      "community": 10,
+      "community": 11,
       "norm_label": "savedisplayname()"
     },
     {
@@ -612,7 +612,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1463",
       "id": "app_handlenewchat",
-      "community": 12,
+      "community": 9,
       "norm_label": "handlenewchat()"
     },
     {
@@ -621,7 +621,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1491",
       "id": "app_createnewchatdocument",
-      "community": 18,
+      "community": 16,
       "norm_label": "createnewchatdocument()"
     },
     {
@@ -630,7 +630,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1522",
       "id": "app_createguestchatdocument",
-      "community": 12,
+      "community": 9,
       "norm_label": "createguestchatdocument()"
     },
     {
@@ -639,7 +639,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1545",
       "id": "app_loadchats",
-      "community": 18,
+      "community": 16,
       "norm_label": "loadchats()"
     },
     {
@@ -648,7 +648,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1595",
       "id": "app_loadmessages",
-      "community": 18,
+      "community": 16,
       "norm_label": "loadmessages()"
     },
     {
@@ -657,7 +657,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1652",
       "id": "app_renderhistory",
-      "community": 13,
+      "community": 17,
       "norm_label": "renderhistory()"
     },
     {
@@ -666,7 +666,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1665",
       "id": "app_syncstatewithlatestchats",
-      "community": 2,
+      "community": 16,
       "norm_label": "syncstatewithlatestchats()"
     },
     {
@@ -675,7 +675,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1681",
       "id": "app_rendermessages",
-      "community": 13,
+      "community": 12,
       "norm_label": "rendermessages()"
     },
     {
@@ -684,7 +684,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1732",
       "id": "app_openchat",
-      "community": 13,
+      "community": 16,
       "norm_label": "openchat()"
     },
     {
@@ -711,7 +711,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1809",
       "id": "app_fetchairesponse",
-      "community": 11,
+      "community": 13,
       "norm_label": "fetchairesponse()"
     },
     {
@@ -720,7 +720,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1862",
       "id": "app_saveactivechatsettings",
-      "community": 11,
+      "community": 13,
       "norm_label": "saveactivechatsettings()"
     },
     {
@@ -729,7 +729,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L1875",
       "id": "app_generateassistantreply",
-      "community": 11,
+      "community": 13,
       "norm_label": "generateassistantreply()"
     },
     {
@@ -756,7 +756,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2017",
       "id": "app_streamassistantmessage",
-      "community": 2,
+      "community": 12,
       "norm_label": "streamassistantmessage()"
     },
     {
@@ -765,7 +765,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2087",
       "id": "app_stopstreamingresponse",
-      "community": 2,
+      "community": 16,
       "norm_label": "stopstreamingresponse()"
     },
     {
@@ -774,7 +774,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2092",
       "id": "app_rendermessageactions",
-      "community": 2,
+      "community": 5,
       "norm_label": "rendermessageactions()"
     },
     {
@@ -783,7 +783,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2098",
       "id": "app_islatestaimessage",
-      "community": 2,
+      "community": 5,
       "norm_label": "islatestaimessage()"
     },
     {
@@ -801,7 +801,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2100",
       "id": "app_findfirstusermessageindex",
-      "community": 2,
+      "community": 5,
       "norm_label": "findfirstusermessageindex()"
     },
     {
@@ -810,7 +810,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2102",
       "id": "app_getmessageactionicon",
-      "community": 2,
+      "community": 5,
       "norm_label": "getmessageactionicon()"
     },
     {
@@ -819,7 +819,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2112",
       "id": "app_startrename",
-      "community": 13,
+      "community": 17,
       "norm_label": "startrename()"
     },
     {
@@ -828,7 +828,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2113",
       "id": "app_cancelrename",
-      "community": 13,
+      "community": 17,
       "norm_label": "cancelrename()"
     },
     {
@@ -837,7 +837,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2115",
       "id": "app_saverename",
-      "community": 13,
+      "community": 17,
       "norm_label": "saverename()"
     },
     {
@@ -846,7 +846,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2131",
       "id": "app_deletechat",
-      "community": 13,
+      "community": 17,
       "norm_label": "deletechat()"
     },
     {
@@ -855,7 +855,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2154",
       "id": "app_syncheaderwithactivechat",
-      "community": 12,
+      "community": 9,
       "norm_label": "syncheaderwithactivechat()"
     },
     {
@@ -864,7 +864,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2170",
       "id": "app_setcomposerloading",
-      "community": 11,
+      "community": 13,
       "norm_label": "setcomposerloading()"
     },
     {
@@ -882,7 +882,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2175",
       "id": "app_getchatbyid",
-      "community": 13,
+      "community": 17,
       "norm_label": "getchatbyid()"
     },
     {
@@ -891,7 +891,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2177",
       "id": "app_generatechattitle",
-      "community": 11,
+      "community": 13,
       "norm_label": "generatechattitle()"
     },
     {
@@ -900,7 +900,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2186",
       "id": "app_getshortname",
-      "community": 10,
+      "community": 11,
       "norm_label": "getshortname()"
     },
     {
@@ -909,7 +909,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2192",
       "id": "app_togglesidebar",
-      "community": 2,
+      "community": 5,
       "norm_label": "togglesidebar()"
     },
     {
@@ -918,7 +918,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2202",
       "id": "app_closesidebar",
-      "community": 13,
+      "community": 16,
       "norm_label": "closesidebar()"
     },
     {
@@ -927,7 +927,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2212",
       "id": "app_focusrenameinput",
-      "community": 13,
+      "community": 17,
       "norm_label": "focusrenameinput()"
     },
     {
@@ -936,7 +936,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2219",
       "id": "app_focusmessageeditor",
-      "community": 13,
+      "community": 12,
       "norm_label": "focusmessageeditor()"
     },
     {
@@ -954,7 +954,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2232",
       "id": "app_bindmodedropdown",
-      "community": 9,
+      "community": 10,
       "norm_label": "bindmodedropdown()"
     },
     {
@@ -963,7 +963,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2237",
       "id": "app_setselectedmode",
-      "community": 12,
+      "community": 9,
       "norm_label": "setselectedmode()"
     },
     {
@@ -972,7 +972,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2244",
       "id": "app_getselectedmode",
-      "community": 11,
+      "community": 13,
       "norm_label": "getselectedmode()"
     },
     {
@@ -981,7 +981,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2245",
       "id": "app_closemodedropdown",
-      "community": 2,
+      "community": 5,
       "norm_label": "closemodedropdown()"
     },
     {
@@ -990,7 +990,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2251",
       "id": "app_bindnotesdropdown",
-      "community": 9,
+      "community": 10,
       "norm_label": "bindnotesdropdown()"
     },
     {
@@ -999,7 +999,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2256",
       "id": "app_setselectednotesmode",
-      "community": 12,
+      "community": 9,
       "norm_label": "setselectednotesmode()"
     },
     {
@@ -1008,7 +1008,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2263",
       "id": "app_getselectednotesmode",
-      "community": 11,
+      "community": 13,
       "norm_label": "getselectednotesmode()"
     },
     {
@@ -1017,7 +1017,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2264",
       "id": "app_closenotesdropdown",
-      "community": 2,
+      "community": 5,
       "norm_label": "closenotesdropdown()"
     },
     {
@@ -1026,7 +1026,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2270",
       "id": "app_gotosettings",
-      "community": 2,
+      "community": 5,
       "norm_label": "gotosettings()"
     },
     {
@@ -1035,7 +1035,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2276",
       "id": "app_applysavedtheme",
-      "community": 9,
+      "community": 10,
       "norm_label": "applysavedtheme()"
     },
     {
@@ -1044,7 +1044,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2282",
       "id": "app_settheme",
-      "community": 2,
+      "community": 5,
       "norm_label": "settheme()"
     },
     {
@@ -1053,7 +1053,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2289",
       "id": "app_getsavedtheme",
-      "community": 9,
+      "community": 10,
       "norm_label": "getsavedtheme()"
     },
     {
@@ -1062,7 +1062,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2298",
       "id": "app_savedefaultmode",
-      "community": 2,
+      "community": 5,
       "norm_label": "savedefaultmode()"
     },
     {
@@ -1071,7 +1071,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2299",
       "id": "app_getsaveddefaultmode",
-      "community": 12,
+      "community": 9,
       "norm_label": "getsaveddefaultmode()"
     },
     {
@@ -1080,7 +1080,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2300",
       "id": "app_savehinglishdefault",
-      "community": 2,
+      "community": 5,
       "norm_label": "savehinglishdefault()"
     },
     {
@@ -1089,7 +1089,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2301",
       "id": "app_getsavedhinglishdefault",
-      "community": 12,
+      "community": 9,
       "norm_label": "getsavedhinglishdefault()"
     },
     {
@@ -1098,7 +1098,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2302",
       "id": "app_savedefaultnotesmode",
-      "community": 11,
+      "community": 5,
       "norm_label": "savedefaultnotesmode()"
     },
     {
@@ -1107,7 +1107,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2303",
       "id": "app_getsaveddefaultnotesmode",
-      "community": 12,
+      "community": 9,
       "norm_label": "getsaveddefaultnotesmode()"
     },
     {
@@ -1116,7 +1116,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2304",
       "id": "app_normalizemode",
-      "community": 12,
+      "community": 9,
       "norm_label": "normalizemode()"
     },
     {
@@ -1125,7 +1125,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2308",
       "id": "app_normalizenotesmode",
-      "community": 11,
+      "community": 9,
       "norm_label": "normalizenotesmode()"
     },
     {
@@ -1134,7 +1134,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2310",
       "id": "app_rendersettingspreferences",
-      "community": 12,
+      "community": 9,
       "norm_label": "rendersettingspreferences()"
     },
     {
@@ -1143,7 +1143,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2322",
       "id": "app_resetpreferences",
-      "community": 2,
+      "community": 5,
       "norm_label": "resetpreferences()"
     },
     {
@@ -1161,7 +1161,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2340",
       "id": "app_initializefeedbackui",
-      "community": 9,
+      "community": 10,
       "norm_label": "initializefeedbackui()"
     },
     {
@@ -1188,7 +1188,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2365",
       "id": "app_consumeflashtoast",
-      "community": 9,
+      "community": 10,
       "norm_label": "consumeflashtoast()"
     },
     {
@@ -1206,7 +1206,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2399",
       "id": "app_closeconfirmmodal",
-      "community": 2,
+      "community": 5,
       "norm_label": "closeconfirmmodal()"
     },
     {
@@ -1215,7 +1215,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2410",
       "id": "app_sendwelcomenotification",
-      "community": 10,
+      "community": 11,
       "norm_label": "sendwelcomenotification()"
     },
     {
@@ -1224,7 +1224,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2427",
       "id": "app_setformmessage",
-      "community": 2,
+      "community": 5,
       "norm_label": "setformmessage()"
     },
     {
@@ -1233,7 +1233,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2428",
       "id": "app_delay",
-      "community": 2,
+      "community": 12,
       "norm_label": "delay()"
     },
     {
@@ -1242,7 +1242,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2429",
       "id": "app_getlatestusermessagefrompayload",
-      "community": 13,
+      "community": 12,
       "norm_label": "getlatestusermessagefrompayload()"
     },
     {
@@ -1251,7 +1251,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2436",
       "id": "app_normalizesources",
-      "community": 11,
+      "community": 13,
       "norm_label": "normalizesources()"
     },
     {
@@ -1260,7 +1260,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2444",
       "id": "app_rendermessagesources",
-      "community": 11,
+      "community": 13,
       "norm_label": "rendermessagesources()"
     },
     {
@@ -1269,7 +1269,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2494",
       "id": "app_formatmessage",
-      "community": 2,
+      "community": 12,
       "norm_label": "formatmessage()"
     },
     {
@@ -1278,7 +1278,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2528",
       "id": "app_rendermermaiddiagrams",
-      "community": 2,
+      "community": 12,
       "norm_label": "rendermermaiddiagrams()"
     },
     {
@@ -1287,7 +1287,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2544",
       "id": "app_formatsidebardate",
-      "community": 2,
+      "community": 5,
       "norm_label": "formatsidebardate()"
     },
     {
@@ -1296,7 +1296,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2545",
       "id": "app_gettimestampvalue",
-      "community": 2,
+      "community": 5,
       "norm_label": "gettimestampvalue()"
     },
     {
@@ -1305,7 +1305,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2546",
       "id": "app_escapehtml",
-      "community": 2,
+      "community": 12,
       "norm_label": "escapehtml()"
     },
     {
@@ -1314,7 +1314,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2547",
       "id": "app_escapeattribute",
-      "community": 2,
+      "community": 5,
       "norm_label": "escapeattribute()"
     },
     {
@@ -1323,7 +1323,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2549",
       "id": "app_sanitizerenderedhtml",
-      "community": 2,
+      "community": 12,
       "norm_label": "sanitizerenderedhtml()"
     },
     {
@@ -1332,7 +1332,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2590",
       "id": "app_initauth",
-      "community": 9,
+      "community": 10,
       "norm_label": "initauth()"
     },
     {
@@ -1341,7 +1341,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2624",
       "id": "app_initapp",
-      "community": 10,
+      "community": 11,
       "norm_label": "initapp()"
     },
     {
@@ -1350,7 +1350,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2654",
       "id": "app_populateuserinfo",
-      "community": 10,
+      "community": 11,
       "norm_label": "populateuserinfo()"
     },
     {
@@ -1359,7 +1359,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2680",
       "id": "app_bootstrap",
-      "community": 9,
+      "community": 10,
       "norm_label": "bootstrap()"
     },
     {
@@ -1368,7 +1368,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2752",
       "id": "app_updatestreamui",
-      "community": 2,
+      "community": 12,
       "norm_label": "updatestreamui()"
     },
     {
@@ -1377,7 +1377,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\app.js",
       "source_location": "L2761",
       "id": "app_generatesafefallbackreply",
-      "community": 2,
+      "community": 12,
       "norm_label": "generatesafefallbackreply()"
     },
     {
@@ -1494,7 +1494,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L1",
       "id": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_notificationbell_js",
-      "community": 5,
+      "community": 6,
       "norm_label": "notificationbell.js"
     },
     {
@@ -1503,7 +1503,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L56",
       "id": "notificationbell_initnotifications",
-      "community": 5,
+      "community": 6,
       "norm_label": "initnotifications()"
     },
     {
@@ -1512,7 +1512,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L130",
       "id": "notificationbell_stopnotifications",
-      "community": 5,
+      "community": 6,
       "norm_label": "stopnotifications()"
     },
     {
@@ -1521,7 +1521,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L149",
       "id": "notificationbell_handleupdate",
-      "community": 5,
+      "community": 6,
       "norm_label": "handleupdate()"
     },
     {
@@ -1530,7 +1530,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L161",
       "id": "notificationbell_renderskeletons",
-      "community": 5,
+      "community": 6,
       "norm_label": "renderskeletons()"
     },
     {
@@ -1539,7 +1539,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L174",
       "id": "notificationbell_rendererror",
-      "community": 5,
+      "community": 6,
       "norm_label": "rendererror()"
     },
     {
@@ -1548,7 +1548,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L191",
       "id": "notificationbell_getfriendlynotificationerrormessage",
-      "community": 5,
+      "community": 6,
       "norm_label": "getfriendlynotificationerrormessage()"
     },
     {
@@ -1557,7 +1557,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L209",
       "id": "notificationbell_updatebadge",
-      "community": 5,
+      "community": 6,
       "norm_label": "updatebadge()"
     },
     {
@@ -1566,7 +1566,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L241",
       "id": "notificationbell_renderlist",
-      "community": 5,
+      "community": 6,
       "norm_label": "renderlist()"
     },
     {
@@ -1575,7 +1575,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L293",
       "id": "notificationbell_clearui",
-      "community": 5,
+      "community": 6,
       "norm_label": "clearui()"
     },
     {
@@ -1584,7 +1584,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L312",
       "id": "notificationbell_bindstaticevents",
-      "community": 5,
+      "community": 6,
       "norm_label": "bindstaticevents()"
     },
     {
@@ -1593,7 +1593,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L356",
       "id": "notificationbell_togglepanel",
-      "community": 5,
+      "community": 6,
       "norm_label": "togglepanel()"
     },
     {
@@ -1602,7 +1602,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L374",
       "id": "notificationbell_closepanel",
-      "community": 5,
+      "community": 6,
       "norm_label": "closepanel()"
     },
     {
@@ -1611,7 +1611,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L389",
       "id": "notificationbell_waitforauththeninit",
-      "community": 5,
+      "community": 6,
       "norm_label": "waitforauththeninit()"
     },
     {
@@ -1620,7 +1620,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L402",
       "id": "notificationbell_startfirstsnapshottimeout",
-      "community": 5,
+      "community": 6,
       "norm_label": "startfirstsnapshottimeout()"
     },
     {
@@ -1629,7 +1629,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L411",
       "id": "notificationbell_clearfirstsnapshottimeout",
-      "community": 5,
+      "community": 6,
       "norm_label": "clearfirstsnapshottimeout()"
     },
     {
@@ -1638,7 +1638,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L417",
       "id": "notificationbell_triggerping",
-      "community": 5,
+      "community": 6,
       "norm_label": "triggerping()"
     },
     {
@@ -1647,7 +1647,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\notificationBell.js",
       "source_location": "L427",
       "id": "notificationbell_escapehtml",
-      "community": 5,
+      "community": 6,
       "norm_label": "escapehtml()"
     },
     {
@@ -1692,7 +1692,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\reset.js",
       "source_location": "L1",
       "id": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_reset_js",
-      "community": 17,
+      "community": 18,
       "norm_label": "reset.js"
     },
     {
@@ -1701,7 +1701,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\reset.js",
       "source_location": "L39",
       "id": "reset_showloading",
-      "community": 17,
+      "community": 18,
       "norm_label": "showloading()"
     },
     {
@@ -1710,7 +1710,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\reset.js",
       "source_location": "L45",
       "id": "reset_showerror",
-      "community": 17,
+      "community": 18,
       "norm_label": "showerror()"
     },
     {
@@ -1719,7 +1719,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\reset.js",
       "source_location": "L56",
       "id": "reset_showform",
-      "community": 17,
+      "community": 18,
       "norm_label": "showform()"
     },
     {
@@ -1728,7 +1728,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\reset.js",
       "source_location": "L68",
       "id": "reset_setstatus",
-      "community": 17,
+      "community": 18,
       "norm_label": "setstatus()"
     },
     {
@@ -1737,7 +1737,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\reset.js",
       "source_location": "L90",
       "id": "reset_verifyresetcode",
-      "community": 17,
+      "community": 18,
       "norm_label": "verifyresetcode()"
     },
     {
@@ -1746,7 +1746,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\reset.js",
       "source_location": "L211",
       "id": "reset_showresetsuccess",
-      "community": 17,
+      "community": 18,
       "norm_label": "showresetsuccess()"
     },
     {
@@ -1809,7 +1809,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\scratch\\test_openrouter.js",
       "source_location": "L1",
       "id": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_scratch_test_openrouter_js",
-      "community": 6,
+      "community": 2,
       "norm_label": "test_openrouter.js"
     },
     {
@@ -1818,7 +1818,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\scratch\\test_openrouter.js",
       "source_location": "L7",
       "id": "test_openrouter_test",
-      "community": 6,
+      "community": 2,
       "norm_label": "test()"
     },
     {
@@ -1827,7 +1827,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\scratch\\test_openrouter.js",
       "source_location": "L25",
       "id": "test_openrouter_run",
-      "community": 6,
+      "community": 2,
       "norm_label": "run()"
     },
     {
@@ -2005,7 +2005,7 @@
       "label": "getSafeFallbackReply()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L405",
+      "source_location": "L408",
       "id": "server_getsafefallbackreply",
       "community": 1,
       "norm_label": "getsafefallbackreply()"
@@ -2014,7 +2014,7 @@
       "label": "selectModel()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L423",
+      "source_location": "L426",
       "id": "server_selectmodel",
       "community": 1,
       "norm_label": "selectmodel()"
@@ -2023,7 +2023,7 @@
       "label": "buildModelCandidates()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L427",
+      "source_location": "L430",
       "id": "server_buildmodelcandidates",
       "community": 1,
       "norm_label": "buildmodelcandidates()"
@@ -2032,7 +2032,7 @@
       "label": "isValidAIResponse()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L432",
+      "source_location": "L435",
       "id": "server_isvalidairesponse",
       "community": 1,
       "norm_label": "isvalidairesponse()"
@@ -2041,7 +2041,7 @@
       "label": "detectIntent()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L460",
+      "source_location": "L463",
       "id": "server_detectintent",
       "community": 1,
       "norm_label": "detectintent()"
@@ -2050,7 +2050,7 @@
       "label": "isIdentityQueryMatch()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L474",
+      "source_location": "L477",
       "id": "server_isidentityquerymatch",
       "community": 1,
       "norm_label": "isidentityquerymatch()"
@@ -2059,7 +2059,7 @@
       "label": "shouldSuggestQuiz()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L484",
+      "source_location": "L487",
       "id": "server_shouldsuggestquiz",
       "community": 1,
       "norm_label": "shouldsuggestquiz()"
@@ -2068,16 +2068,16 @@
       "label": "buildAgentPrompt()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L489",
+      "source_location": "L492",
       "id": "server_buildagentprompt",
-      "community": 6,
+      "community": 2,
       "norm_label": "buildagentprompt()"
     },
     {
       "label": "getRandomIdentityResponse()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L515",
+      "source_location": "L518",
       "id": "server_getrandomidentityresponse",
       "community": 1,
       "norm_label": "getrandomidentityresponse()"
@@ -2086,7 +2086,7 @@
       "label": "normalizeIdentityCacheKey()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L524",
+      "source_location": "L527",
       "id": "server_normalizeidentitycachekey",
       "community": 1,
       "norm_label": "normalizeidentitycachekey()"
@@ -2095,7 +2095,7 @@
       "label": "getCachedIdentityResult()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L528",
+      "source_location": "L531",
       "id": "server_getcachedidentityresult",
       "community": 1,
       "norm_label": "getcachedidentityresult()"
@@ -2104,7 +2104,7 @@
       "label": "setCachedIdentityResult()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L540",
+      "source_location": "L543",
       "id": "server_setcachedidentityresult",
       "community": 1,
       "norm_label": "setcachedidentityresult()"
@@ -2113,7 +2113,7 @@
       "label": "quickIdentityCheck()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L546",
+      "source_location": "L549",
       "id": "server_quickidentitycheck",
       "community": 1,
       "norm_label": "quickidentitycheck()"
@@ -2122,7 +2122,7 @@
       "label": "isIdentityQuery()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L571",
+      "source_location": "L574",
       "id": "server_isidentityquery",
       "community": 1,
       "norm_label": "isidentityquery()"
@@ -2131,7 +2131,7 @@
       "label": "handleIdentityQuery()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L612",
+      "source_location": "L615",
       "id": "server_handleidentityquery",
       "community": 1,
       "norm_label": "handleidentityquery()"
@@ -2140,7 +2140,7 @@
       "label": "callAIModel()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L636",
+      "source_location": "L639",
       "id": "server_callaimodel",
       "community": 1,
       "norm_label": "callaimodel()"
@@ -2149,7 +2149,7 @@
       "label": "normalizeMessage()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L691",
+      "source_location": "L694",
       "id": "server_normalizemessage",
       "community": 1,
       "norm_label": "normalizemessage()"
@@ -2158,7 +2158,7 @@
       "label": "generateCacheKey()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L699",
+      "source_location": "L702",
       "id": "server_generatecachekey",
       "community": 1,
       "norm_label": "generatecachekey()"
@@ -2167,7 +2167,7 @@
       "label": "getCachedResponse()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L706",
+      "source_location": "L709",
       "id": "server_getcachedresponse",
       "community": 1,
       "norm_label": "getcachedresponse()"
@@ -2176,7 +2176,7 @@
       "label": "setCache()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L716",
+      "source_location": "L719",
       "id": "server_setcache",
       "community": 1,
       "norm_label": "setcache()"
@@ -2185,7 +2185,7 @@
       "label": "extractQuiz()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L727",
+      "source_location": "L730",
       "id": "server_extractquiz",
       "community": 1,
       "norm_label": "extractquiz()"
@@ -2194,7 +2194,7 @@
       "label": "getRecentHistory()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L735",
+      "source_location": "L738",
       "id": "server_getrecenthistory",
       "community": 1,
       "norm_label": "getrecenthistory()"
@@ -2203,7 +2203,7 @@
       "label": "buildContextLayer()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L749",
+      "source_location": "L752",
       "id": "server_buildcontextlayer",
       "community": 1,
       "norm_label": "buildcontextlayer()"
@@ -2212,7 +2212,7 @@
       "label": "buildPrompt()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L769",
+      "source_location": "L772",
       "id": "server_buildprompt",
       "community": 1,
       "norm_label": "buildprompt()"
@@ -2221,7 +2221,7 @@
       "label": "getLatestUserMessage()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L792",
+      "source_location": "L795",
       "id": "server_getlatestusermessage",
       "community": 1,
       "norm_label": "getlatestusermessage()"
@@ -2230,16 +2230,16 @@
       "label": "isRealtimeQuery()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L802",
+      "source_location": "L805",
       "id": "server_isrealtimequery",
-      "community": 6,
+      "community": 2,
       "norm_label": "isrealtimequery()"
     },
     {
       "label": "getCachedRealtimeContext()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L806",
+      "source_location": "L809",
       "id": "server_getcachedrealtimecontext",
       "community": 1,
       "norm_label": "getcachedrealtimecontext()"
@@ -2248,7 +2248,7 @@
       "label": "setCachedRealtimeContext()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L818",
+      "source_location": "L821",
       "id": "server_setcachedrealtimecontext",
       "community": 1,
       "norm_label": "setcachedrealtimecontext()"
@@ -2257,7 +2257,7 @@
       "label": "fetchRealtimeContext()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L824",
+      "source_location": "L827",
       "id": "server_fetchrealtimecontext",
       "community": 1,
       "norm_label": "fetchrealtimecontext()"
@@ -2266,7 +2266,7 @@
       "label": "fetchSearchResults()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L859",
+      "source_location": "L862",
       "id": "server_fetchsearchresults",
       "community": 1,
       "norm_label": "fetchsearchresults()"
@@ -2275,7 +2275,7 @@
       "label": "collectDuckDuckGoSources()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L885",
+      "source_location": "L888",
       "id": "server_collectduckduckgosources",
       "community": 1,
       "norm_label": "collectduckduckgosources()"
@@ -2284,7 +2284,7 @@
       "label": "dedupeSources()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L907",
+      "source_location": "L910",
       "id": "server_dedupesources",
       "community": 1,
       "norm_label": "dedupesources()"
@@ -2293,7 +2293,7 @@
       "label": "fetchNewsData()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L914",
+      "source_location": "L917",
       "id": "server_fetchnewsdata",
       "community": 1,
       "norm_label": "fetchnewsdata()"
@@ -2385,25 +2385,25 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\classifier.js",
       "source_location": "L1",
       "id": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_classifier_js",
-      "community": 6,
+      "community": 2,
       "norm_label": "classifier.js"
     },
     {
       "label": "classify()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\classifier.js",
-      "source_location": "L106",
+      "source_location": "L107",
       "id": "classifier_classify",
-      "community": 6,
+      "community": 2,
       "norm_label": "classify()"
     },
     {
       "label": "result()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\classifier.js",
-      "source_location": "L199",
+      "source_location": "L200",
       "id": "classifier_result",
-      "community": 6,
+      "community": 2,
       "norm_label": "result()"
     },
     {
@@ -2412,7 +2412,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\formatter.js",
       "source_location": "L1",
       "id": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_formatter_js",
-      "community": 6,
+      "community": 2,
       "norm_label": "formatter.js"
     },
     {
@@ -2421,7 +2421,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\formatter.js",
       "source_location": "L55",
       "id": "formatter_formatcontext",
-      "community": 6,
+      "community": 2,
       "norm_label": "formatcontext()"
     },
     {
@@ -2430,7 +2430,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\formatter.js",
       "source_location": "L114",
       "id": "formatter_deepsanitize",
-      "community": 6,
+      "community": 2,
       "norm_label": "deepsanitize()"
     },
     {
@@ -2439,7 +2439,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\formatter.js",
       "source_location": "L143",
       "id": "formatter_sanitizeurl",
-      "community": 6,
+      "community": 2,
       "norm_label": "sanitizeurl()"
     },
     {
@@ -2448,7 +2448,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\formatter.js",
       "source_location": "L152",
       "id": "formatter_getcategorylabel",
-      "community": 6,
+      "community": 2,
       "norm_label": "getcategorylabel()"
     },
     {
@@ -2457,7 +2457,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\ragRunner.js",
       "source_location": "L1",
       "id": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_ragrunner_js",
-      "community": 6,
+      "community": 2,
       "norm_label": "ragrunner.js"
     },
     {
@@ -2466,7 +2466,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\ragRunner.js",
       "source_location": "L35",
       "id": "ragrunner_execute",
-      "community": 6,
+      "community": 2,
       "norm_label": "execute()"
     },
     {
@@ -2475,7 +2475,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\ragRunner.js",
       "source_location": "L143",
       "id": "ragrunner_normalizecachekey",
-      "community": 6,
+      "community": 2,
       "norm_label": "normalizecachekey()"
     },
     {
@@ -2484,7 +2484,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\ragRunner.js",
       "source_location": "L151",
       "id": "ragrunner_getcachedresult",
-      "community": 6,
+      "community": 2,
       "norm_label": "getcachedresult()"
     },
     {
@@ -2493,7 +2493,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\ragRunner.js",
       "source_location": "L162",
       "id": "ragrunner_setcacheresult",
-      "community": 6,
+      "community": 2,
       "norm_label": "setcacheresult()"
     },
     {
@@ -2502,7 +2502,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
       "source_location": "L1",
       "id": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_retriever_js",
-      "community": 16,
+      "community": 2,
       "norm_label": "retriever.js"
     },
     {
@@ -2511,7 +2511,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
       "source_location": "L15",
       "id": "retriever_fetchfromnewsdata",
-      "community": 16,
+      "community": 2,
       "norm_label": "fetchfromnewsdata()"
     },
     {
@@ -2520,61 +2520,61 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
       "source_location": "L72",
       "id": "retriever_fetchfromduckduckgo",
-      "community": 16,
+      "community": 2,
       "norm_label": "fetchfromduckduckgo()"
     },
     {
       "label": "retrieve()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L117",
+      "source_location": "L133",
       "id": "retriever_retrieve",
-      "community": 16,
+      "community": 2,
       "norm_label": "retrieve()"
     },
     {
       "label": "flattenDDGTopics()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L138",
+      "source_location": "L154",
       "id": "retriever_flattenddgtopics",
-      "community": 16,
+      "community": 2,
       "norm_label": "flattenddgtopics()"
     },
     {
       "label": "deduplicateSources()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L150",
+      "source_location": "L166",
       "id": "retriever_deduplicatesources",
-      "community": 16,
+      "community": 2,
       "norm_label": "deduplicatesources()"
     },
     {
       "label": "rankSources()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L161",
+      "source_location": "L177",
       "id": "retriever_ranksources",
-      "community": 16,
+      "community": 2,
       "norm_label": "ranksources()"
     },
     {
       "label": "cleanSearchQuery()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L174",
+      "source_location": "L186",
       "id": "retriever_cleansearchquery",
-      "community": 16,
+      "community": 2,
       "norm_label": "cleansearchquery()"
     },
     {
       "label": "sanitizeText()",
       "file_type": "code",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L180",
+      "source_location": "L192",
       "id": "retriever_sanitizetext",
-      "community": 16,
+      "community": 2,
       "norm_label": "sanitizetext()"
     },
     {
@@ -2628,7 +2628,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\services\\notificationService.js",
       "source_location": "L130",
       "id": "notificationservice_createnotification",
-      "community": 10,
+      "community": 11,
       "norm_label": "createnotification()"
     },
     {
@@ -2673,7 +2673,7 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\services\\notificationService.js",
       "source_location": "L311",
       "id": "notificationservice_getunreadcount",
-      "community": 5,
+      "community": 6,
       "norm_label": "getunreadcount()"
     },
     {
@@ -2692,9 +2692,9 @@
       "path": "index.html",
       "size": 13788,
       "description": "Main dashboard / SPA shell with chat UI, sidebar, notifications, modals",
-      "id": "index.html",
       "community": 0,
-      "norm_label": "index.html"
+      "norm_label": "index.html",
+      "id": "index.html"
     },
     {
       "label": "login.html",
@@ -2703,9 +2703,9 @@
       "path": "login.html",
       "size": 5474,
       "description": "Login page with email/password and Google OAuth",
-      "id": "login.html",
       "community": 0,
-      "norm_label": "login.html"
+      "norm_label": "login.html",
+      "id": "login.html"
     },
     {
       "label": "signup.html",
@@ -2714,9 +2714,9 @@
       "path": "signup.html",
       "size": 4383,
       "description": "Signup page with disposable email blocking",
-      "id": "signup.html",
       "community": 0,
-      "norm_label": "signup.html"
+      "norm_label": "signup.html",
+      "id": "signup.html"
     },
     {
       "label": "settings.html",
@@ -2725,9 +2725,9 @@
       "path": "settings.html",
       "size": 18057,
       "description": "Account settings \u2014 profile, security, AI config, preferences, privacy",
-      "id": "settings.html",
       "community": 0,
-      "norm_label": "settings.html"
+      "norm_label": "settings.html",
+      "id": "settings.html"
     },
     {
       "label": "admin.html",
@@ -2736,9 +2736,9 @@
       "path": "admin.html",
       "size": 6822,
       "description": "Admin notification control panel (RBAC-protected)",
-      "id": "admin.html",
       "community": 0,
-      "norm_label": "admin.html"
+      "norm_label": "admin.html",
+      "id": "admin.html"
     },
     {
       "label": "verify.html",
@@ -2747,9 +2747,9 @@
       "path": "verify.html",
       "size": 3037,
       "description": "Email verification polling page",
-      "id": "verify.html",
       "community": 0,
-      "norm_label": "verify.html"
+      "norm_label": "verify.html",
+      "id": "verify.html"
     },
     {
       "label": "recover.html",
@@ -2758,9 +2758,9 @@
       "path": "recover.html",
       "size": 2732,
       "description": "Account recovery handler page",
-      "id": "recover.html",
       "community": 0,
-      "norm_label": "recover.html"
+      "norm_label": "recover.html",
+      "id": "recover.html"
     },
     {
       "label": "reset.html",
@@ -2769,9 +2769,9 @@
       "path": "reset.html",
       "size": 2210,
       "description": "Password reset form page",
-      "id": "reset.html",
       "community": 0,
-      "norm_label": "reset.html"
+      "norm_label": "reset.html",
+      "id": "reset.html"
     },
     {
       "label": "privacy.html",
@@ -2780,9 +2780,9 @@
       "path": "privacy.html",
       "size": 8535,
       "description": "Privacy policy page",
-      "id": "privacy.html",
       "community": 24,
-      "norm_label": "privacy.html"
+      "norm_label": "privacy.html",
+      "id": "privacy.html"
     },
     {
       "label": "terms.html",
@@ -2791,9 +2791,9 @@
       "path": "terms.html",
       "size": 7893,
       "description": "Terms of service page",
-      "id": "terms.html",
       "community": 25,
-      "norm_label": "terms.html"
+      "norm_label": "terms.html",
+      "id": "terms.html"
     },
     {
       "label": "app.js",
@@ -2803,9 +2803,9 @@
       "size": 100928,
       "lines": 2594,
       "description": "Core SPA logic \u2014 auth flows, chat, markdown rendering, guest mode, study tracker",
-      "id": "app.js",
       "community": 0,
-      "norm_label": "app.js"
+      "norm_label": "app.js",
+      "id": "app.js"
     },
     {
       "label": "firebase.js",
@@ -2820,9 +2820,9 @@
         "functions"
       ],
       "description": "Firebase client SDK initialization \u2014 exports auth, db, functions",
-      "id": "firebase.js",
       "community": 0,
-      "norm_label": "firebase.js"
+      "norm_label": "firebase.js",
+      "id": "firebase.js"
     },
     {
       "label": "notificationBell.js",
@@ -2836,9 +2836,9 @@
         "stopNotifications"
       ],
       "description": "Notification bell UI component \u2014 real-time listener, badge, panel, filters",
-      "id": "notificationBell.js",
       "community": 0,
-      "norm_label": "notificationbell.js"
+      "norm_label": "notificationbell.js",
+      "id": "notificationBell.js"
     },
     {
       "label": "notificationService.js",
@@ -2858,9 +2858,9 @@
         "formatNotificationTime"
       ],
       "description": "Firestore-backed notification CRUD \u2014 subscribe, mark read, admin dispatch",
-      "id": "notificationService.js",
       "community": 0,
-      "norm_label": "notificationservice.js"
+      "norm_label": "notificationservice.js",
+      "id": "notificationService.js"
     },
     {
       "label": "disposableEmailValidator.js",
@@ -2876,9 +2876,9 @@
         "clearBlockedAttemptsLog"
       ],
       "description": "3000+ domain blocklist with suffix matching and debounce.io remote fallback",
-      "id": "disposableEmailValidator.js",
       "community": 0,
-      "norm_label": "disposableemailvalidator.js"
+      "norm_label": "disposableemailvalidator.js",
+      "id": "disposableEmailValidator.js"
     },
     {
       "label": "admin.js",
@@ -2888,9 +2888,9 @@
       "size": 11336,
       "lines": 276,
       "description": "Admin panel logic \u2014 RBAC auth check, notification form, live preview",
-      "id": "admin.js",
       "community": 0,
-      "norm_label": "admin.js"
+      "norm_label": "admin.js",
+      "id": "admin.js"
     },
     {
       "label": "verify.js",
@@ -2900,9 +2900,9 @@
       "size": 3517,
       "lines": 107,
       "description": "Email verification polling and oobCode handler",
-      "id": "verify.js",
       "community": 0,
-      "norm_label": "verify.js"
+      "norm_label": "verify.js",
+      "id": "verify.js"
     },
     {
       "label": "recover.js",
@@ -2912,9 +2912,9 @@
       "size": 1774,
       "lines": 50,
       "description": "Account recovery action code handler",
-      "id": "recover.js",
       "community": 0,
-      "norm_label": "recover.js"
+      "norm_label": "recover.js",
+      "id": "recover.js"
     },
     {
       "label": "reset.js",
@@ -2924,9 +2924,9 @@
       "size": 3528,
       "lines": 107,
       "description": "Password reset form handler with auto-login",
-      "id": "reset.js",
       "community": 0,
-      "norm_label": "reset.js"
+      "norm_label": "reset.js",
+      "id": "reset.js"
     },
     {
       "label": "style.css",
@@ -2935,9 +2935,9 @@
       "path": "style.css",
       "size": 64759,
       "description": "Global stylesheet \u2014 glassmorphism design system, themes, responsive layouts",
-      "id": "style.css",
       "community": 0,
-      "norm_label": "style.css"
+      "norm_label": "style.css",
+      "id": "style.css"
     },
     {
       "label": "notification.css",
@@ -2946,9 +2946,9 @@
       "path": "notification.css",
       "size": 14493,
       "description": "Notification bell and panel component styles",
-      "id": "notification.css",
       "community": 0,
-      "norm_label": "notification.css"
+      "norm_label": "notification.css",
+      "id": "notification.css"
     },
     {
       "label": "admin.css",
@@ -2957,9 +2957,9 @@
       "path": "admin.css",
       "size": 6646,
       "description": "Admin panel styles",
-      "id": "admin.css",
       "community": 0,
-      "norm_label": "admin.css"
+      "norm_label": "admin.css",
+      "id": "admin.css"
     },
     {
       "label": "marked (CDN)",
@@ -2967,9 +2967,9 @@
       "layer": "frontend",
       "url": "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js",
       "description": "Markdown-to-HTML parser",
-      "id": "marked_cdn",
       "community": 0,
-      "norm_label": "marked (cdn)"
+      "norm_label": "marked (cdn)",
+      "id": "marked_cdn"
     },
     {
       "label": "highlight.js (CDN)",
@@ -2977,9 +2977,9 @@
       "layer": "frontend",
       "url": "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/+esm",
       "description": "Syntax highlighting for code blocks",
-      "id": "hljs_cdn",
       "community": 0,
-      "norm_label": "highlight.js (cdn)"
+      "norm_label": "highlight.js (cdn)",
+      "id": "hljs_cdn"
     },
     {
       "label": "Mermaid.js (CDN)",
@@ -2987,9 +2987,9 @@
       "layer": "frontend",
       "url": "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js",
       "description": "Diagram rendering engine",
-      "id": "mermaid_cdn",
       "community": 0,
-      "norm_label": "mermaid.js (cdn)"
+      "norm_label": "mermaid.js (cdn)",
+      "id": "mermaid_cdn"
     },
     {
       "label": "Firebase SDK (CDN)",
@@ -3003,9 +3003,9 @@
         "firebase-functions"
       ],
       "description": "Firebase JS SDK v10.7.1 \u2014 app, auth, firestore, functions",
-      "id": "firebase_sdk",
       "community": 0,
-      "norm_label": "firebase sdk (cdn)"
+      "norm_label": "firebase sdk (cdn)",
+      "id": "firebase_sdk"
     },
     {
       "label": "server.js",
@@ -3015,9 +3015,9 @@
       "size": 31462,
       "lines": 972,
       "description": "Express API proxy \u2014 model routing, caching, search, zero-failure chain",
-      "id": "server.js",
       "community": 0,
-      "norm_label": "server.js"
+      "norm_label": "server.js",
+      "id": "server.js"
     },
     {
       "label": "agents.js",
@@ -3030,9 +3030,9 @@
         "AgentRunner (singleton)"
       ],
       "description": "Central agent runner \u2014 Identity, Intent, Quiz, UI agents for pre/post processing",
-      "id": "agents.js",
       "community": 0,
-      "norm_label": "agents.js"
+      "norm_label": "agents.js",
+      "id": "agents.js"
     },
     {
       "label": "functions/index.js",
@@ -3045,9 +3045,9 @@
         "sendNotification"
       ],
       "description": "Cloud Function \u2014 sendNotification (asia-south1, admin-only, broadcast/single)",
-      "id": "functions_index.js",
       "community": 0,
-      "norm_label": "functions/index.js"
+      "norm_label": "functions/index.js",
+      "id": "functions_index.js"
     },
     {
       "label": "scripts/setAdmin.js",
@@ -3057,9 +3057,9 @@
       "size": 2241,
       "lines": 72,
       "description": "CLI script to set admin custom claim on a Firebase user",
-      "id": "setAdmin.js",
       "community": 0,
-      "norm_label": "scripts/setadmin.js"
+      "norm_label": "scripts/setadmin.js",
+      "id": "setAdmin.js"
     },
     {
       "label": "firestore.rules",
@@ -3068,27 +3068,27 @@
       "path": "firestore.rules",
       "size": 3457,
       "description": "Firestore security rules \u2014 RBAC enforcement",
-      "id": "firestore.rules",
       "community": 0,
-      "norm_label": "firestore.rules"
+      "norm_label": "firestore.rules",
+      "id": "firestore.rules"
     },
     {
       "label": "Firebase Auth",
       "type": "service",
       "layer": "firebase",
       "description": "Authentication service \u2014 email/password, Google OAuth, email verification",
-      "id": "firebase_auth",
       "community": 0,
-      "norm_label": "firebase auth"
+      "norm_label": "firebase auth",
+      "id": "firebase_auth"
     },
     {
       "label": "Cloud Firestore",
       "type": "service",
       "layer": "firebase",
       "description": "NoSQL database \u2014 users, chats, messages, notifications collections",
-      "id": "firestore_db",
       "community": 0,
-      "norm_label": "cloud firestore"
+      "norm_label": "cloud firestore",
+      "id": "firestore_db"
     },
     {
       "label": "OpenRouter AI",
@@ -3104,9 +3104,9 @@
         "nvidia/nemotron-3-nano-30b-a3b:free"
       ],
       "description": "AI chat completions \u2014 6 free models with zero-failure fallback chain",
-      "id": "openrouter",
       "community": 0,
-      "norm_label": "openrouter ai"
+      "norm_label": "openrouter ai",
+      "id": "openrouter"
     },
     {
       "label": "DuckDuckGo",
@@ -3114,9 +3114,9 @@
       "layer": "external",
       "url": "https://api.duckduckgo.com/",
       "description": "Instant answer and web search for real-time context",
-      "id": "duckduckgo",
       "community": 0,
-      "norm_label": "duckduckgo"
+      "norm_label": "duckduckgo",
+      "id": "duckduckgo"
     },
     {
       "label": "NewsData.io",
@@ -3124,9 +3124,9 @@
       "layer": "external",
       "url": "https://newsdata.io/api/1/news",
       "description": "News article API for current affairs context (24h freshness filter)",
-      "id": "newsdata",
       "community": 0,
-      "norm_label": "newsdata.io"
+      "norm_label": "newsdata.io",
+      "id": "newsdata"
     },
     {
       "label": "debounce.io",
@@ -3134,9 +3134,9 @@
       "layer": "external",
       "url": "https://disposable.debounce.io/",
       "description": "Remote disposable email verification API (free, no key)",
-      "id": "debounce_io",
       "community": 0,
-      "norm_label": "debounce.io"
+      "norm_label": "debounce.io",
+      "id": "debounce_io"
     }
   ],
   "links": [
@@ -6927,8 +6927,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
       "source_location": "L601",
       "weight": 1.0,
-      "_src": "server_isidentityquery",
-      "_tgt": "app_fetchwithretry",
+      "_src": "app_fetchwithretry",
+      "_tgt": "server_isidentityquery",
       "source": "app_fetchwithretry",
       "target": "server_isidentityquery"
     },
@@ -8715,8 +8715,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\agents.js",
       "source_location": "L134",
       "weight": 1.0,
-      "_src": "agents_intentagent_execute",
-      "_tgt": "test_openrouter_test",
+      "_src": "test_openrouter_test",
+      "_tgt": "agents_intentagent_execute",
       "source": "test_openrouter_test",
       "target": "agents_intentagent_execute"
     },
@@ -8727,8 +8727,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
       "source_location": "L465",
       "weight": 1.0,
-      "_src": "server_detectintent",
-      "_tgt": "test_openrouter_test",
+      "_src": "test_openrouter_test",
+      "_tgt": "server_detectintent",
       "source": "test_openrouter_test",
       "target": "server_detectintent"
     },
@@ -8739,8 +8739,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
       "source_location": "L498",
       "weight": 1.0,
-      "_src": "server_buildagentprompt",
-      "_tgt": "test_openrouter_test",
+      "_src": "test_openrouter_test",
+      "_tgt": "server_buildagentprompt",
       "source": "test_openrouter_test",
       "target": "server_buildagentprompt"
     },
@@ -8751,8 +8751,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
       "source_location": "L803",
       "weight": 1.0,
-      "_src": "server_isrealtimequery",
-      "_tgt": "test_openrouter_test",
+      "_src": "test_openrouter_test",
+      "_tgt": "server_isrealtimequery",
       "source": "test_openrouter_test",
       "target": "server_isrealtimequery"
     },
@@ -8763,8 +8763,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\classifier.js",
       "source_location": "L131",
       "weight": 1.0,
-      "_src": "classifier_classify",
-      "_tgt": "test_openrouter_test",
+      "_src": "test_openrouter_test",
+      "_tgt": "classifier_classify",
       "source": "test_openrouter_test",
       "target": "classifier_classify"
     },
@@ -8775,10 +8775,22 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\formatter.js",
       "source_location": "L145",
       "weight": 1.0,
-      "_src": "formatter_sanitizeurl",
-      "_tgt": "test_openrouter_test",
+      "_src": "test_openrouter_test",
+      "_tgt": "formatter_sanitizeurl",
       "source": "test_openrouter_test",
       "target": "formatter_sanitizeurl"
+    },
+    {
+      "relation": "calls",
+      "confidence": "INFERRED",
+      "confidence_score": 0.8,
+      "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
+      "source_location": "L102",
+      "weight": 1.0,
+      "_src": "retriever_fetchfromduckduckgo",
+      "_tgt": "test_openrouter_test",
+      "source": "test_openrouter_test",
+      "target": "retriever_fetchfromduckduckgo"
     },
     {
       "relation": "contains",
@@ -9072,7 +9084,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L405",
+      "source_location": "L408",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_getsafefallbackreply",
@@ -9084,7 +9096,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L423",
+      "source_location": "L426",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_selectmodel",
@@ -9096,7 +9108,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L427",
+      "source_location": "L430",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_buildmodelcandidates",
@@ -9108,7 +9120,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L432",
+      "source_location": "L435",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_isvalidairesponse",
@@ -9120,7 +9132,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L460",
+      "source_location": "L463",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_detectintent",
@@ -9132,7 +9144,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L474",
+      "source_location": "L477",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_isidentityquerymatch",
@@ -9144,7 +9156,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L484",
+      "source_location": "L487",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_shouldsuggestquiz",
@@ -9156,7 +9168,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L489",
+      "source_location": "L492",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_buildagentprompt",
@@ -9168,7 +9180,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L515",
+      "source_location": "L518",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_getrandomidentityresponse",
@@ -9180,7 +9192,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L524",
+      "source_location": "L527",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_normalizeidentitycachekey",
@@ -9192,7 +9204,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L528",
+      "source_location": "L531",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_getcachedidentityresult",
@@ -9204,7 +9216,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L540",
+      "source_location": "L543",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_setcachedidentityresult",
@@ -9216,7 +9228,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L546",
+      "source_location": "L549",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_quickidentitycheck",
@@ -9228,7 +9240,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L571",
+      "source_location": "L574",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_isidentityquery",
@@ -9240,7 +9252,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L612",
+      "source_location": "L615",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_handleidentityquery",
@@ -9252,7 +9264,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L636",
+      "source_location": "L639",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_callaimodel",
@@ -9264,7 +9276,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L691",
+      "source_location": "L694",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_normalizemessage",
@@ -9276,7 +9288,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L699",
+      "source_location": "L702",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_generatecachekey",
@@ -9288,7 +9300,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L706",
+      "source_location": "L709",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_getcachedresponse",
@@ -9300,7 +9312,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L716",
+      "source_location": "L719",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_setcache",
@@ -9312,7 +9324,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L727",
+      "source_location": "L730",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_extractquiz",
@@ -9324,7 +9336,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L735",
+      "source_location": "L738",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_getrecenthistory",
@@ -9336,7 +9348,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L749",
+      "source_location": "L752",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_buildcontextlayer",
@@ -9348,7 +9360,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L769",
+      "source_location": "L772",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_buildprompt",
@@ -9360,7 +9372,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L792",
+      "source_location": "L795",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_getlatestusermessage",
@@ -9372,7 +9384,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L802",
+      "source_location": "L805",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_isrealtimequery",
@@ -9384,7 +9396,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L806",
+      "source_location": "L809",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_getcachedrealtimecontext",
@@ -9396,7 +9408,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L818",
+      "source_location": "L821",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_setcachedrealtimecontext",
@@ -9408,7 +9420,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L824",
+      "source_location": "L827",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_fetchrealtimecontext",
@@ -9420,7 +9432,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L859",
+      "source_location": "L862",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_fetchsearchresults",
@@ -9432,7 +9444,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L885",
+      "source_location": "L888",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_collectduckduckgosources",
@@ -9444,7 +9456,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L907",
+      "source_location": "L910",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_dedupesources",
@@ -9456,7 +9468,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L914",
+      "source_location": "L917",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_server_js",
       "_tgt": "server_fetchnewsdata",
@@ -9468,7 +9480,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L463",
+      "source_location": "L466",
       "weight": 1.0,
       "_src": "server_detectintent",
       "_tgt": "server_isidentityquerymatch",
@@ -9480,7 +9492,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L615",
+      "source_location": "L618",
       "weight": 1.0,
       "_src": "server_handleidentityquery",
       "_tgt": "server_getrandomidentityresponse",
@@ -9492,7 +9504,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L529",
+      "source_location": "L532",
       "weight": 1.0,
       "_src": "server_getcachedidentityresult",
       "_tgt": "server_normalizeidentitycachekey",
@@ -9504,7 +9516,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L541",
+      "source_location": "L544",
       "weight": 1.0,
       "_src": "server_setcachedidentityresult",
       "_tgt": "server_normalizeidentitycachekey",
@@ -9516,7 +9528,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L619",
+      "source_location": "L622",
       "weight": 1.0,
       "_src": "server_handleidentityquery",
       "_tgt": "server_getcachedidentityresult",
@@ -9528,7 +9540,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L628",
+      "source_location": "L631",
       "weight": 1.0,
       "_src": "server_handleidentityquery",
       "_tgt": "server_setcachedidentityresult",
@@ -9540,7 +9552,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L614",
+      "source_location": "L617",
       "weight": 1.0,
       "_src": "server_handleidentityquery",
       "_tgt": "server_quickidentitycheck",
@@ -9552,7 +9564,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L627",
+      "source_location": "L630",
       "weight": 1.0,
       "_src": "server_handleidentityquery",
       "_tgt": "server_isidentityquery",
@@ -9564,7 +9576,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L700",
+      "source_location": "L703",
       "weight": 1.0,
       "_src": "server_generatecachekey",
       "_tgt": "server_normalizemessage",
@@ -9576,7 +9588,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L770",
+      "source_location": "L773",
       "weight": 1.0,
       "_src": "server_buildprompt",
       "_tgt": "server_buildcontextlayer",
@@ -9588,7 +9600,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L825",
+      "source_location": "L828",
       "weight": 1.0,
       "_src": "server_fetchrealtimecontext",
       "_tgt": "server_getcachedrealtimecontext",
@@ -9600,7 +9612,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L854",
+      "source_location": "L857",
       "weight": 1.0,
       "_src": "server_fetchrealtimecontext",
       "_tgt": "server_setcachedrealtimecontext",
@@ -9612,7 +9624,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L829",
+      "source_location": "L832",
       "weight": 1.0,
       "_src": "server_fetchrealtimecontext",
       "_tgt": "server_fetchnewsdata",
@@ -9624,7 +9636,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L830",
+      "source_location": "L833",
       "weight": 1.0,
       "_src": "server_fetchrealtimecontext",
       "_tgt": "server_fetchsearchresults",
@@ -9636,7 +9648,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L846",
+      "source_location": "L849",
       "weight": 1.0,
       "_src": "server_fetchrealtimecontext",
       "_tgt": "server_dedupesources",
@@ -9648,7 +9660,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\server.js",
-      "source_location": "L873",
+      "source_location": "L876",
       "weight": 1.0,
       "_src": "server_fetchsearchresults",
       "_tgt": "server_collectduckduckgosources",
@@ -9675,8 +9687,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\memory\\memoryRunner.js",
       "source_location": "L44",
       "weight": 1.0,
-      "_src": "memoryrunner_memoryrunner_extractnewmemories",
-      "_tgt": "memoryextractor_extractmemory",
+      "_src": "memoryextractor_extractmemory",
+      "_tgt": "memoryrunner_memoryrunner_extractnewmemories",
       "source": "memoryextractor_extractmemory",
       "target": "memoryrunner_memoryrunner_extractnewmemories"
     },
@@ -9711,8 +9723,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\memory\\memoryRunner.js",
       "source_location": "L22",
       "weight": 1.0,
-      "_src": "memoryrunner_memoryrunner_retrievecontext",
-      "_tgt": "memoryretriever_retrieverelevantmemories",
+      "_src": "memoryretriever_retrieverelevantmemories",
+      "_tgt": "memoryrunner_memoryrunner_retrievecontext",
       "source": "memoryretriever_retrieverelevantmemories",
       "target": "memoryrunner_memoryrunner_retrievecontext"
     },
@@ -9723,8 +9735,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\memory\\memoryRunner.js",
       "source_location": "L25",
       "weight": 1.0,
-      "_src": "memoryrunner_memoryrunner_retrievecontext",
-      "_tgt": "memoryretriever_formatmemoryprompt",
+      "_src": "memoryretriever_formatmemoryprompt",
+      "_tgt": "memoryrunner_memoryrunner_retrievecontext",
       "source": "memoryretriever_formatmemoryprompt",
       "target": "memoryrunner_memoryrunner_retrievecontext"
     },
@@ -9768,7 +9780,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\classifier.js",
-      "source_location": "L106",
+      "source_location": "L107",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_classifier_js",
       "_tgt": "classifier_classify",
@@ -9780,7 +9792,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\classifier.js",
-      "source_location": "L199",
+      "source_location": "L200",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_classifier_js",
       "_tgt": "classifier_result",
@@ -9792,7 +9804,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\classifier.js",
-      "source_location": "L111",
+      "source_location": "L112",
       "weight": 1.0,
       "_src": "classifier_classify",
       "_tgt": "classifier_result",
@@ -9807,8 +9819,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\ragRunner.js",
       "source_location": "L49",
       "weight": 1.0,
-      "_src": "ragrunner_execute",
-      "_tgt": "classifier_classify",
+      "_src": "classifier_classify",
+      "_tgt": "ragrunner_execute",
       "source": "classifier_classify",
       "target": "ragrunner_execute"
     },
@@ -9879,8 +9891,8 @@
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\ragRunner.js",
       "source_location": "L96",
       "weight": 1.0,
-      "_src": "ragrunner_execute",
-      "_tgt": "formatter_formatcontext",
+      "_src": "formatter_formatcontext",
+      "_tgt": "ragrunner_execute",
       "source": "formatter_formatcontext",
       "target": "ragrunner_execute"
     },
@@ -10008,7 +10020,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L117",
+      "source_location": "L133",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_retriever_js",
       "_tgt": "retriever_retrieve",
@@ -10020,7 +10032,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L138",
+      "source_location": "L154",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_retriever_js",
       "_tgt": "retriever_flattenddgtopics",
@@ -10032,7 +10044,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L150",
+      "source_location": "L166",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_retriever_js",
       "_tgt": "retriever_deduplicatesources",
@@ -10044,7 +10056,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L161",
+      "source_location": "L177",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_retriever_js",
       "_tgt": "retriever_ranksources",
@@ -10056,7 +10068,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L174",
+      "source_location": "L186",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_retriever_js",
       "_tgt": "retriever_cleansearchquery",
@@ -10068,7 +10080,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L180",
+      "source_location": "L192",
       "weight": 1.0,
       "_src": "c_users_vrs_r_onedrive_desktop_websites_source_codes_studymate_server_rag_retriever_js",
       "_tgt": "retriever_sanitizetext",
@@ -10092,7 +10104,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L120",
+      "source_location": "L136",
       "weight": 1.0,
       "_src": "retriever_retrieve",
       "_tgt": "retriever_fetchfromnewsdata",
@@ -10116,7 +10128,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L91",
+      "source_location": "L108",
       "weight": 1.0,
       "_src": "retriever_fetchfromduckduckgo",
       "_tgt": "retriever_sanitizetext",
@@ -10128,19 +10140,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L97",
-      "weight": 1.0,
-      "_src": "retriever_fetchfromduckduckgo",
-      "_tgt": "retriever_flattenddgtopics",
-      "source": "retriever_fetchfromduckduckgo",
-      "target": "retriever_flattenddgtopics",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "confidence": "EXTRACTED",
-      "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L120",
+      "source_location": "L136",
       "weight": 1.0,
       "_src": "retriever_retrieve",
       "_tgt": "retriever_fetchfromduckduckgo",
@@ -10152,7 +10152,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L127",
+      "source_location": "L143",
       "weight": 1.0,
       "_src": "retriever_retrieve",
       "_tgt": "retriever_deduplicatesources",
@@ -10164,7 +10164,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "C:\\Users\\vrs_r\\OneDrive\\Desktop\\websites-source-codes\\studymate\\server\\rag\\retriever.js",
-      "source_location": "L128",
+      "source_location": "L144",
       "weight": 1.0,
       "_src": "retriever_retrieve",
       "_tgt": "retriever_ranksources",
@@ -10335,9 +10335,9 @@
       "label": "type=module",
       "_src": "index.html",
       "_tgt": "app.js",
+      "confidence_score": 1.0,
       "source": "index.html",
-      "target": "app.js",
-      "confidence_score": 1.0
+      "target": "app.js"
     },
     {
       "from": "index.html",
@@ -10346,9 +10346,9 @@
       "label": "type=module",
       "_src": "index.html",
       "_tgt": "notificationBell.js",
+      "confidence_score": 1.0,
       "source": "index.html",
-      "target": "notificationBell.js",
-      "confidence_score": 1.0
+      "target": "notificationBell.js"
     },
     {
       "from": "index.html",
@@ -10356,9 +10356,9 @@
       "type": "script_tag",
       "_src": "index.html",
       "_tgt": "mermaid_cdn",
+      "confidence_score": 1.0,
       "source": "index.html",
-      "target": "mermaid_cdn",
-      "confidence_score": 1.0
+      "target": "mermaid_cdn"
     },
     {
       "from": "index.html",
@@ -10366,9 +10366,9 @@
       "type": "stylesheet",
       "_src": "index.html",
       "_tgt": "style.css",
+      "confidence_score": 1.0,
       "source": "index.html",
-      "target": "style.css",
-      "confidence_score": 1.0
+      "target": "style.css"
     },
     {
       "from": "index.html",
@@ -10376,9 +10376,9 @@
       "type": "stylesheet",
       "_src": "index.html",
       "_tgt": "notification.css",
+      "confidence_score": 1.0,
       "source": "index.html",
-      "target": "notification.css",
-      "confidence_score": 1.0
+      "target": "notification.css"
     },
     {
       "from": "login.html",
@@ -10387,9 +10387,9 @@
       "label": "type=module",
       "_src": "login.html",
       "_tgt": "app.js",
+      "confidence_score": 1.0,
       "source": "login.html",
-      "target": "app.js",
-      "confidence_score": 1.0
+      "target": "app.js"
     },
     {
       "from": "login.html",
@@ -10397,9 +10397,9 @@
       "type": "stylesheet",
       "_src": "login.html",
       "_tgt": "style.css",
+      "confidence_score": 1.0,
       "source": "login.html",
-      "target": "style.css",
-      "confidence_score": 1.0
+      "target": "style.css"
     },
     {
       "from": "signup.html",
@@ -10408,9 +10408,9 @@
       "label": "type=module",
       "_src": "signup.html",
       "_tgt": "app.js",
+      "confidence_score": 1.0,
       "source": "signup.html",
-      "target": "app.js",
-      "confidence_score": 1.0
+      "target": "app.js"
     },
     {
       "from": "signup.html",
@@ -10418,9 +10418,9 @@
       "type": "stylesheet",
       "_src": "signup.html",
       "_tgt": "style.css",
+      "confidence_score": 1.0,
       "source": "signup.html",
-      "target": "style.css",
-      "confidence_score": 1.0
+      "target": "style.css"
     },
     {
       "from": "settings.html",
@@ -10429,9 +10429,9 @@
       "label": "type=module",
       "_src": "settings.html",
       "_tgt": "app.js",
+      "confidence_score": 1.0,
       "source": "settings.html",
-      "target": "app.js",
-      "confidence_score": 1.0
+      "target": "app.js"
     },
     {
       "from": "settings.html",
@@ -10439,9 +10439,9 @@
       "type": "stylesheet",
       "_src": "settings.html",
       "_tgt": "style.css",
+      "confidence_score": 1.0,
       "source": "settings.html",
-      "target": "style.css",
-      "confidence_score": 1.0
+      "target": "style.css"
     },
     {
       "from": "admin.html",
@@ -10450,9 +10450,9 @@
       "label": "type=module",
       "_src": "admin.html",
       "_tgt": "admin.js",
+      "confidence_score": 1.0,
       "source": "admin.html",
-      "target": "admin.js",
-      "confidence_score": 1.0
+      "target": "admin.js"
     },
     {
       "from": "admin.html",
@@ -10460,9 +10460,9 @@
       "type": "stylesheet",
       "_src": "admin.html",
       "_tgt": "style.css",
+      "confidence_score": 1.0,
       "source": "admin.html",
-      "target": "style.css",
-      "confidence_score": 1.0
+      "target": "style.css"
     },
     {
       "from": "admin.html",
@@ -10470,9 +10470,9 @@
       "type": "stylesheet",
       "_src": "admin.html",
       "_tgt": "notification.css",
+      "confidence_score": 1.0,
       "source": "admin.html",
-      "target": "notification.css",
-      "confidence_score": 1.0
+      "target": "notification.css"
     },
     {
       "from": "admin.html",
@@ -10480,9 +10480,9 @@
       "type": "stylesheet",
       "_src": "admin.html",
       "_tgt": "admin.css",
+      "confidence_score": 1.0,
       "source": "admin.html",
-      "target": "admin.css",
-      "confidence_score": 1.0
+      "target": "admin.css"
     },
     {
       "from": "verify.html",
@@ -10491,9 +10491,9 @@
       "label": "type=module",
       "_src": "verify.html",
       "_tgt": "verify.js",
+      "confidence_score": 1.0,
       "source": "verify.html",
-      "target": "verify.js",
-      "confidence_score": 1.0
+      "target": "verify.js"
     },
     {
       "from": "verify.html",
@@ -10501,9 +10501,9 @@
       "type": "stylesheet",
       "_src": "verify.html",
       "_tgt": "style.css",
+      "confidence_score": 1.0,
       "source": "verify.html",
-      "target": "style.css",
-      "confidence_score": 1.0
+      "target": "style.css"
     },
     {
       "from": "recover.html",
@@ -10511,9 +10511,9 @@
       "type": "script_tag",
       "_src": "recover.html",
       "_tgt": "recover.js",
+      "confidence_score": 1.0,
       "source": "recover.html",
-      "target": "recover.js",
-      "confidence_score": 1.0
+      "target": "recover.js"
     },
     {
       "from": "reset.html",
@@ -10521,9 +10521,9 @@
       "type": "script_tag",
       "_src": "reset.html",
       "_tgt": "reset.js",
+      "confidence_score": 1.0,
       "source": "reset.html",
-      "target": "reset.js",
-      "confidence_score": 1.0
+      "target": "reset.js"
     },
     {
       "from": "app.js",
@@ -10535,9 +10535,9 @@
       ],
       "_src": "app.js",
       "_tgt": "firebase.js",
+      "confidence_score": 1.0,
       "source": "app.js",
-      "target": "firebase.js",
-      "confidence_score": 1.0
+      "target": "firebase.js"
     },
     {
       "from": "app.js",
@@ -10549,9 +10549,9 @@
       ],
       "_src": "app.js",
       "_tgt": "disposableEmailValidator.js",
+      "confidence_score": 1.0,
       "source": "app.js",
-      "target": "disposableEmailValidator.js",
-      "confidence_score": 1.0
+      "target": "disposableEmailValidator.js"
     },
     {
       "from": "app.js",
@@ -10563,9 +10563,9 @@
       ],
       "_src": "app.js",
       "_tgt": "notificationBell.js",
+      "confidence_score": 1.0,
       "source": "app.js",
-      "target": "notificationBell.js",
-      "confidence_score": 1.0
+      "target": "notificationBell.js"
     },
     {
       "from": "app.js",
@@ -10576,9 +10576,9 @@
       ],
       "_src": "app.js",
       "_tgt": "marked_cdn",
+      "confidence_score": 1.0,
       "source": "app.js",
-      "target": "marked_cdn",
-      "confidence_score": 1.0
+      "target": "marked_cdn"
     },
     {
       "from": "app.js",
@@ -10589,9 +10589,9 @@
       ],
       "_src": "app.js",
       "_tgt": "hljs_cdn",
+      "confidence_score": 1.0,
       "source": "app.js",
-      "target": "hljs_cdn",
-      "confidence_score": 1.0
+      "target": "hljs_cdn"
     },
     {
       "from": "app.js",
@@ -10603,9 +10603,9 @@
       ],
       "_src": "app.js",
       "_tgt": "firebase_sdk",
+      "confidence_score": 1.0,
       "source": "app.js",
-      "target": "firebase_sdk",
-      "confidence_score": 1.0
+      "target": "firebase_sdk"
     },
     {
       "from": "app.js",
@@ -10615,9 +10615,9 @@
       "endpoint": "/api/chat",
       "_src": "app.js",
       "_tgt": "server.js",
+      "confidence_score": 1.0,
       "source": "app.js",
-      "target": "server.js",
-      "confidence_score": 1.0
+      "target": "server.js"
     },
     {
       "from": "app.js",
@@ -10630,9 +10630,9 @@
       ],
       "_src": "app.js",
       "_tgt": "firestore_db",
+      "confidence_score": 1.0,
       "source": "app.js",
-      "target": "firestore_db",
-      "confidence_score": 1.0
+      "target": "firestore_db"
     },
     {
       "from": "notificationBell.js",
@@ -10641,11 +10641,11 @@
       "imports": [
         "auth"
       ],
-      "_src": "notificationBell.js",
-      "_tgt": "firebase.js",
+      "_src": "firebase.js",
+      "_tgt": "notificationBell.js",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "notificationBell.js",
-      "confidence_score": 1.0
+      "target": "notificationBell.js"
     },
     {
       "from": "notificationService.js",
@@ -10655,11 +10655,11 @@
         "db",
         "functions"
       ],
-      "_src": "notificationService.js",
-      "_tgt": "firebase.js",
+      "_src": "firebase.js",
+      "_tgt": "notificationService.js",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "notificationService.js",
-      "confidence_score": 1.0
+      "target": "notificationService.js"
     },
     {
       "from": "admin.js",
@@ -10668,11 +10668,11 @@
       "imports": [
         "auth"
       ],
-      "_src": "admin.js",
-      "_tgt": "firebase.js",
+      "_src": "firebase.js",
+      "_tgt": "admin.js",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "admin.js",
-      "confidence_score": 1.0
+      "target": "admin.js"
     },
     {
       "from": "verify.js",
@@ -10681,11 +10681,11 @@
       "imports": [
         "auth"
       ],
-      "_src": "verify.js",
-      "_tgt": "firebase.js",
+      "_src": "firebase.js",
+      "_tgt": "verify.js",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "verify.js",
-      "confidence_score": 1.0
+      "target": "verify.js"
     },
     {
       "from": "recover.js",
@@ -10694,11 +10694,11 @@
       "imports": [
         "auth"
       ],
-      "_src": "recover.js",
-      "_tgt": "firebase.js",
+      "_src": "firebase.js",
+      "_tgt": "recover.js",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "recover.js",
-      "confidence_score": 1.0
+      "target": "recover.js"
     },
     {
       "from": "reset.js",
@@ -10707,11 +10707,11 @@
       "imports": [
         "auth"
       ],
-      "_src": "reset.js",
-      "_tgt": "firebase.js",
+      "_src": "firebase.js",
+      "_tgt": "reset.js",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "reset.js",
-      "confidence_score": 1.0
+      "target": "reset.js"
     },
     {
       "from": "firebase.js",
@@ -10725,9 +10725,9 @@
       ],
       "_src": "firebase.js",
       "_tgt": "firebase_sdk",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "firebase_sdk",
-      "confidence_score": 1.0
+      "target": "firebase_sdk"
     },
     {
       "from": "firebase.js",
@@ -10736,9 +10736,9 @@
       "label": "getAuth()",
       "_src": "firebase.js",
       "_tgt": "firebase_auth",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "firebase_auth",
-      "confidence_score": 1.0
+      "target": "firebase_auth"
     },
     {
       "from": "firebase.js",
@@ -10747,9 +10747,9 @@
       "label": "getFirestore()",
       "_src": "firebase.js",
       "_tgt": "firestore_db",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "firestore_db",
-      "confidence_score": 1.0
+      "target": "firestore_db"
     },
     {
       "from": "firebase.js",
@@ -10758,9 +10758,9 @@
       "label": "getFunctions(asia-south1)",
       "_src": "firebase.js",
       "_tgt": "functions_index.js",
+      "confidence_score": 1.0,
       "source": "firebase.js",
-      "target": "functions_index.js",
-      "confidence_score": 1.0
+      "target": "functions_index.js"
     },
     {
       "from": "notificationBell.js",
@@ -10775,9 +10775,9 @@
       ],
       "_src": "notificationBell.js",
       "_tgt": "notificationService.js",
+      "confidence_score": 1.0,
       "source": "notificationBell.js",
-      "target": "notificationService.js",
-      "confidence_score": 1.0
+      "target": "notificationService.js"
     },
     {
       "from": "notificationBell.js",
@@ -10788,9 +10788,9 @@
       ],
       "_src": "notificationBell.js",
       "_tgt": "firebase_sdk",
+      "confidence_score": 1.0,
       "source": "notificationBell.js",
-      "target": "firebase_sdk",
-      "confidence_score": 1.0
+      "target": "firebase_sdk"
     },
     {
       "from": "notificationService.js",
@@ -10802,9 +10802,9 @@
       ],
       "_src": "notificationService.js",
       "_tgt": "firebase_sdk",
+      "confidence_score": 1.0,
       "source": "notificationService.js",
-      "target": "firebase_sdk",
-      "confidence_score": 1.0
+      "target": "firebase_sdk"
     },
     {
       "from": "admin.js",
@@ -10813,11 +10813,11 @@
       "imports": [
         "sendAdminNotification"
       ],
-      "_src": "admin.js",
-      "_tgt": "notificationService.js",
+      "_src": "notificationService.js",
+      "_tgt": "admin.js",
+      "confidence_score": 1.0,
       "source": "notificationService.js",
-      "target": "admin.js",
-      "confidence_score": 1.0
+      "target": "admin.js"
     },
     {
       "from": "notificationService.js",
@@ -10826,9 +10826,9 @@
       "collection": "notifications",
       "_src": "notificationService.js",
       "_tgt": "firestore_db",
+      "confidence_score": 1.0,
       "source": "notificationService.js",
-      "target": "firestore_db",
-      "confidence_score": 1.0
+      "target": "firestore_db"
     },
     {
       "from": "notificationService.js",
@@ -10837,9 +10837,9 @@
       "function": "sendNotification",
       "_src": "notificationService.js",
       "_tgt": "functions_index.js",
+      "confidence_score": 1.0,
       "source": "notificationService.js",
-      "target": "functions_index.js",
-      "confidence_score": 1.0
+      "target": "functions_index.js"
     },
     {
       "from": "disposableEmailValidator.js",
@@ -10849,9 +10849,9 @@
       "label": "remote email check",
       "_src": "disposableEmailValidator.js",
       "_tgt": "debounce_io",
+      "confidence_score": 1.0,
       "source": "disposableEmailValidator.js",
-      "target": "debounce_io",
-      "confidence_score": 1.0
+      "target": "debounce_io"
     },
     {
       "from": "admin.js",
@@ -10862,9 +10862,9 @@
       ],
       "_src": "admin.js",
       "_tgt": "firebase_sdk",
+      "confidence_score": 1.0,
       "source": "admin.js",
-      "target": "firebase_sdk",
-      "confidence_score": 1.0
+      "target": "firebase_sdk"
     },
     {
       "from": "verify.js",
@@ -10875,9 +10875,9 @@
       ],
       "_src": "verify.js",
       "_tgt": "firebase_sdk",
+      "confidence_score": 1.0,
       "source": "verify.js",
-      "target": "firebase_sdk",
-      "confidence_score": 1.0
+      "target": "firebase_sdk"
     },
     {
       "from": "recover.js",
@@ -10888,9 +10888,9 @@
       ],
       "_src": "recover.js",
       "_tgt": "firebase_sdk",
+      "confidence_score": 1.0,
       "source": "recover.js",
-      "target": "firebase_sdk",
-      "confidence_score": 1.0
+      "target": "firebase_sdk"
     },
     {
       "from": "reset.js",
@@ -10901,9 +10901,9 @@
       ],
       "_src": "reset.js",
       "_tgt": "firebase_sdk",
+      "confidence_score": 1.0,
       "source": "reset.js",
-      "target": "firebase_sdk",
-      "confidence_score": 1.0
+      "target": "firebase_sdk"
     },
     {
       "from": "server.js",
@@ -10914,9 +10914,9 @@
       ],
       "_src": "server.js",
       "_tgt": "agents.js",
+      "confidence_score": 1.0,
       "source": "server.js",
-      "target": "agents.js",
-      "confidence_score": 1.0
+      "target": "agents.js"
     },
     {
       "from": "server.js",
@@ -10926,9 +10926,9 @@
       "label": "chat/completions",
       "_src": "server.js",
       "_tgt": "openrouter",
+      "confidence_score": 1.0,
       "source": "server.js",
-      "target": "openrouter",
-      "confidence_score": 1.0
+      "target": "openrouter"
     },
     {
       "from": "server.js",
@@ -10938,9 +10938,9 @@
       "label": "instant answer",
       "_src": "server.js",
       "_tgt": "duckduckgo",
+      "confidence_score": 1.0,
       "source": "server.js",
-      "target": "duckduckgo",
-      "confidence_score": 1.0
+      "target": "duckduckgo"
     },
     {
       "from": "server.js",
@@ -10950,9 +10950,9 @@
       "label": "news articles",
       "_src": "server.js",
       "_tgt": "newsdata",
+      "confidence_score": 1.0,
       "source": "server.js",
-      "target": "newsdata",
-      "confidence_score": 1.0
+      "target": "newsdata"
     },
     {
       "from": "functions_index.js",
@@ -10961,9 +10961,9 @@
       "collection": "notifications",
       "_src": "functions_index.js",
       "_tgt": "firestore_db",
+      "confidence_score": 1.0,
       "source": "functions_index.js",
-      "target": "firestore_db",
-      "confidence_score": 1.0
+      "target": "firestore_db"
     },
     {
       "from": "functions_index.js",
@@ -10972,9 +10972,9 @@
       "label": "auth context verification",
       "_src": "functions_index.js",
       "_tgt": "firebase_auth",
+      "confidence_score": 1.0,
       "source": "functions_index.js",
-      "target": "firebase_auth",
-      "confidence_score": 1.0
+      "target": "firebase_auth"
     },
     {
       "from": "setAdmin.js",
@@ -10983,9 +10983,9 @@
       "label": "setCustomUserClaims",
       "_src": "setAdmin.js",
       "_tgt": "firebase_auth",
+      "confidence_score": 1.0,
       "source": "setAdmin.js",
-      "target": "firebase_auth",
-      "confidence_score": 1.0
+      "target": "firebase_auth"
     },
     {
       "from": "firestore.rules",
@@ -10994,9 +10994,9 @@
       "label": "security rules",
       "_src": "firestore.rules",
       "_tgt": "firestore_db",
+      "confidence_score": 1.0,
       "source": "firestore.rules",
-      "target": "firestore_db",
-      "confidence_score": 1.0
+      "target": "firestore_db"
     }
   ],
   "hyperedges": []

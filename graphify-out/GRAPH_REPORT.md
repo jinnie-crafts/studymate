@@ -1,12 +1,12 @@
 # Graph Report - C:\Users\vrs_r\OneDrive\Desktop\websites-source-codes\studymate  (2026-05-17)
 
 ## Corpus Check
-- 21 files · ~114,850 words
+- 21 files · ~140,426 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
 - 335 nodes · 655 edges · 26 communities detected
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 22 edges (avg confidence: 0.8)
+- Extraction: 96% EXTRACTED · 4% INFERRED · 0% AMBIGUOUS · INFERRED: 23 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
@@ -47,7 +47,7 @@
 7. `syncHeaderWithActiveChat()` - 12 edges
 8. `handleNewChat()` - 11 edges
 9. `initNotifications()` - 11 edges
-10. `regenerateAiMessage()` - 9 edges
+10. `test()` - 10 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `initNotifications()` --calls--> `subscribeToNotifications()`  [INFERRED]
@@ -72,8 +72,8 @@ Cohesion: 0.09
 Nodes (21): fetchWithRetry(), buildContextLayer(), buildPrompt(), collectDuckDuckGoSources(), dedupeSources(), detectIntent(), fetchNewsData(), fetchRealtimeContext() (+13 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.1
-Nodes (17): delay(), escapeHtml(), formatMessage(), generateSafeFallbackReply(), getMessageActionIcon(), isLatestAiMessage(), renderMermaidDiagrams(), renderMessageActions() (+9 more)
+Cohesion: 0.12
+Nodes (20): classify(), result(), formatContext(), getCategoryLabel(), sanitizeUrl(), execute(), getCachedResult(), normalizeCacheKey() (+12 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.09
@@ -84,12 +84,12 @@ Cohesion: 0.13
 Nodes (15): bindEvents(), escapeHtml(), getErrorMessage(), handleSubmit(), setLoading(), setupUI(), showToast(), updateCounters() (+7 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.2
-Nodes (18): bindStaticEvents(), clearFirstSnapshotTimeout(), clearUI(), closePanel(), escapeHtml(), getFriendlyNotificationErrorMessage(), handleUpdate(), initNotifications() (+10 more)
+Cohesion: 0.12
+Nodes (8): getMessageActionIcon(), isLatestAiMessage(), renderMessageActions(), resetPreferences(), saveDefaultMode(), saveDefaultNotesMode(), saveHinglishDefault(), setTheme()
 
 ### Community 6 - "Community 6"
-Cohesion: 0.16
-Nodes (13): classify(), result(), formatContext(), getCategoryLabel(), sanitizeUrl(), execute(), getCachedResult(), normalizeCacheKey() (+5 more)
+Cohesion: 0.2
+Nodes (18): bindStaticEvents(), clearFirstSnapshotTimeout(), clearUI(), closePanel(), escapeHtml(), getFriendlyNotificationErrorMessage(), handleUpdate(), initNotifications() (+10 more)
 
 ### Community 7 - "Community 7"
 Cohesion: 0.18
@@ -100,24 +100,24 @@ Cohesion: 0.17
 Nodes (15): cleanupChatSubscription(), clearCurrentUserChats(), confirmLogoutAll(), copyMessageContent(), exportUserData(), handleDeleteAccount(), handleLogout(), handlePasswordResetRequest() (+7 more)
 
 ### Community 9 - "Community 9"
+Cohesion: 0.32
+Nodes (14): closeGuestLimitModal(), createGuestChatDocument(), getSavedDefaultMode(), getSavedDefaultNotesMode(), getSavedHinglishDefault(), handleNewChat(), initializeGuestDashboard(), loadGuestQuestionUsage() (+6 more)
+
+### Community 10 - "Community 10"
 Cohesion: 0.14
 Nodes (14): applySavedTheme(), bindDashboardEvents(), bindModeDropdown(), bindNotesDropdown(), bindSettingsEvents(), bootstrap(), consumeFlashToast(), getSavedTheme() (+6 more)
 
-### Community 10 - "Community 10"
+### Community 11 - "Community 11"
 Cohesion: 0.15
 Nodes (13): applyFontSize(), closeEditNameModal(), displayUserProfile(), ensureUserDocument(), getShortName(), initApp(), loadUsageStats(), loadUserMemory() (+5 more)
 
-### Community 11 - "Community 11"
-Cohesion: 0.18
-Nodes (13): createGuestMessage(), fetchAIResponse(), generateAssistantReply(), generateChatTitle(), getSelectedMode(), getSelectedNotesMode(), normalizeNotesMode(), normalizeSources() (+5 more)
-
 ### Community 12 - "Community 12"
-Cohesion: 0.35
-Nodes (13): closeGuestLimitModal(), createGuestChatDocument(), getSavedDefaultMode(), getSavedDefaultNotesMode(), getSavedHinglishDefault(), handleNewChat(), initializeGuestDashboard(), loadGuestQuestionUsage() (+5 more)
+Cohesion: 0.24
+Nodes (11): delay(), escapeHtml(), focusMessageEditor(), formatMessage(), generateSafeFallbackReply(), getLatestUserMessageFromPayload(), renderMermaidDiagrams(), renderMessages() (+3 more)
 
 ### Community 13 - "Community 13"
-Cohesion: 0.23
-Nodes (12): cancelRename(), closeSidebar(), deleteChat(), focusMessageEditor(), focusRenameInput(), getChatById(), getLatestUserMessageFromPayload(), openChat() (+4 more)
+Cohesion: 0.22
+Nodes (11): createGuestMessage(), fetchAIResponse(), generateAssistantReply(), generateChatTitle(), getSelectedMode(), getSelectedNotesMode(), normalizeSources(), renderMessageSources() (+3 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.33
@@ -128,16 +128,16 @@ Cohesion: 0.31
 Nodes (9): autoResizeTextarea(), findPreviousUserMessageIndex(), getCurrentChat(), handleSendMessage(), incrementGuestQuestionUsage(), isGuestUsageLimitReached(), regenerateAiMessage(), saveGuestQuestionUsage() (+1 more)
 
 ### Community 16 - "Community 16"
-Cohesion: 0.44
-Nodes (8): cleanSearchQuery(), deduplicateSources(), fetchFromDuckDuckGo(), fetchFromNewsData(), flattenDDGTopics(), rankSources(), retrieve(), sanitizeText()
+Cohesion: 0.32
+Nodes (8): closeSidebar(), createNewChatDocument(), getCurrentUserId(), loadChats(), loadMessages(), openChat(), stopStreamingResponse(), syncStateWithLatestChats()
 
 ### Community 17 - "Community 17"
-Cohesion: 0.43
-Nodes (4): showError(), showForm(), showLoading(), verifyResetCode()
+Cohesion: 0.38
+Nodes (7): cancelRename(), deleteChat(), focusRenameInput(), getChatById(), renderHistory(), saveRename(), startRename()
 
 ### Community 18 - "Community 18"
-Cohesion: 0.83
-Nodes (4): createNewChatDocument(), getCurrentUserId(), loadChats(), loadMessages()
+Cohesion: 0.43
+Nodes (4): showError(), showForm(), showLoading(), verifyResetCode()
 
 ### Community 19 - "Community 19"
 Cohesion: 0.83
@@ -182,16 +182,16 @@ Nodes (1): terms.html
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `test()` connect `Community 6` to `Community 1`, `Community 3`, `Community 13`?**
+- **Why does `test()` connect `Community 2` to `Community 1`, `Community 3`, `Community 12`?**
   _High betweenness centrality (0.236) - this node is a cross-community bridge._
-- **Why does `renderMessages()` connect `Community 13` to `Community 2`, `Community 6`, `Community 11`, `Community 12`, `Community 15`, `Community 18`?**
+- **Why does `renderMessages()` connect `Community 12` to `Community 2`, `Community 5`, `Community 9`, `Community 13`, `Community 15`, `Community 16`, `Community 17`?**
   _High betweenness centrality (0.194) - this node is a cross-community bridge._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.09 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.09 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.1 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
   _Cohesion score 0.09 - nodes in this community are weakly interconnected._
 - **Should `Community 4` be split into smaller, more focused modules?**

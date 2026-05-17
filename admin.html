@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | StudyMate AI</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="notification.css">
+  <link rel="stylesheet" href="admin.css">
+</head>
+<body class="admin-body admin-root">
+
+  <!-- Auth Skeleton (Show while checking admin claim) -->
+  <div id="adminSkeleton" class="admin-dashboard admin-container skeleton-pulse">
+    <div class="admin-panel-left glass-card">
+      <div class="skeleton skeleton-text" style="height:32px; width:60%; margin-bottom:30px;"></div>
+      <div class="skeleton-card" style="height:120px; border-radius:12px;"></div>
+      <div class="skeleton-card" style="height:120px; border-radius:12px;"></div>
+      <div class="skeleton-card" style="height:80px; border-radius:12px; width:50%;"></div>
+    </div>
+    <div class="admin-panel-right">
+      <div class="skeleton-card" style="height:300px; border-radius:24px;"></div>
+    </div>
+  </div>
+
+  <main id="adminContent" class="admin-dashboard admin-container" style="display: none;">
+    <a href="index.html" class="admin-back-link">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Back to Dashboard</span>
+    </a>
+
+    <header class="admin-header">
+      <h1>Notification Control</h1>
+      <p>Compose and dispatch system-wide or targeted notifications.</p>
+    </header>
+
+    <div class="admin-grid">
+      <!-- Left: Form -->
+      <section class="glass-card">
+        <form id="adminNotifForm" novalidate>
+          
+          <div class="admin-form-group">
+            <div class="admin-label-row">
+              <label for="notifTitle" class="admin-label">Title</label>
+              <span id="titleCounter" class="char-counter">0 / 100</span>
+            </div>
+            <input type="text" id="notifTitle" class="admin-input" placeholder="e.g., New Feature Alert! 🚀" maxlength="100">
+            <div id="titleError" class="error-msg">Title must be at least 3 characters.</div>
+          </div>
+
+          <div class="admin-form-group">
+            <div class="admin-label-row">
+              <label for="notifMessage" class="admin-label">Message</label>
+              <span id="messageCounter" class="char-counter">0 / 300</span>
+            </div>
+            <textarea id="notifMessage" class="admin-textarea" placeholder="Tell your users something important..." maxlength="300"></textarea>
+            <div id="messageError" class="error-msg">Message must be at least 5 characters.</div>
+          </div>
+
+          <div class="admin-form-group">
+            <label for="notifType" class="admin-label" style="margin-bottom: 8px;">Notification Type</label>
+            <select id="notifType" class="admin-select">
+              <option value="info">Info (Blue)</option>
+              <option value="success">Success (Green)</option>
+              <option value="warning">Warning (Yellow)</option>
+            </select>
+          </div>
+
+          <div class="admin-form-group">
+            <label class="admin-label" style="margin-bottom: 12px;">Recipient Target</label>
+            <div class="target-options">
+              <label class="target-card active" data-target="broadcast">
+                <input type="radio" name="targetType" value="broadcast" checked>
+                <div class="custom-radio"></div>
+                <span class="target-label">Broadcast (All Users)</span>
+              </label>
+              <label class="target-card" data-target="single">
+                <input type="radio" name="targetType" value="single">
+                <div class="custom-radio"></div>
+                <span class="target-label">Single User</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- Conditional User ID Input -->
+          <div id="singleUserGroup" class="admin-form-group hidden">
+            <label for="targetUid" class="admin-label" style="margin-bottom: 8px;">Target User ID (UID)</label>
+            <input type="text" id="targetUid" class="admin-input" placeholder="Paste the user's UID here">
+            <div id="uidError" class="error-msg">A valid User UID is required for single-target sends.</div>
+          </div>
+
+          <div style="margin-top: 32px;">
+            <button type="submit" id="sendBtn" class="admin-send-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              </svg>
+              <span>Dispatch Notification</span>
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <!-- Right: Preview -->
+      <aside class="preview-panel">
+        <div class="preview-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+          Live Preview
+        </div>
+        <div class="preview-container">
+          <div id="previewSlot">
+            <!-- Rendered via JS -->
+            <div class="notification-root">
+            <div class="notification-item unread">
+              <div class="notification-icon type-info">ℹ️</div>
+              <div class="notification-body">
+                <p class="notification-title">Notification Title</p>
+                <p class="notification-message">Your message will appear here precisely as users will see it in their dashboard.</p>
+                <span class="notification-time">Just now</span>
+              </div>
+            </div>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </main>
+
+  <div id="toastContainer" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script type="module" src="admin.js"></script>
+</body>
+</html>

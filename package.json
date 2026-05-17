@@ -1,0 +1,15 @@
+{
+  "scripts": {
+    "start": "concurrently \"npx serve .\" \"cd server && node server.js\"",
+    "start:backend": "cd server && node server.js",
+    "start:frontend": "npx serve ."
+  },
+  "dependencies": {
+    "highlight.js": "^11.11.1",
+    "marked": "^18.0.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "jest": "^30.3.0"
+  }
+}

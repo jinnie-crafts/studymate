@@ -1,0 +1,973 @@
+/**
+ * StudyMate AI — Backend Proxy
+ *
+ * Keeps the OpenRouter API key server-side.
+ * Frontend calls POST /api/chat → this server → OpenRouter → response back.
+ */
+
+require("dotenv").config();
+const express = require("express");
+const cors = require("cors");
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+const AgentRunner = require("./agents");
+const ragRunner = require("./rag/ragRunner");  // RAG Pipeline Integration
+const memoryRunner = require("./memory/memoryRunner"); // Memory System Integration
+
+if (!process.env.OPENROUTER_API_KEY) {
+  console.error("❌ CRITICAL: Missing OPENROUTER_API_KEY in environment.");
+}
+
+const REALTIME_QUERY_REGEX = /(today|now|latest|news|current|recent|weather|price|score|stock|time)/i;
+const NEWS_QUERY_REGEX = /(news|headlines|breaking|latest news|current affairs)/i;
+const CODE_QUERY_REGEX = /code|program|example|debug|script|function|snippet|coding/i;
+const MATH_QUERY_REGEX = /math|calculate|solve|equation/i;
+const DIAGRAM_QUERY_REGEX = /diagram|chart|graph|flow|flowchart|structure|architecture/i;
+const DEFAULT_MODEL = "deepseek/deepseek-chat:free";
+const IDENTITY_CLASSIFIER_MODEL = "openrouter/free";
+
+const MODEL_POOL = [
+  "minimax/minimax-m2.5:free",
+  "meta-llama/llama-3-8b-instruct:free",
+  "google/gemma-7b-it:free",
+  "nousresearch/nous-capybara-7b:free",
+  "openchat/openchat-7b:free",
+  "nvidia/nemotron-3-nano-30b-a3b:free"
+];
+
+// Model Strategy Constants
+const MODELS = {
+  GENERAL: "minimax/minimax-m2.5:free",
+  LONG_EXPLANATION: "meta-llama/llama-3-8b-instruct:free",
+  CODING: "nousresearch/nous-capybara-7b:free",
+  REASONING: "openchat/openchat-7b:free",
+  FAST: "minimax/minimax-m2.5:free",
+  FALLBACK: "nvidia/nemotron-3-nano-30b-a3b:free"
+};
+
+const failureTracker = new Map(); // model -> cooldownExpiry
+const COOLDOWN_MS = 5 * 60 * 1000;
+
+let lastIdentityIndex = -1;
+const IDENTITY_RESPONSES = [
+  "StudyMate-AI is developed by Rishu Maurya and Komal Sharma.",
+  "This application is created by Rishu Maurya and Komal Sharma.",
+  "Rishu Maurya and Komal Sharma are the developers of StudyMate-AI.",
+  "StudyMate-AI is built by Rishu Maurya and Komal Sharma."
+];
+const REALTIME_CACHE_TTL_MS = 5 * 60 * 1000;
+const IDENTITY_CACHE_TTL_MS = 30 * 60 * 1000;
+const RESPONSE_CACHE_TTL_MS = 5 * 60 * 1000;
+
+const realtimeCache = new Map();
+const identityCache = new Map();
+const responseCache = new Map();
+const MAX_CACHE_SIZE = 500;
+
+// ---------------------------------------------------------------------------
+// Prompt Templates
+// ---------------------------------------------------------------------------
+
+const PROMPT_TEMPLATES = {
+  CHAT: `
+[System: You are StudyMate-AI, a AI developed by Rishu Maurya and Komal Sharma. Use Markdown for formatting.]
+[Role: Professional Tutor]
+[Guidelines:
+ - If Intent is DIAGRAM: Start with the Mermaid block ( \`\`\`mermaid ). Follow with a brief 1-2 line explanation.
+ - If Intent is CODING: Provide full, usable code first ( \`\`\`language ). Follow with key points. No generic definitions.
+ - If Intent is EXPLANATION: Use structure: **Definition:** (substantial), **Key Points:** (bulleted), **Example:** (simple).
+ - If Intent is GENERAL: Answer directly and clearly. No fluff.
+ - Use exactly ONE natural, contextual follow-up question at the end for all intents.
+]
+[Goal: High-quality, polished educational response. Do not truncate useful code.]
+`,
+  QUIZ_GEN: `[Role:QuizMaster][Task:1MCQ][Format:Q: | A) | B) | C) | D)] Based on topic.`,
+  QUIZ_EVAL: `[Task:EvalAns][Rule:IfOk:Correct!+NextQ.Else:Explain+Retry][Limit:4Lines]`
+};
+
+const THINKING_PROMPT = `
+Think step-by-step internally.
+Do NOT show your thinking.
+Only return the final structured answer.
+`;
+
+// ---------------------------------------------------------------------------
+// Middleware
+// ---------------------------------------------------------------------------
+
+app.use(cors());
+app.use(express.json({ limit: "100kb" }));
+
+// ---------------------------------------------------------------------------
+// Health check
+// ---------------------------------------------------------------------------
+
+app.get("/", (_req, res) => {
+  res.json({ status: "ok", service: "StudyMate AI Backend" });
+});
+
+// ---------------------------------------------------------------------------
+// POST /api/chat — proxy to OpenRouter with fallback
+// ---------------------------------------------------------------------------
+
+const MODEL_FALLBACKS = [
+  "minimax/minimax-m2.5:free",
+  "meta-llama/llama-3-8b-instruct:free",
+  "google/gemma-7b-it:free",
+  "nousresearch/nous-capybara-7b:free",
+  "openchat/openchat-7b:free",
+  "nvidia/nemotron-3-nano-30b-a3b:free"
+];
+
+const MODEL_TIMEOUT_MS = 25000;
+
+app.post("/api/chat", async (req, res) => {
+  const start = Date.now();
+  try {
+    const apiKey = process.env.OPENROUTER_API_KEY;
+    if (!apiKey) {
+      console.error("[Configuration Error] OPENROUTER_API_KEY is missing from environment.");
+      return res.status(500).json({ error: "AI Service is not configured. Please check server logs." });
+    }
+
+    const { messages, mode, hinglish, notesMode, userId, doubt = false, currentQuestion = null, userMemory = [] } = req.body;
+    if (userId) console.log(`[AI Request] User: ${userId} | Mode: ${mode || "General"} | Messages: ${Array.isArray(messages) ? messages.length : 'NOT_ARRAY'}`);
+
+    if (!Array.isArray(messages) || messages.length === 0) {
+      console.warn("[Validation Error] No messages or invalid format:", JSON.stringify(req.body, null, 2));
+      return res.status(400).json({ error: "No messages provided." });
+    }
+
+    const latestUserMessage = getLatestUserMessage(messages);
+    const context = { req, res, userId, mode, doubt, currentQuestion, messages, userMemory };
+
+    // 1. Identity check (CRITICAL — Hardcoded, bypassing AI)
+    if (isIdentityQueryMatch(latestUserMessage)) {
+      const responseText = getRandomIdentityResponse();
+      return res.json({
+        text: responseText,
+        reply: responseText,
+        intent: "identity"
+      });
+    }
+
+    // 2. Detect intent (Keyword based)
+    let intent = detectIntent(latestUserMessage, mode);
+
+    // 3. Mode Normalization
+    let normalizedMode = (mode || "general").toLowerCase();
+    const validModes = ["general", "coding", "exam"];
+    if (!validModes.includes(normalizedMode)) {
+      normalizedMode = "general";
+    }
+
+    // 4. Intent Override (CRITICAL)
+    if (normalizedMode === "coding") {
+      intent = "CODING";
+    }
+
+    // 5. Select model
+    const selectedModel = selectModel(intent);
+
+    // 6. Check cache (with bypass logic)
+    // --- RAG Integration: Use classifier to determine if retrieval is needed ---
+    const ragResult = await ragRunner.execute(latestUserMessage);
+    const isRealtime = ragResult.enhanced; // RAG classifier supersedes old regex
+    const cacheKey = generateCacheKey({
+      message: latestUserMessage,
+      intent,
+      userProfile: req.body.userProfile,
+      mode: normalizedMode
+    });
+
+    if (!isRealtime && !doubt && latestUserMessage.length <= 300) {
+      const cached = getCachedResponse(cacheKey);
+      if (cached) {
+        console.log(`[Cache Hit] Serving: ${cacheKey}`);
+        return res.json({
+          text: cached.reply,
+          reply: cached.reply,
+          quiz: cached.quiz,
+          sources: [],
+          model_used: cached.model_used,
+          cached: true
+        });
+      }
+    }
+
+    // --- RAG Integration: Use sources and context from RAG pipeline ---
+    let sources = ragResult.sources || [];
+    sources = Array.isArray(sources)
+      ? sources.filter((src) => (
+        src &&
+        typeof src.url === "string" &&
+        /^https?:\/\//i.test(src.url) &&
+        typeof src.title === "string" &&
+        src.title.trim()
+      ))
+      : [];
+    sources = dedupeSources(sources).slice(0, 5);
+    sources = sources.map((src, i) => ({
+      title: `🔗 Source ${i + 1}`,
+      url: src.url
+    }));
+
+    // 5. Build prompt with History Context (Last 5 messages)
+    const autoQuestionEnabled = req.body.autoQuestion !== false;
+    // --- RAG FIX: Inject formatted context into system prompt (was missing before) ---
+    const ragContext = ragResult.promptContext || "";
+    
+    // --- MEMORY INTEGRATION ---
+    const memoryContext = memoryRunner.retrieveContext(latestUserMessage, userMemory);
+
+    const systemPrompt = `${buildAgentPrompt(latestUserMessage, intent, normalizedMode, currentQuestion, autoQuestionEnabled)}\n[User Intent: ${intent}]${ragContext ? "\n" + ragContext : ""}${memoryContext ? "\n" + memoryContext : ""}`;
+
+    const finalMessages = [
+      { role: "system", content: systemPrompt }
+    ];
+
+    // Add session history context (last 5 messages)
+    const historyContext = messages.slice(-6, -1); // Exclude the latest user message which we add below
+    historyContext.forEach(msg => {
+      finalMessages.push({ role: "user", content: msg.content, name: msg.role === "user" ? "User" : "StudyMate" });
+    });
+
+    // If evaluating, include the question being answered
+    if (intent === "quiz" && currentQuestion) {
+      finalMessages.push({ role: "assistant", content: `Q: ${currentQuestion}` });
+    }
+
+    finalMessages.push({ role: "user", content: latestUserMessage });
+
+    // 6. Build model chain with cooldown awareness
+    const now = Date.now();
+    const candidateChain = buildModelCandidates(selectedModel).filter(model => {
+      const expiry = failureTracker.get(model);
+      if (expiry && now < expiry) {
+        console.log(`[Zero-Failure] Skipping benched model: ${model} (Cooling down)`);
+        return false;
+      }
+      return true;
+    });
+
+    // 7. Support Streaming if requested
+    if (req.body.stream) {
+      res.writeHead(200, {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache, no-transform",
+        "Connection": "keep-alive",
+        "X-Accel-Buffering": "no" // Disable buffering for Nginx
+      });
+      res.flushHeaders();
+      // If compression or a proxy is used, they might need an explicit flush
+      if (typeof res.flush === "function") res.flush();
+
+      let fullText = "";
+      let success = false;
+      let usedModel = "";
+
+      for (const model of candidateChain) {
+        try {
+          console.log(`[Zero-Failure Streaming] Attempting: ${model}`);
+          const streamResponse = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiKey}`,
+              "HTTP-Referer": "https://aadirishi.in/",
+              "X-Title": "StudyMate AI"
+            },
+            body: JSON.stringify({
+              model,
+              messages: finalMessages,
+              stream: true,
+              provider: { allow_fallbacks: false }
+            })
+          });
+
+          if (!streamResponse.ok) throw new Error(`HTTP ${streamResponse.status}`);
+
+          const reader = streamResponse.body;
+          const decoder = new TextDecoder();
+          const streamReader = reader.getReader();
+          let firstChunk = true;
+
+          while (true) {
+            const { done, value } = await streamReader.read();
+            if (done) break;
+
+            const chunk = decoder.decode(value, { stream: true });
+            const lines = chunk.split("\n");
+            for (const line of lines) {
+              const cleanedLine = line.trim();
+              if (cleanedLine.startsWith("data: ")) {
+                const dataStr = cleanedLine.slice(6).trim();
+                if (dataStr === "[DONE]") break;
+                try {
+                  const data = JSON.parse(dataStr);
+                  const content = data.choices[0]?.delta?.content || "";
+                  if (content) {
+                    if (firstChunk) {
+                      firstChunk = false;
+                      success = true;
+                      usedModel = model;
+                    }
+                    fullText += content;
+                    res.write(`data: ${JSON.stringify({ content })}\n\n`);
+                  }
+                } catch (e) {}
+              }
+            }
+          }
+
+          if (success) break;
+        } catch (error) {
+          console.error(`[Zero-Failure Streaming] FAILURE with ${model}: ${error.message}`);
+          failureTracker.set(model, now + COOLDOWN_MS);
+        }
+      }
+
+      if (!success) {
+        console.warn("[Zero-Failure Streaming] CRITICAL: All models failed. Using safe fallback.");
+        const fallback = getSafeFallbackReply(latestUserMessage, intent);
+        fullText = fallback;
+        usedModel = "safe-fallback";
+        res.write(`data: ${JSON.stringify({ content: fallback, success: false })}\n\n`);
+      }
+
+      // 8. Run Agents Post-processing (Quiz & UI Metadata)
+      const finalResult = await AgentRunner.postProcess(context, {
+        text: fullText,
+        reply: fullText,
+        sources: sources || [],
+        model_used: usedModel,
+        intent: intent,
+        doubt: doubt,
+        success: usedModel !== "safe-fallback",
+        rag_enhanced: ragResult.enhanced || false,
+        rag_debug: ragResult.debug || null
+      });
+
+      res.write(`data: ${JSON.stringify({ metadata: finalResult })}\n\n`);
+      res.write("data: [DONE]\n\n");
+      return res.end();
+    }
+
+    // --- Legacy JSON Path (Internal fallback or non-stream clients) ---
+    let aiResponse = "";
+    let modelUsed = "";
+
+    for (const model of candidateChain) {
+      try {
+        console.log(`[Zero-Failure] Attempting: ${model}`);
+        const responseData = await callAIModel(apiKey, model, finalMessages);
+        
+        if (isValidAIResponse(responseData)) {
+          aiResponse = responseData;
+          modelUsed = model;
+          break;
+        } else {
+          failureTracker.set(model, now + COOLDOWN_MS);
+        }
+      } catch (error) {
+        failureTracker.set(model, now + COOLDOWN_MS);
+      }
+    }
+
+    if (!aiResponse) {
+      aiResponse = getSafeFallbackReply(latestUserMessage, intent);
+      modelUsed = "safe-fallback";
+    }
+
+    const answerBody = String(aiResponse).trim();
+    const finalResult = await AgentRunner.postProcess(context, {
+      text: answerBody,
+      reply: answerBody,
+      sources: sources || [],
+      model_used: modelUsed,
+      intent: intent,
+      doubt: doubt,
+      success: modelUsed !== "safe-fallback",
+      rag_enhanced: ragResult.enhanced || false,
+      rag_debug: ragResult.debug || null
+    });
+
+    return res.json(finalResult);
+
+  } catch (error) {
+    console.log("Response time (error):", Date.now() - start, "ms");
+    console.error("POST /api/chat error:", error);
+    return res.status(500).json({ error: "Internal server error." });
+  }
+});
+
+function getSafeFallbackReply(query, intent) {
+  const base = "I'm currently optimizing my specialized learning modules. In the meantime, here is a general overview:";
+  
+  if (intent === "CODING") {
+    return `${base}\n\nTo help with your coding request, please ensure your syntax is correct. I am syncing my developer tools and will be able to provide deep code analysis in a moment. What specific language or error are you working with?`;
+  }
+  
+  if (intent === "DIAGRAM") {
+    return `${base}\n\nI am refreshing my visual engine to generate a clear diagram for you. Please try asking for the specific structure or flow again in a minute.`;
+  }
+
+  return `${base}\n\nI'm StudyMate AI, and I'm here to help you learn effectively. My high-performance engines are currently under heavy load, but I'm ready to discuss your topic. Could you please provide more context or rephrase your question?`;
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function selectModel(intent) {
+  return MODELS[intent] || MODELS.GENERAL;
+}
+
+function buildModelCandidates(selectedModel) {
+  const ordered = [selectedModel, ...MODEL_FALLBACKS];
+  return [...new Set(ordered.filter(Boolean))];
+}
+
+function isValidAIResponse(text) {
+  if (!text || typeof text !== "string") return false;
+  const t = text.trim();
+  
+  // 1. Minimum length validation
+  if (t.length < 20) return false;
+  
+  // 2. Refusal phrase detection
+  const refusalPhrases = [
+    "i am an ai model",
+    "i cannot assist",
+    "i am unable to",
+    "my purpose is",
+    "sorry, i don't know",
+    "limit reached",
+    "internal server error",
+    "as an ai",
+    "my programming",
+    "contact support"
+  ];
+  const lower = t.toLowerCase();
+  return !refusalPhrases.some(p => lower.includes(p));
+}
+
+/**
+ * detectIntent(query)
+ * Classifies the query intent to route to the optimal model.
+ */
+function detectIntent(query, mode) {
+  const text = String(query || "").toLowerCase();
+
+  if (isIdentityQueryMatch(text)) return "identity";
+
+  if (DIAGRAM_QUERY_REGEX.test(text)) return "DIAGRAM";
+  if (CODE_QUERY_REGEX.test(text) || mode === "coding") return "CODING";
+
+  const explanationKeywords = ["explain", "how", "why", "what is", "define", "concept", "theory"];
+  if (explanationKeywords.some(kw => text.includes(kw))) return "EXPLANATION";
+
+  return "GENERAL";
+}
+
+function isIdentityQueryMatch(query) {
+  const text = String(query || "").toLowerCase();
+  const identityKeywords = [
+    "who made", "who created", "who built", "who developed", "who coded",
+    "who is the owner", "who is the creator", "your developer", "your owner",
+    "who built this app", "anthropic", "openai", "google", "meta"
+  ];
+  return identityKeywords.some(kw => text.includes(kw));
+}
+
+function shouldSuggestQuiz(text, intent) {
+  // Temporarily disabled to prevent legacy quiz CTA
+  return false;
+}
+
+function buildAgentPrompt(message, intent, mode, currentQuestion, autoQuestionEnabled = true) {
+  if (intent === "quiz") {
+    return currentQuestion ? PROMPT_TEMPLATES.QUIZ_EVAL : PROMPT_TEMPLATES.QUIZ_GEN;
+  }
+
+  let chatPrompt = PROMPT_TEMPLATES.CHAT;
+  const lowerMsg = String(message || "").toLowerCase();
+
+  // Enforce code blocks for coding queries
+  if (CODE_QUERY_REGEX.test(lowerMsg) || mode === "coding") {
+    chatPrompt += "\n[CRITICAL: User is asking for code. You MUST provide a complete, working code block with proper syntax highlighting. Do NOT just give theory.]";
+  }
+
+  // Encourage Mermaid for diagrams
+  if (DIAGRAM_QUERY_REGEX.test(lowerMsg)) {
+    chatPrompt += "\n[CRITICAL: User is asking for a diagram. You MUST use Mermaid syntax ( \`\`\`mermaid ) to draw a clear visual structure.]";
+  }
+
+  if (!autoQuestionEnabled) {
+    chatPrompt = chatPrompt.replace(/Follow-up: \(Ask exactly ONE natural, contextual, related question\. Do NOT mention quizzes\.\)/g, "");
+    chatPrompt += "\n[Do NOT ask any follow-up questions.]";
+  }
+  return chatPrompt;
+}
+
+
+function getRandomIdentityResponse() {
+  let index;
+  do {
+    index = Math.floor(Math.random() * IDENTITY_RESPONSES.length);
+  } while (index === lastIdentityIndex && IDENTITY_RESPONSES.length > 1);
+  lastIdentityIndex = index;
+  return IDENTITY_RESPONSES[index];
+}
+
+function normalizeIdentityCacheKey(message) {
+  return String(message || "").trim().toLowerCase();
+}
+
+function getCachedIdentityResult(message) {
+  const key = normalizeIdentityCacheKey(message);
+  if (!key) return null;
+  const cachedItem = identityCache.get(key);
+  if (!cachedItem) return null;
+  if (Date.now() - cachedItem.timestamp > IDENTITY_CACHE_TTL_MS) {
+    identityCache.delete(key);
+    return null;
+  }
+  return cachedItem.value;
+}
+
+function setCachedIdentityResult(message, value) {
+  const key = normalizeIdentityCacheKey(message);
+  if (!key || typeof value !== "boolean") return;
+  identityCache.set(key, { value, timestamp: Date.now() });
+}
+
+function quickIdentityCheck(message) {
+  const text = String(message || "")
+    .toLowerCase()
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+
+  if (!text) return false;
+
+  const groups = [
+    ["who", "made"],
+    ["who", "created"],
+    ["who", "built"],
+    ["who", "developed"],
+    ["your", "creator"],
+    ["your", "developer"],
+    ["your", "owner"],
+    ["who", "is", "behind"],
+    ["kisne", "banaya"],
+    ["kaun", "hai", "developer"]
+  ];
+
+  return groups.some(group => group.every(word => text.includes(word)));
+}
+
+async function isIdentityQuery(apiKey, userMessage) {
+  const prompt = `
+You are an intent classifier.
+
+Return ONLY "YES" or "NO".
+
+Return "YES" if the user is asking about:
+- who created you
+- who built you
+- who developed you
+- who owns you
+- your creator or developer
+
+This includes:
+- English
+- Hindi
+- Hinglish (mixed language)
+
+Examples:
+- who made you -> YES
+- who is your developer -> YES
+- tumhe kisne banaya -> YES
+- tumhara developer kaun hai -> YES
+- who is elon musk -> NO
+
+Message:
+"${String(userMessage || "").slice(0, 1000)}"
+`;
+
+  try {
+    const result = await fetchWithRetry(
+      () => callAIModel(apiKey, IDENTITY_CLASSIFIER_MODEL, [{ role: "user", content: prompt }]),
+      1
+    );
+    return String(result).trim().toUpperCase().includes("YES");
+  } catch (error) {
+    console.error("Identity detection failed:", error.message);
+    return false;
+  }
+}
+
+async function handleIdentityQuery(apiKey, userMessage) {
+  // 1. Robust normalized check first
+  if (quickIdentityCheck(userMessage)) {
+    return { text: getRandomIdentityResponse(), sources: [] };
+  }
+
+  // 2. Fallback to AI classifier for ambiguous cases
+  const cached = getCachedIdentityResult(userMessage);
+  if (cached === true) {
+    return { text: getRandomIdentityResponse(), sources: [] };
+  }
+  if (cached === false) {
+    return null;
+  }
+
+  const identityIntent = await isIdentityQuery(apiKey, userMessage);
+  setCachedIdentityResult(userMessage, identityIntent);
+
+  if (!identityIntent) return null;
+  return { text: getRandomIdentityResponse(), sources: [] };
+}
+
+// fetchWithRetry removed (moved to primary helper section)
+
+async function callAIModel(apiKey, model, messages) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000); // Strict 8s timeout
+
+  // PRE-FLIGHT SAFETY CHECK (CRITICAL: 100% Free enforcement)
+  const isAuthorized = MODEL_POOL.includes(model) && model.endsWith(":free");
+  if (!isAuthorized) {
+    throw new Error(`CRITICAL BLOCKED: Model ${model} is not authorized or not free.`);
+  }
+
+  try {
+    const requestBody = {
+      model,
+      messages,
+      provider: {
+        allow_fallbacks: false // Disable provider-level paid fallbacks
+      }
+    };
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+        "HTTP-Referer": "https://aadirishi.in/",
+        "X-Title": "StudyMate AI"
+      },
+      body: JSON.stringify(requestBody),
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      const rawError = await response.text();
+      throw new Error(`OpenRouter HTTP ${response.status}: ${rawError}`);
+    }
+
+    const data = await response.json();
+    const content = data?.choices?.[0]?.message?.content;
+    
+    if (!content) throw new Error("Empty response from provider.");
+    
+    return String(content);
+  } catch (error) {
+    if (error.name === "AbortError") {
+      throw new Error("Timeout: AI model took too long (>8s).");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+/**
+ * Caching System
+ */
+function normalizeMessage(message) {
+  return String(message || "")
+    .toLowerCase()
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function generateCacheKey({ message, intent, userProfile, mode }) {
+  const msg = normalizeMessage(message);
+  const grade = userProfile?.grade || "N/A";
+  const style = userProfile?.preferred_style || "N/A";
+  return `MSG:${msg}|INT:${intent}|MODE:${mode}|G:${grade}|S:${style}`;
+}
+
+function getCachedResponse(key) {
+  const cached = responseCache.get(key);
+  if (!cached) return null;
+  if (Date.now() - cached.timestamp > RESPONSE_CACHE_TTL_MS) {
+    responseCache.delete(key);
+    return null;
+  }
+  return cached.data;
+}
+
+function setCache(key, data) {
+  if (responseCache.size >= MAX_CACHE_SIZE) {
+    const oldestKey = responseCache.keys().next().value;
+    responseCache.delete(oldestKey);
+  }
+  responseCache.set(key, {
+    data,
+    timestamp: Date.now()
+  });
+}
+
+function extractQuiz(text) {
+  if (!text) return null;
+  const match = text.match(/Quiz:\s*(.*)/i);
+  return match ? match[1].trim() : null;
+}
+
+
+
+function getRecentHistory(messages) {
+  if (!Array.isArray(messages)) return [];
+  return messages.slice(-5).map(msg => {
+    let content = String(msg.content || "");
+    if (content.length > 300) {
+      content = content.substring(0, 300) + "...";
+    }
+    return {
+      role: msg.role === "user" ? "user" : "assistant",
+      content
+    };
+  });
+}
+
+function buildContextLayer({ userProfile, intent, doubt }) {
+  const grade = userProfile?.grade || "Unknown";
+  const goal = userProfile?.goal || "General Learning";
+  const style = userProfile?.preferred_style || "Simple";
+
+  return `
+STUDENT CONTEXT:
+- Level: ${grade}
+- Goal: ${goal}
+- Style: ${style}
+- Intent: ${intent}
+- Doubt Mode: ${doubt ? "ON" : "OFF"}
+
+INSTRUCTION: Adapt to student level, align with goal, and follow preferred style.
+`.trim();
+}
+
+/**
+ * Prompt Builder
+ */
+function buildPrompt({ message, intent, userProfile, externalContext, doubt, mode }) {
+  const contextLayer = buildContextLayer({ userProfile, intent, doubt });
+  const doubtInstructions = doubt ? PROMPT_TEMPLATES.DOUBT.trim() : "";
+  const modeInstructions = mode === "exam" ? PROMPT_TEMPLATES.EXAM.trim() : "";
+  const base = (intent === "FAST" || mode === "coding") ? "" : PROMPT_TEMPLATES.BASE.trim();
+  const specific = PROMPT_TEMPLATES[intent] || PROMPT_TEMPLATES.GENERAL;
+
+  return `You are StudyMate AI, a smart and friendly tutor.
+
+${THINKING_PROMPT.trim()}
+
+${contextLayer}
+
+${modeInstructions ? `MODE INSTRUCTIONS:\n${modeInstructions}\n\n` : ""}${doubtInstructions ? `IMPORTANT: ${doubtInstructions}\n\n` : ""}${base ? `${base}\n\n` : ""}Additional Context: ${externalContext || "No additional data."}
+
+User Question:
+${message}
+
+Task: ${specific}
+
+Final Rule: Always teach clearly and simply. Use step-by-step logic.`;
+}
+
+function getLatestUserMessage(messages) {
+  if (!Array.isArray(messages)) return "";
+  for (let i = messages.length - 1; i >= 0; i--) {
+    if (messages[i]?.role === "user" && typeof messages[i]?.content === "string") {
+      return messages[i].content;
+    }
+  }
+  return "";
+}
+
+function isRealtimeQuery(userMessage) {
+  return REALTIME_QUERY_REGEX.test(String(userMessage || ""));
+}
+
+function getCachedRealtimeContext(query) {
+  const cacheKey = String(query || "").trim().toLowerCase();
+  if (!cacheKey) return { text: "", sources: [] };
+  const cachedItem = realtimeCache.get(cacheKey);
+  if (!cachedItem) return { text: "", sources: [] };
+  if (Date.now() - cachedItem.timestamp > REALTIME_CACHE_TTL_MS) {
+    realtimeCache.delete(cacheKey);
+    return { text: "", sources: [] };
+  }
+  return cachedItem.value;
+}
+
+function setCachedRealtimeContext(query, value) {
+  const cacheKey = String(query || "").trim().toLowerCase();
+  if (!cacheKey || !value?.text) return;
+  realtimeCache.set(cacheKey, { value, timestamp: Date.now() });
+}
+
+async function fetchRealtimeContext(query) {
+  const cached = getCachedRealtimeContext(query);
+  if (cached.text) return cached;
+
+  const [newsDataResult, ddgResult] = await Promise.allSettled([
+    fetchNewsData(query),
+    fetchSearchResults(query)
+  ]);
+
+  if (newsDataResult.status === "rejected") {
+    console.error("[Realtime] NewsData failed:", newsDataResult.reason);
+  }
+  if (ddgResult.status === "rejected") {
+    console.error("[Realtime] DuckDuckGo failed:", ddgResult.reason);
+  }
+
+  const newsSources = newsDataResult.status === "fulfilled" && Array.isArray(newsDataResult.value?.sources)
+    ? newsDataResult.value.sources
+    : [];
+  const ddgSources = ddgResult.status === "fulfilled" && Array.isArray(ddgResult.value?.sources)
+    ? ddgResult.value.sources
+    : [];
+  const combinedSources = dedupeSources([...newsSources, ...ddgSources]).slice(0, 5);
+  const externalText = combinedSources.map((src) => `- ${src.title}`).join("\n");
+
+  const context = {
+    text: externalText,
+    sources: combinedSources
+  };
+  if (context.text || context.sources.length > 0) {
+    setCachedRealtimeContext(query, context);
+  }
+  return context;
+}
+
+async function fetchSearchResults(query) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const res = await fetch(`https://api.duckduckgo.com/?q=${encodeURIComponent(query)}&format=json&no_redirect=1&no_html=1`, {
+      signal: controller.signal
+    });
+
+    if (!res.ok) {
+      throw new Error(`DuckDuckGo request failed with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    const sources = collectDuckDuckGoSources(data?.RelatedTopics).slice(0, 5);
+    const text = sources.map((source) => source.title).join("\n");
+
+    return {
+      text,
+      sources
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+function collectDuckDuckGoSources(relatedTopics) {
+  if (!Array.isArray(relatedTopics)) return [];
+  const flatItems = [];
+  for (const item of relatedTopics) {
+    if (item?.FirstURL && item?.Text) {
+      flatItems.push(item);
+      continue;
+    }
+    if (Array.isArray(item?.Topics)) {
+      for (const nested of item.Topics) {
+        if (nested?.FirstURL && nested?.Text) {
+          flatItems.push(nested);
+        }
+      }
+    }
+  }
+  return flatItems.map((item) => ({
+    title: item.Text,
+    url: item.FirstURL
+  })).filter((item) => /^https?:\/\//i.test(item.url));
+}
+
+function dedupeSources(sources) {
+  if (!Array.isArray(sources)) return [];
+  return sources.filter((src, index, self) => (
+    index === self.findIndex((s) => String(s?.url || "").trim() === String(src?.url || "").trim())
+  ));
+}
+
+async function fetchNewsData(query) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 8000);
+
+  try {
+    const apiKey = process.env.NEWSDATA_API_KEY;
+    if (!apiKey) return { text: "", sources: [] };
+
+    const url = `https://newsdata.io/api/1/news?apikey=${apiKey}&q=${encodeURIComponent(query)}&language=en`;
+    const res = await fetch(url, { signal: controller.signal });
+
+    if (!res.ok) {
+      throw new Error(`NewsData request failed with status ${res.status}`);
+    }
+
+    const data = await res.json();
+    if (!Array.isArray(data?.results) || data.results.length === 0) {
+      return { text: "", sources: [] };
+    }
+
+    const now = new Date();
+    const freshArticles = data.results.filter((article) => {
+      if (!article?.pubDate || !article?.link || !article?.title) return false;
+      if (!/^https?:\/\//i.test(article.link)) return false;
+
+      const published = new Date(article.pubDate);
+      if (Number.isNaN(published.getTime())) return false;
+
+      const diffHours = (now - published) / (1000 * 60 * 60);
+      return diffHours >= 0 && diffHours <= 24;
+    });
+
+    if (freshArticles.length === 0) {
+      return { text: "", sources: [] };
+    }
+
+    const articles = freshArticles.slice(0, 5);
+
+    const sources = articles.map((article) => ({
+      title: article.title,
+      url: article.link
+    }));
+    const text = articles.map((article) => article.title).join("\n");
+
+    return {
+      text,
+      sources
+    };
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Start
+// ---------------------------------------------------------------------------
+
+app.listen(PORT, () => {
+  console.log(`StudyMate AI Backend running on http://localhost:${PORT}`);
+});

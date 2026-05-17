@@ -1,0 +1,543 @@
+{
+  "meta": {
+    "project": "StudyMate AI",
+    "version": "1.0.0",
+    "generatedAt": "2026-04-30T00:21:00+05:30",
+    "generator": "graphify",
+    "description": "Full architecture dependency graph for StudyMate AI — nodes, edges, layers, and external services."
+  },
+  "stats": {
+    "totalNodes": 42,
+    "totalEdges": 58,
+    "layers": 5,
+    "sourceFiles": 30,
+    "externalAPIs": 4,
+    "firestoreCollections": 4,
+    "aiModels": 6
+  },
+  "layers": [
+    { "id": "frontend", "label": "Frontend — Browser", "color": "#3b82f6" },
+    { "id": "backend", "label": "Express Backend", "color": "#8b5cf6" },
+    { "id": "cloud", "label": "Cloud Functions", "color": "#10b981" },
+    { "id": "firebase", "label": "Firebase Services", "color": "#f59e0b" },
+    { "id": "external", "label": "External APIs", "color": "#f43f5e" }
+  ],
+  "nodes": [
+    {
+      "id": "index.html",
+      "label": "index.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "index.html",
+      "size": 13788,
+      "description": "Main dashboard / SPA shell with chat UI, sidebar, notifications, modals"
+    },
+    {
+      "id": "login.html",
+      "label": "login.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "login.html",
+      "size": 5474,
+      "description": "Login page with email/password and Google OAuth"
+    },
+    {
+      "id": "signup.html",
+      "label": "signup.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "signup.html",
+      "size": 4383,
+      "description": "Signup page with disposable email blocking"
+    },
+    {
+      "id": "settings.html",
+      "label": "settings.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "settings.html",
+      "size": 18057,
+      "description": "Account settings — profile, security, AI config, preferences, privacy"
+    },
+    {
+      "id": "admin.html",
+      "label": "admin.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "admin.html",
+      "size": 6822,
+      "description": "Admin notification control panel (RBAC-protected)"
+    },
+    {
+      "id": "verify.html",
+      "label": "verify.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "verify.html",
+      "size": 3037,
+      "description": "Email verification polling page"
+    },
+    {
+      "id": "recover.html",
+      "label": "recover.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "recover.html",
+      "size": 2732,
+      "description": "Account recovery handler page"
+    },
+    {
+      "id": "reset.html",
+      "label": "reset.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "reset.html",
+      "size": 2210,
+      "description": "Password reset form page"
+    },
+    {
+      "id": "privacy.html",
+      "label": "privacy.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "privacy.html",
+      "size": 8535,
+      "description": "Privacy policy page"
+    },
+    {
+      "id": "terms.html",
+      "label": "terms.html",
+      "type": "page",
+      "layer": "frontend",
+      "path": "terms.html",
+      "size": 7893,
+      "description": "Terms of service page"
+    },
+    {
+      "id": "app.js",
+      "label": "app.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "app.js",
+      "size": 100928,
+      "lines": 2594,
+      "description": "Core SPA logic — auth flows, chat, markdown rendering, guest mode, study tracker"
+    },
+    {
+      "id": "firebase.js",
+      "label": "firebase.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "firebase.js",
+      "size": 991,
+      "lines": 23,
+      "exports": ["auth", "db", "functions"],
+      "description": "Firebase client SDK initialization — exports auth, db, functions"
+    },
+    {
+      "id": "notificationBell.js",
+      "label": "notificationBell.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "notificationBell.js",
+      "size": 13726,
+      "lines": 433,
+      "exports": ["initNotifications", "stopNotifications"],
+      "description": "Notification bell UI component — real-time listener, badge, panel, filters"
+    },
+    {
+      "id": "notificationService.js",
+      "label": "notificationService.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "services/notificationService.js",
+      "size": 12486,
+      "lines": 339,
+      "exports": [
+        "sendAdminNotification", "createNotification", "getUserNotifications",
+        "subscribeToNotifications", "markAsRead", "markAllAsRead",
+        "getUnreadCount", "formatNotificationTime"
+      ],
+      "description": "Firestore-backed notification CRUD — subscribe, mark read, admin dispatch"
+    },
+    {
+      "id": "disposableEmailValidator.js",
+      "label": "disposableEmailValidator.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "disposableEmailValidator.js",
+      "size": 30231,
+      "lines": 641,
+      "exports": ["validateEmail", "isDisposableEmailSync", "getBlockedAttemptsLog", "clearBlockedAttemptsLog"],
+      "description": "3000+ domain blocklist with suffix matching and debounce.io remote fallback"
+    },
+    {
+      "id": "admin.js",
+      "label": "admin.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "admin.js",
+      "size": 11336,
+      "lines": 276,
+      "description": "Admin panel logic — RBAC auth check, notification form, live preview"
+    },
+    {
+      "id": "verify.js",
+      "label": "verify.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "verify.js",
+      "size": 3517,
+      "lines": 107,
+      "description": "Email verification polling and oobCode handler"
+    },
+    {
+      "id": "recover.js",
+      "label": "recover.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "recover.js",
+      "size": 1774,
+      "lines": 50,
+      "description": "Account recovery action code handler"
+    },
+    {
+      "id": "reset.js",
+      "label": "reset.js",
+      "type": "script",
+      "layer": "frontend",
+      "path": "reset.js",
+      "size": 3528,
+      "lines": 107,
+      "description": "Password reset form handler with auto-login"
+    },
+    {
+      "id": "style.css",
+      "label": "style.css",
+      "type": "stylesheet",
+      "layer": "frontend",
+      "path": "style.css",
+      "size": 64759,
+      "description": "Global stylesheet — glassmorphism design system, themes, responsive layouts"
+    },
+    {
+      "id": "notification.css",
+      "label": "notification.css",
+      "type": "stylesheet",
+      "layer": "frontend",
+      "path": "notification.css",
+      "size": 14493,
+      "description": "Notification bell and panel component styles"
+    },
+    {
+      "id": "admin.css",
+      "label": "admin.css",
+      "type": "stylesheet",
+      "layer": "frontend",
+      "path": "admin.css",
+      "size": 6646,
+      "description": "Admin panel styles"
+    },
+    {
+      "id": "marked_cdn",
+      "label": "marked (CDN)",
+      "type": "cdn",
+      "layer": "frontend",
+      "url": "https://cdn.jsdelivr.net/npm/marked/lib/marked.esm.js",
+      "description": "Markdown-to-HTML parser"
+    },
+    {
+      "id": "hljs_cdn",
+      "label": "highlight.js (CDN)",
+      "type": "cdn",
+      "layer": "frontend",
+      "url": "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/+esm",
+      "description": "Syntax highlighting for code blocks"
+    },
+    {
+      "id": "mermaid_cdn",
+      "label": "Mermaid.js (CDN)",
+      "type": "cdn",
+      "layer": "frontend",
+      "url": "https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js",
+      "description": "Diagram rendering engine"
+    },
+    {
+      "id": "firebase_sdk",
+      "label": "Firebase SDK (CDN)",
+      "type": "cdn",
+      "layer": "frontend",
+      "url": "https://www.gstatic.com/firebasejs/10.7.1/",
+      "modules": ["firebase-app", "firebase-auth", "firebase-firestore", "firebase-functions"],
+      "description": "Firebase JS SDK v10.7.1 — app, auth, firestore, functions"
+    },
+    {
+      "id": "server.js",
+      "label": "server.js",
+      "type": "script",
+      "layer": "backend",
+      "path": "server/server.js",
+      "size": 31462,
+      "lines": 972,
+      "description": "Express API proxy — model routing, caching, search, zero-failure chain"
+    },
+    {
+      "id": "agents.js",
+      "label": "agents.js",
+      "type": "script",
+      "layer": "backend",
+      "path": "server/agents.js",
+      "size": 5731,
+      "lines": 187,
+      "exports": ["AgentRunner (singleton)"],
+      "description": "Central agent runner — Identity, Intent, Quiz, UI agents for pre/post processing"
+    },
+    {
+      "id": "functions_index.js",
+      "label": "functions/index.js",
+      "type": "script",
+      "layer": "cloud",
+      "path": "functions/index.js",
+      "size": 4691,
+      "lines": 129,
+      "exports": ["sendNotification"],
+      "description": "Cloud Function — sendNotification (asia-south1, admin-only, broadcast/single)"
+    },
+    {
+      "id": "setAdmin.js",
+      "label": "scripts/setAdmin.js",
+      "type": "script",
+      "layer": "cloud",
+      "path": "functions/scripts/setAdmin.js",
+      "size": 2241,
+      "lines": 72,
+      "description": "CLI script to set admin custom claim on a Firebase user"
+    },
+    {
+      "id": "firestore.rules",
+      "label": "firestore.rules",
+      "type": "config",
+      "layer": "firebase",
+      "path": "firestore.rules",
+      "size": 3457,
+      "description": "Firestore security rules — RBAC enforcement"
+    },
+    {
+      "id": "firebase_auth",
+      "label": "Firebase Auth",
+      "type": "service",
+      "layer": "firebase",
+      "description": "Authentication service — email/password, Google OAuth, email verification"
+    },
+    {
+      "id": "firestore_db",
+      "label": "Cloud Firestore",
+      "type": "service",
+      "layer": "firebase",
+      "description": "NoSQL database — users, chats, messages, notifications collections"
+    },
+    {
+      "id": "openrouter",
+      "label": "OpenRouter AI",
+      "type": "api",
+      "layer": "external",
+      "url": "https://openrouter.ai/api/v1/chat/completions",
+      "models": [
+        "minimax/minimax-m2.5:free",
+        "meta-llama/llama-3-8b-instruct:free",
+        "google/gemma-7b-it:free",
+        "nousresearch/nous-capybara-7b:free",
+        "openchat/openchat-7b:free",
+        "nvidia/nemotron-3-nano-30b-a3b:free"
+      ],
+      "description": "AI chat completions — 6 free models with zero-failure fallback chain"
+    },
+    {
+      "id": "duckduckgo",
+      "label": "DuckDuckGo",
+      "type": "api",
+      "layer": "external",
+      "url": "https://api.duckduckgo.com/",
+      "description": "Instant answer and web search for real-time context"
+    },
+    {
+      "id": "newsdata",
+      "label": "NewsData.io",
+      "type": "api",
+      "layer": "external",
+      "url": "https://newsdata.io/api/1/news",
+      "description": "News article API for current affairs context (24h freshness filter)"
+    },
+    {
+      "id": "debounce_io",
+      "label": "debounce.io",
+      "type": "api",
+      "layer": "external",
+      "url": "https://disposable.debounce.io/",
+      "description": "Remote disposable email verification API (free, no key)"
+    }
+  ],
+  "edges": [
+    { "from": "index.html", "to": "app.js", "type": "script_tag", "label": "type=module" },
+    { "from": "index.html", "to": "notificationBell.js", "type": "script_tag", "label": "type=module" },
+    { "from": "index.html", "to": "mermaid_cdn", "type": "script_tag" },
+    { "from": "index.html", "to": "style.css", "type": "stylesheet" },
+    { "from": "index.html", "to": "notification.css", "type": "stylesheet" },
+    { "from": "login.html", "to": "app.js", "type": "script_tag", "label": "type=module" },
+    { "from": "login.html", "to": "style.css", "type": "stylesheet" },
+    { "from": "signup.html", "to": "app.js", "type": "script_tag", "label": "type=module" },
+    { "from": "signup.html", "to": "style.css", "type": "stylesheet" },
+    { "from": "settings.html", "to": "app.js", "type": "script_tag", "label": "type=module" },
+    { "from": "settings.html", "to": "style.css", "type": "stylesheet" },
+    { "from": "admin.html", "to": "admin.js", "type": "script_tag", "label": "type=module" },
+    { "from": "admin.html", "to": "style.css", "type": "stylesheet" },
+    { "from": "admin.html", "to": "notification.css", "type": "stylesheet" },
+    { "from": "admin.html", "to": "admin.css", "type": "stylesheet" },
+    { "from": "verify.html", "to": "verify.js", "type": "script_tag", "label": "type=module" },
+    { "from": "verify.html", "to": "style.css", "type": "stylesheet" },
+    { "from": "recover.html", "to": "recover.js", "type": "script_tag" },
+    { "from": "reset.html", "to": "reset.js", "type": "script_tag" },
+
+    { "from": "app.js", "to": "firebase.js", "type": "es_import", "imports": ["auth", "db"] },
+    { "from": "app.js", "to": "disposableEmailValidator.js", "type": "es_import", "imports": ["validateEmail", "isDisposableEmailSync"] },
+    { "from": "app.js", "to": "notificationBell.js", "type": "es_import", "imports": ["initNotifications", "stopNotifications"] },
+    { "from": "app.js", "to": "marked_cdn", "type": "es_import", "imports": ["marked"] },
+    { "from": "app.js", "to": "hljs_cdn", "type": "es_import", "imports": ["hljs"] },
+    { "from": "app.js", "to": "firebase_sdk", "type": "es_import", "imports": ["firebase-auth", "firebase-firestore"] },
+
+    { "from": "notificationBell.js", "to": "notificationService.js", "type": "es_import", "imports": ["subscribeToNotifications", "markAsRead", "markAllAsRead", "getUnreadCount", "formatNotificationTime"] },
+    { "from": "notificationBell.js", "to": "firebase.js", "type": "es_import", "imports": ["auth"] },
+    { "from": "notificationBell.js", "to": "firebase_sdk", "type": "es_import", "imports": ["firebase-auth"] },
+
+    { "from": "notificationService.js", "to": "firebase.js", "type": "es_import", "imports": ["db", "functions"] },
+    { "from": "notificationService.js", "to": "firebase_sdk", "type": "es_import", "imports": ["firebase-functions", "firebase-firestore"] },
+
+    { "from": "admin.js", "to": "firebase.js", "type": "es_import", "imports": ["auth"] },
+    { "from": "admin.js", "to": "notificationService.js", "type": "es_import", "imports": ["sendAdminNotification"] },
+    { "from": "admin.js", "to": "firebase_sdk", "type": "es_import", "imports": ["firebase-auth"] },
+
+    { "from": "verify.js", "to": "firebase.js", "type": "es_import", "imports": ["auth"] },
+    { "from": "verify.js", "to": "firebase_sdk", "type": "es_import", "imports": ["firebase-auth"] },
+
+    { "from": "recover.js", "to": "firebase.js", "type": "es_import", "imports": ["auth"] },
+    { "from": "recover.js", "to": "firebase_sdk", "type": "es_import", "imports": ["firebase-auth"] },
+
+    { "from": "reset.js", "to": "firebase.js", "type": "es_import", "imports": ["auth"] },
+    { "from": "reset.js", "to": "firebase_sdk", "type": "es_import", "imports": ["firebase-auth"] },
+
+    { "from": "firebase.js", "to": "firebase_sdk", "type": "es_import", "imports": ["firebase-app", "firebase-auth", "firebase-firestore", "firebase-functions"] },
+    { "from": "firebase.js", "to": "firebase_auth", "type": "service_connect", "label": "getAuth()" },
+    { "from": "firebase.js", "to": "firestore_db", "type": "service_connect", "label": "getFirestore()" },
+    { "from": "firebase.js", "to": "functions_index.js", "type": "service_connect", "label": "getFunctions(asia-south1)" },
+
+    { "from": "app.js", "to": "server.js", "type": "http", "method": "POST", "endpoint": "/api/chat" },
+
+    { "from": "notificationService.js", "to": "firestore_db", "type": "firestore_query", "collection": "notifications" },
+    { "from": "notificationService.js", "to": "functions_index.js", "type": "httpsCallable", "function": "sendNotification" },
+
+    { "from": "disposableEmailValidator.js", "to": "debounce_io", "type": "http", "method": "GET", "label": "remote email check" },
+
+    { "from": "server.js", "to": "agents.js", "type": "require", "imports": ["AgentRunner"] },
+    { "from": "server.js", "to": "openrouter", "type": "http", "method": "POST", "label": "chat/completions" },
+    { "from": "server.js", "to": "duckduckgo", "type": "http", "method": "GET", "label": "instant answer" },
+    { "from": "server.js", "to": "newsdata", "type": "http", "method": "GET", "label": "news articles" },
+
+    { "from": "functions_index.js", "to": "firestore_db", "type": "admin_sdk", "collection": "notifications" },
+    { "from": "functions_index.js", "to": "firebase_auth", "type": "admin_sdk", "label": "auth context verification" },
+
+    { "from": "setAdmin.js", "to": "firebase_auth", "type": "admin_sdk", "label": "setCustomUserClaims" },
+
+    { "from": "firestore.rules", "to": "firestore_db", "type": "enforces", "label": "security rules" },
+
+    { "from": "app.js", "to": "firestore_db", "type": "firestore_query", "collections": ["users", "chats", "messages"] }
+  ],
+  "collections": [
+    {
+      "name": "users",
+      "fields": {
+        "uid": "string (PK)",
+        "name": "string",
+        "email": "string",
+        "photoURL": "string",
+        "onboardingDone": "boolean",
+        "hasSeenWelcome": "boolean",
+        "questionsAsked": "number",
+        "questionsToday": "number",
+        "streakCount": "number",
+        "lastActiveDate": "string (YYYY-MM-DD)",
+        "createdAt": "Timestamp"
+      }
+    },
+    {
+      "name": "chats",
+      "parent": "users/{userId}",
+      "fields": {
+        "id": "string (PK)",
+        "userId": "string (FK)",
+        "title": "string",
+        "mode": "string (general|exam|coding)",
+        "hinglish": "boolean",
+        "notesMode": "string",
+        "createdAt": "Timestamp"
+      }
+    },
+    {
+      "name": "messages",
+      "parent": "chats/{chatId}",
+      "fields": {
+        "id": "string (PK)",
+        "role": "string (user|assistant)",
+        "content": "string",
+        "sources": "array",
+        "createdAt": "Timestamp"
+      }
+    },
+    {
+      "name": "notifications",
+      "fields": {
+        "id": "string (PK)",
+        "userId": "string (FK)",
+        "title": "string",
+        "message": "string",
+        "type": "string (info|success|warning)",
+        "isRead": "boolean",
+        "createdAt": "Timestamp"
+      }
+    }
+  ],
+  "techStack": {
+    "frontend": "Vanilla JS (ES Modules)",
+    "styling": "CSS (Glassmorphism, Dark Theme)",
+    "font": "Outfit (Google Fonts)",
+    "markdown": "marked + highlight.js",
+    "diagrams": "Mermaid.js",
+    "auth": "Firebase Auth v10.7.1",
+    "database": "Cloud Firestore",
+    "security": "Firestore Rules (RBAC)",
+    "cloudFunctions": "Firebase Functions v4 (Node 20)",
+    "backend": "Express.js v4",
+    "ai": "OpenRouter (6 free models)",
+    "search": "DuckDuckGo + NewsData.io",
+    "emailBlocking": "3000+ domain blocklist + debounce.io",
+    "region": "asia-south1 (Mumbai)"
+  },
+  "modelRouting": {
+    "strategy": "intent-based selection → zero-failure fallback chain",
+    "intents": {
+      "GENERAL": "minimax/minimax-m2.5:free",
+      "EXPLANATION": "meta-llama/llama-3-8b-instruct:free",
+      "CODING": "nousresearch/nous-capybara-7b:free",
+      "DIAGRAM": "minimax/minimax-m2.5:free",
+      "REASONING": "openchat/openchat-7b:free"
+    },
+    "fallbackChain": [
+      "minimax/minimax-m2.5:free",
+      "meta-llama/llama-3-8b-instruct:free",
+      "google/gemma-7b-it:free",
+      "nousresearch/nous-capybara-7b:free",
+      "openchat/openchat-7b:free",
+      "nvidia/nemotron-3-nano-30b-a3b:free"
+    ],
+    "cooldownMs": 300000
+  }
+}

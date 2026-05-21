@@ -39,7 +39,7 @@ window.__FIRESTORE_DEBUG__ = false;
 
 function sanitizeFirestorePayload(payload) {
   if (payload === null || typeof payload !== "object") return payload;
-  
+
   // Preserve Firebase special objects (Timestamp, FieldValue, Date)
   if (payload.constructor && payload.constructor.name !== "Object" && payload.constructor.name !== "Array") {
     return payload;
@@ -200,12 +200,12 @@ const state = {
   isGuestMode: false,
   guestQuestionsUsed: 0,
   currentQuestion: null,
-  userSettings: { 
-    aiModel: "auto", 
-    aiStyle: "detailed", 
-    aiTone: "professional", 
-    autoQuestion: true, 
-    fontSize: 16 
+  userSettings: {
+    aiModel: "auto",
+    aiStyle: "detailed",
+    aiTone: "professional",
+    autoQuestion: true,
+    fontSize: 16
   },
   userMemory: []
 };
@@ -723,7 +723,7 @@ function initDashboardPage() {
 
   hideOnboardingOverlay();
   bindDashboardEvents();
-  
+
   if (state.isGuestMode) {
     initializeGuestDashboard();
   }
@@ -756,7 +756,7 @@ function initializeGuestDashboard() {
   bindNotesModeControls();
   bindHinglishToggle();
   initVersioning();
-  
+
   ui.hinglishToggle.checked = getSavedHinglishDefault();
 
   renderHistory();
@@ -1040,22 +1040,22 @@ function initSettingsPage() {
     settingsDisplayHeader: document.getElementById("settingsDisplayHeader"),
     settingsEmailHeader: document.getElementById("settingsEmailHeader"),
     saveAccountBtn: document.getElementById("saveAccountBtn"),
-    
+
     changePasswordBtn: document.getElementById("changePasswordBtn"),
     logoutAllSessionsBtn: document.getElementById("logoutAllSessionsBtn"),
-    
+
     aiModelSelect: document.getElementById("aiModelSelect"),
     aiStyleSelect: document.getElementById("aiStyleSelect"),
     aiToneSelect: document.getElementById("aiToneSelect"),
     autoQuestionToggle: document.getElementById("autoQuestionToggle"),
-    
+
     statsTotalRequests: document.getElementById("statsTotalRequests"),
     statsTokensUsed: document.getElementById("statsTokensUsed"),
-    
+
     themeSelector: document.getElementById("themeSelector"),
     appLanguageSelect: document.getElementById("appLanguageSelect"),
     fontSizeRange: document.getElementById("fontSizeRange"),
-    
+
     fullLogoutBtn: document.getElementById("fullLogoutBtn"),
     clearAllHistoryBtn: document.getElementById("clearAllHistoryBtn"),
     downloadDataBtn: document.getElementById("downloadDataBtn"),
@@ -1070,7 +1070,7 @@ function initSettingsPage() {
   const nav = document.getElementById("settingsNav");
   const mobileBackBtn = document.getElementById("settingsMobileBack");
   const settingsLayout = document.querySelector(".settings-layout");
-  
+
   // Helper: detect mobile breakpoint
   const isMobile = () => window.innerWidth <= 768;
 
@@ -1103,7 +1103,7 @@ function initSettingsPage() {
     navItems.forEach(item => {
       item.addEventListener("click", () => {
         const target = item.dataset.section;
-        
+
         // Update nav active state
         navItems.forEach(i => i.classList.remove("active"));
         item.classList.add("active");
@@ -1167,12 +1167,12 @@ function bindSettingsEvents() {
   if (ui.changePasswordBtn) ui.changePasswordBtn.addEventListener("click", () => handlePasswordResetRequest());
   if (ui.logoutAllSessionsBtn) ui.logoutAllSessionsBtn.addEventListener("click", () => confirmLogoutAll());
   if (ui.fullLogoutBtn) ui.fullLogoutBtn.addEventListener("click", () => confirmLogoutAll());
-  
+
   if (ui.aiModelSelect) ui.aiModelSelect.addEventListener("change", () => saveUserSettings());
   if (ui.aiStyleSelect) ui.aiStyleSelect.addEventListener("change", () => saveUserSettings());
   if (ui.aiToneSelect) ui.aiToneSelect.addEventListener("change", () => saveUserSettings());
   if (ui.autoQuestionToggle) ui.autoQuestionToggle.addEventListener("change", () => saveUserSettings());
-  
+
   if (ui.themeSelector) {
     ui.themeSelector.addEventListener("click", (e) => {
       const btn = e.target.closest(".theme-btn-card");
@@ -1181,7 +1181,7 @@ function bindSettingsEvents() {
       renderSettingsPreferences();
     });
   }
-  
+
   if (ui.appLanguageSelect) ui.appLanguageSelect.addEventListener("change", () => saveUserSettings());
   if (ui.fontSizeRange) {
     ui.fontSizeRange.addEventListener("input", (e) => applyFontSize(e.target.value));
@@ -1200,7 +1200,7 @@ async function loadUserSettings() {
     if (snap.exists()) {
       const data = snap.data();
       const settings = data.settings || {};
-      
+
       state.userSettings = {
         aiModel: settings.aiModel || "auto",
         aiStyle: settings.aiStyle || "detailed",
@@ -1209,7 +1209,7 @@ async function loadUserSettings() {
         language: settings.language || "en",
         fontSize: settings.fontSize || 16
       };
-      
+
       if (ui.aiModelSelect) ui.aiModelSelect.value = state.userSettings.aiModel;
       if (ui.aiStyleSelect) ui.aiStyleSelect.value = state.userSettings.aiStyle;
       if (ui.aiToneSelect) ui.aiToneSelect.value = state.userSettings.aiTone;
@@ -1268,13 +1268,13 @@ async function saveUserSettings() {
     language: ui.appLanguageSelect?.value || "en",
     fontSize: Number(ui.fontSizeRange?.value || 16)
   };
-  
+
   state.userSettings = settings;
-  
+
   try {
-    await updateDoc(doc(db, "users", state.currentUser.uid), { 
+    await updateDoc(doc(db, "users", state.currentUser.uid), {
       settings,
-      updatedAt: serverTimestamp() 
+      updatedAt: serverTimestamp()
     });
     localStorage.setItem("appSettings", JSON.stringify(settings));
     showToast("Preferences updated", "success");
@@ -1288,25 +1288,25 @@ async function saveAccountProfile() {
   if (!state.currentUser) return;
   const newName = ui.settingsNameInput.value.trim();
   const newPhoto = ui.settingsAvatarUrlInput.value.trim();
-  
+
   try {
     ui.saveAccountBtn.disabled = true;
     ui.saveAccountBtn.textContent = "Saving...";
-    
+
     await updateProfile(state.currentUser, {
       displayName: newName,
       photoURL: newPhoto
     });
-    
+
     await updateDoc(doc(db, "users", state.currentUser.uid), {
       displayName: newName,
       photoURL: newPhoto,
       updatedAt: serverTimestamp()
     });
-    
+
     if (ui.settingsDisplayHeader) ui.settingsDisplayHeader.textContent = newName;
     if (ui.settingsAvatarPreview && newPhoto) ui.settingsAvatarPreview.src = newPhoto;
-    
+
     showToast("Profile updated successfully", "success");
   } catch (err) {
     console.error("Profile update error:", err);
@@ -1345,7 +1345,7 @@ async function handlePasswordResetRequest() {
     confirmText: "Send Link"
   });
   if (!confirmed) return;
-  
+
   try {
     await sendPasswordResetEmail(auth, state.currentUser.email);
     showToast("Reset link sent to your email", "success");
@@ -1359,7 +1359,7 @@ async function exportUserData() {
     const userDoc = await getDoc(doc(db, "users", state.currentUser.uid));
     const chatsQuery = query(collection(db, "chats"), where("userId", "==", state.currentUser.uid));
     const chatsSnap = await getDocs(chatsQuery);
-    
+
     const chats = [];
     for (const d of chatsSnap.docs) {
       const chatData = d.data();
@@ -1367,13 +1367,13 @@ async function exportUserData() {
       chatData.messages = msgsSnap.docs.map(m => m.data());
       chats.push(chatData);
     }
-    
+
     const exportData = {
       profile: userDoc.data(),
       chats,
       exportedAt: new Date().toISOString()
     };
-    
+
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -1397,7 +1397,7 @@ async function handleDeleteAccount() {
     type: "danger"
   });
   if (!step1) return;
-  
+
   const step2 = await showConfirm({
     label: "Last Warning",
     title: "Are you absolutely sure?",
@@ -1414,13 +1414,13 @@ async function handleDeleteAccount() {
     for (const d of snapshot.docs) {
       await deleteDoc(doc(db, "chats", d.id));
     }
-    
+
     // 2. Delete User Doc
     await deleteDoc(doc(db, "users", state.currentUser.uid));
-    
+
     // 3. Delete Auth Account
     await state.currentUser.delete();
-    
+
     window.location.replace("signup.html");
   } catch (err) {
     console.error("Delete error:", err);
@@ -1703,10 +1703,10 @@ function loadChats(preferredChatId = state.currentChatId) {
           const data = d.data({ serverTimestamps: "estimate" });
           const existingChat = chatMap.get(d.id);
           const parsed = {
-            id: d.id, 
-            userId: data.userId, 
+            id: d.id,
+            userId: data.userId,
             title: data.title || "New Chat",
-            mode: normalizeMode(data.mode), 
+            mode: normalizeMode(data.mode),
             hinglish: Boolean(data.hinglish),
             notesMode: data.notesMode || "normal",
             createdAt: data.createdAt || null,
@@ -1866,30 +1866,30 @@ function renderMessages() {
       ui.chatForm.style.display = "flex";
       return;
     }
-  const messageMarkup = activeChat.messages.map((message, index) => {
-    const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
-    // --- RAG Integration: Show "Live" badge on RAG-enhanced AI messages ---
-    const ragBadge = (message.role === "ai" && message.rag_enhanced) ? `<span class="rag-badge">Live</span>` : "";
-    const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content, message.role, message.intent, message.doubt)}</div>`;
-    const sourcesMarkup = renderMessageSources(message);
-    const actionMarkup = renderMessageActions(activeChat.messages, message, index);
-    return `<div class="message-row ${message.role}"><div class="message-bubble"><div class="message-meta"><strong>${roleLabel}</strong>${ragBadge}</div>${contentMarkup}${sourcesMarkup}${actionMarkup}</div></div>`;
-  }).join("");
+    const messageMarkup = activeChat.messages.map((message, index) => {
+      const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
+      // --- RAG Integration: Show "Live" badge on RAG-enhanced AI messages ---
+      const ragBadge = (message.role === "ai" && message.rag_enhanced) ? `<span class="rag-badge">Live</span>` : "";
+      const contentMarkup = `<div class="message-content" data-message-content="${index}">${formatMessage(message.content, message.role, message.intent, message.doubt)}</div>`;
+      const sourcesMarkup = renderMessageSources(message);
+      const actionMarkup = renderMessageActions(activeChat.messages, message, index);
+      return `<div class="message-row ${message.role}"><div class="message-bubble"><div class="message-meta"><strong>${roleLabel}</strong>${ragBadge}</div>${contentMarkup}${sourcesMarkup}${actionMarkup}</div></div>`;
+    }).join("");
 
-  let assistantBubbleMarkup = "";
-  if (isStreaming || showTyping) {
-    const text = isStreaming ? state.streamingResponse.visibleText : "";
-    // --- RAG Integration: Show search indicator when waiting for live info ---
-    const lastUserMsg = getLatestUserMessageFromPayload(activeChat.messages);
-    const isRagQuery = REALTIME_QUERY_REGEX.test(lastUserMsg || "");
-    const ragIndicator = (!text && showTyping && isRagQuery)
-      ? `<div class="rag-search-indicator"><span class="rag-pulse"></span><span class="rag-label">Searching latest information...</span></div>`
-      : "";
-    const content = text 
-      ? formatMessage(text, "ai") 
-      : `${ragIndicator}<div class="thinking-dots"><span></span><span></span><span></span></div>`;
-    
-    assistantBubbleMarkup = `
+    let assistantBubbleMarkup = "";
+    if (isStreaming || showTyping) {
+      const text = isStreaming ? state.streamingResponse.visibleText : "";
+      // --- RAG Integration: Show search indicator when waiting for live info ---
+      const lastUserMsg = getLatestUserMessageFromPayload(activeChat.messages);
+      const isRagQuery = REALTIME_QUERY_REGEX.test(lastUserMsg || "");
+      const ragIndicator = (!text && showTyping && isRagQuery)
+        ? `<div class="rag-search-indicator"><span class="rag-pulse"></span><span class="rag-label">Searching latest information...</span></div>`
+        : "";
+      const content = text
+        ? formatMessage(text, "ai")
+        : `${ragIndicator}<div class="thinking-dots"><span></span><span></span><span></span></div>`;
+
+      assistantBubbleMarkup = `
       <div class="message-row ai">
         <div class="message-bubble">
           <div class="message-meta"><strong>StudyMate AI</strong></div>
@@ -1897,11 +1897,11 @@ function renderMessages() {
         </div>
       </div>
     `.trim();
-  }
+    }
 
-  ui.chatMessages.innerHTML = `${messageMarkup}${assistantBubbleMarkup}`;
-  renderMermaidDiagrams();
-  focusMessageEditor();
+    ui.chatMessages.innerHTML = `${messageMarkup}${assistantBubbleMarkup}`;
+    renderMermaidDiagrams();
+    focusMessageEditor();
   } catch (err) {
     console.error("[Render Safety] renderMessages failed:", err);
   }
@@ -1915,17 +1915,17 @@ function openChat(chatId) {
   if (!state.isGuestMode) {
     persistLastActiveChatId(chatId, state.currentUser?.uid);
   }
-  
+
   if (!state.isGuestMode) {
     loadMessages(chatId);
   } else {
-    syncHeaderWithActiveChat(); 
-    renderHistory(); 
-    renderMessages(); 
+    syncHeaderWithActiveChat();
+    renderHistory();
+    renderMessages();
     // Force scroll to bottom on initial load
     setTimeout(() => scrollMessagesToBottom(true), 100);
   }
-  
+
   closeSidebar();
 }
 
@@ -2028,10 +2028,10 @@ async function fetchAIResponse(messages, mode, hinglishEnabled, notesMode) {
 
     // Fallback for non-streaming response
     const data = await response.json();
-    return { 
-      text: data.reply || data.text, 
-      sources: data.sources || [], 
-      intent: data.intent || "GENERAL", 
+    return {
+      text: data.reply || data.text,
+      sources: data.sources || [],
+      intent: data.intent || "GENERAL",
       doubt: data.doubt || false,
       metadata: data
     };
@@ -2056,16 +2056,16 @@ async function saveActiveChatSettings() {
 
 async function generateAssistantReply({ chat, apiMessages = null, userContent = null, titleSource = "", successMessage = "" }) {
   if (!chat || state.isSending) return;
-  state.isSending = true; 
+  state.isSending = true;
   state.showTypingIndicator = true;
-  state.editingMessageIndex = null; 
+  state.editingMessageIndex = null;
   state.messageDraft = "";
   setComposerLoading(true);
 
   chat.mode = getSelectedMode();
   chat.hinglish = ui.hinglishToggle.checked;
   chat.notesMode = getSelectedNotesMode();
-  renderHistory(); 
+  renderHistory();
   renderMessages();
   scrollMessagesToBottom(true); // Initial scroll
 
@@ -2076,7 +2076,7 @@ async function generateAssistantReply({ chat, apiMessages = null, userContent = 
 
   try {
     const aiResult = await fetchAIResponse(finalApiMessages, chat.mode, chat.hinglish, chat.notesMode);
-    
+
     let finalContent = "";
     let finalMetadata = null;
 
@@ -2199,18 +2199,18 @@ async function copyMessageContent(messageIndex) {
 async function streamAssistantMessage(chatId, source, controller = null) {
   stopStreamingResponse();
   state.streamingResponse = { chatId, visibleText: "", isCancelled: false };
-  
+
   if (typeof source === "string") {
     // Legacy simulated streaming
     const words = source.split(" ");
     let current = "";
     try {
       for (let i = 0; i < words.length; i++) {
-         if (!state.streamingResponse || state.streamingResponse.isCancelled) return;
-         current += (i === 0 ? words[i] : ` ${words[i]}`);
-         state.streamingResponse.visibleText = current;
-         updateStreamUI(current);
-         await delay(STREAM_WORD_DELAY_MS);
+        if (!state.streamingResponse || state.streamingResponse.isCancelled) return;
+        current += (i === 0 ? words[i] : ` ${words[i]}`);
+        state.streamingResponse.visibleText = current;
+        updateStreamUI(current);
+        await delay(STREAM_WORD_DELAY_MS);
       }
     } catch (err) {
       console.error("[Render Safety] streamAssistantMessage legacy loop failed:", err);
@@ -2246,7 +2246,7 @@ async function streamAssistantMessage(chatId, source, controller = null) {
         try {
           const data = JSON.parse(dataStr);
           if (data.content) {
-            if (state.showTypingIndicator) state.showTypingIndicator = false; 
+            if (state.showTypingIndicator) state.showTypingIndicator = false;
             accumulatedText += data.content;
             state.streamingResponse.visibleText = accumulatedText;
             updateStreamUI(accumulatedText);
@@ -2254,7 +2254,7 @@ async function streamAssistantMessage(chatId, source, controller = null) {
           } else if (data.metadata) {
             metadata = data.metadata;
           }
-        } catch (e) {}
+        } catch (e) { }
       }
     }
   } catch (err) {
@@ -2571,7 +2571,7 @@ async function renderChangelog() {
   if (!ui.changelogContent) return;
   ui.changelogContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-soft)">Loading updates...</div>`;
   try {
-    const res = await fetch("/config/changelog.json");
+    const res = await fetch("/config/changelog.json?t=" + Date.now());
     if (!res.ok) throw new Error("Failed to load");
     const data = await res.json();
     ui.changelogContent.innerHTML = data.releases.map(release => `
@@ -2604,7 +2604,7 @@ async function renderChangelog() {
 
 window.addEventListener("popstate", () => {
   if (document.body.dataset.page !== "dashboard") return;
-  
+
   if (window.location.pathname === "/changelog") {
     toggleChangelogView(true);
   } else {
@@ -2773,7 +2773,7 @@ function renderMessageSources(message) {
       domain = urlObj.hostname.replace('www.', '');
       const faviconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
       faviconHtml = `<img src="${faviconUrl}" alt="" class="source-favicon" loading="lazy" onerror="this.outerHTML='<div class=\\'source-favicon-fallback\\'>${index + 1}</div>'">`;
-    } catch (e) {}
+    } catch (e) { }
 
     // Use domain as the display text to avoid generic "source 1" titles
     let displayText = domain;
@@ -2785,7 +2785,7 @@ function renderMessageSources(message) {
       </a>
     `;
   }).join("");
-  
+
   return `
     <div class="sources-wrapper">
       <div class="sources-toggle-btn" onclick="this.nextElementSibling.classList.toggle('hidden')">
@@ -2872,11 +2872,11 @@ async function renderMermaidDiagrams() {
       }
 
       const uniqueId = `mermaid-render-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
-      
+
       try {
         const { svg, bindFunctions } = await mermaid.render(uniqueId, rawCode);
         if (!node.isConnected) continue; // Check again after async parse
-        
+
         node.innerHTML = svg;
         if (bindFunctions) bindFunctions(node);
       } catch (err) {
@@ -2921,7 +2921,7 @@ function sanitizeRenderedHtml(rawHtml) {
   return template.innerHTML;
 }
 
-window.startQuizInteractive = function(button) {
+window.startQuizInteractive = function (button) {
   // 1. Set mode to quiz
   const quizModeBtn = document.querySelector('.mode-btn[data-mode="quiz"]');
   if (quizModeBtn) {
@@ -2930,10 +2930,10 @@ window.startQuizInteractive = function(button) {
     state.currentMode = 'quiz';
     renderDashboard();
   }
-  
+
   // 2. Clear current question state for a fresh start
   state.currentQuestion = null;
-  
+
   // 3. Send a message to get the first question
   ui.userInput.value = "Start the quiz please!";
   handleSendMessage();
@@ -2952,7 +2952,7 @@ async function initVersioning() {
     version = window.APP_VERSION;
   } else {
     try {
-      const res = await fetch("/config/version.json");
+      const res = await fetch("/config/version.json?t=" + Date.now());
       if (res.ok) {
         const data = await res.json();
         if (data.version) version = data.version;
@@ -2961,7 +2961,7 @@ async function initVersioning() {
       // ignore
     }
   }
-  
+
   versionDisplay.textContent = version;
 }
 
@@ -2975,9 +2975,9 @@ let heartbeatIntervalId = null;
 
 function generateUUID() {
   if (crypto && crypto.randomUUID) {
-    try { return crypto.randomUUID(); } catch (e) {}
+    try { return crypto.randomUUID(); } catch (e) { }
   }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
     const r = Math.random() * 16 | 0;
     const v = c === 'x' ? r : (r & 0x3 | 0x8);
     return v.toString(16);
@@ -3053,12 +3053,12 @@ function startSessionHeartbeat(uid, sessionId) {
     const lockKey = `studymate_heartbeat_lock_${sessionId}`;
     const now = Date.now();
     const lockVal = localStorage.getItem(lockKey);
-    
+
     // If another tab grabbed the lock within the last 110s, skip this heartbeat
     if (lockVal && (now - parseInt(lockVal, 10)) < 110000) {
       return;
     }
-    
+
     // Grab/Renew the lock
     localStorage.setItem(lockKey, now.toString());
 
@@ -3092,7 +3092,7 @@ function setupSessionRevocationListener(uid, sessionId) {
       console.warn("Session revoked remotely. Logging out.");
       // Stop streaming if active to avoid corrupting UI or hanging requests
       if (state.streamingResponse) stopStreamingResponse();
-      
+
       localStorage.removeItem(STORAGE_KEYS.deviceSessionId);
       cleanupDeviceSession();
       signOut(auth).then(() => {
@@ -3138,7 +3138,7 @@ function loadSessions(user) {
     return;
   }
   if (state.isGuestMode) return;
-  
+
   const sessionsContainer = document.getElementById("sessionsListContainer");
   if (!sessionsContainer) return;
 
@@ -3174,12 +3174,12 @@ function loadSessions(user) {
       const data = d.data();
       const isCurrent = data.sessionId === currentSessionId;
       const badgeHtml = isCurrent ? '<span class="badge success-badge">Current Device</span>' : '';
-      const actionHtml = isCurrent 
-        ? '' 
+      const actionHtml = isCurrent
+        ? ''
         : `<button class="ghost-btn danger-btn" id="revokeBtn_${data.sessionId}" onclick="window.revokeSession('${data.sessionId}')" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Log Out</button>`;
-      
+
       const lastSeenStr = formatSidebarDate(data.lastSeenAt);
-      
+
       return `
         <div class="glass-card" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
           <div style="display: flex; flex-direction: column; gap: 0.25rem;">
@@ -3201,7 +3201,7 @@ function loadSessions(user) {
     console.error("[Sessions] Firestore error:", error);
     console.error("[Sessions] Error code:", error.code);
     console.error("[Sessions] Error message:", error.message);
-    
+
     sessionsContainer.innerHTML = `
       <div class="session-loading" style="color: var(--danger-color); text-align: left;">
         <div style="font-weight: 600; margin-bottom: 0.5rem;">⚠ Failed to load sessions</div>
@@ -3212,7 +3212,7 @@ function loadSessions(user) {
   });
 }
 
-window.revokeSession = async function(sessionIdToRevoke) {
+window.revokeSession = async function (sessionIdToRevoke) {
   const uid = state.currentUser?.uid;
   if (!uid || sessionIdToRevoke === currentSessionId) return;
 
@@ -3255,14 +3255,14 @@ if (typeof document !== "undefined") {
           const snapshot = await getDocs(q);
           const batchOp = writeBatch(db);
           let count = 0;
-          
+
           snapshot.forEach(docSnap => {
             if (docSnap.id !== currentSessionId) {
               batchOp.update(docSnap.ref, { revokedAt: serverTimestamp() });
               count++;
             }
           });
-          
+
           if (count > 0) {
             await batchOp.commit();
             showToast(`Successfully logged out ${count} other device(s).`, "success");
@@ -3326,7 +3326,7 @@ async function initAuth() {
 async function initApp(user) {
   try {
     await ensureUserDocument(user);
-    
+
     // Core Shared Init
     const page = document.body.dataset.page;
 
@@ -3335,12 +3335,12 @@ async function initApp(user) {
       await loadUserSettings();
       await loadUserMemory();
       populateUserInfo(user);
-      
+
       // 2. Load Chats and Hydrate Persistence FIRST
       // This MUST happen before any Firestore writes (like Session initialization) 
       // to prevent empty cache snapshots from destroying preferredChatId.
       startDashboardApp(user);
-      
+
       // 3. Post-load operations
       await maybeHandleOnboardingForUser(user);
       await initDeviceSession(user);
@@ -3402,8 +3402,8 @@ async function bootstrap() {
       console.log("[AUTH ACTION] oobCode present:", !!actionOobCode);
 
       const currentPath = window.location.pathname.toLowerCase();
-      const isAlreadyOnHandler = currentPath.includes("reset.html") 
-        || currentPath.includes("verify.html") 
+      const isAlreadyOnHandler = currentPath.includes("reset.html")
+        || currentPath.includes("verify.html")
         || currentPath.includes("recover.html");
 
       if (!isAlreadyOnHandler) {
@@ -3432,7 +3432,7 @@ async function bootstrap() {
 
     // 2. Initialize Mermaid (Lazy Singleton)
     initMermaidSingleton();
-    
+
     // 3. Initialize Page-Specific UI Bindings
     const page = document.body.dataset.page;
     if (page === "login") initLoginPage();
@@ -3442,7 +3442,7 @@ async function bootstrap() {
 
     // 4. Auth Gatekeeper (Handles redirects and initApp)
     await initAuth();
-    
+
   } catch (err) {
     console.error("StudyMate Bootstrap Error:", err);
   }
@@ -3455,7 +3455,7 @@ async function bootstrap() {
 function updateStreamUI(text) {
   const streamContainer = document.querySelector("[data-stream-content]");
   if (!streamContainer) return;
-  
+
   // Directly update inner HTML of the active stream bubble
   streamContainer.innerHTML = formatMessage(text, "ai");
   // CRITICAL: DO NOT call renderMermaidDiagrams() here. 

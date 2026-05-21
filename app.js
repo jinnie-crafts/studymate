@@ -13,11 +13,11 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
 import {
   doc,
-  setDoc,
+  setDoc as rawSetDoc,
   getDoc,
-  updateDoc,
+  updateDoc as rawUpdateDoc,
   collection,
-  addDoc,
+  addDoc as rawAddDoc,
   query,
   where,
   orderBy,
@@ -33,6 +33,93 @@ import hljs from "https://cdn.jsdelivr.net/npm/highlight.js@11.11.1/+esm";
 
 // ---------------------------------------------------------------------------
 // Network Layer Hardening (Safe Fetch Wrapper)
+// ---------------------------------------------------------------------------
+
+window.__FIRESTORE_DEBUG__ = false;
+
+function sanitizeFirestorePayload(payload) {
+  if (payload === null || typeof payload !== "object") return payload;
+  
+  // Preserve Firebase special objects (Timestamp, FieldValue, Date)
+  if (payload.constructor && payload.constructor.name !== "Object" && payload.constructor.name !== "Array") {
+    return payload;
+  }
+
+  if (Array.isArray(payload)) {
+    return payload.map(item => sanitizeFirestorePayload(item)).filter(item => item !== undefined);
+  }
+
+  const sanitized = {};
+  for (const [key, value] of Object.entries(payload)) {
+    if (value === undefined || Number.isNaN(value)) continue; // Strip undefined & NaN
+    sanitized[key] = sanitizeFirestorePayload(value);
+  }
+  return sanitized;
+}
+
+const addDoc = async (collectionRef, data) => {
+  const sanitized = sanitizeFirestorePayload(data);
+  if (window.__FIRESTORE_DEBUG__) {
+    console.log("[Firestore Path]", collectionRef.path);
+    console.log("[Firestore Payload]", JSON.stringify(sanitized, null, 2));
+    console.log("[Auth UID]", auth.currentUser?.uid);
+    console.log("[Current Chat]", state.currentChatId);
+  }
+  if (!auth.currentUser?.uid) throw new Error("Auth not ready");
+  try {
+    return await rawAddDoc(collectionRef, sanitized);
+  } catch (err) {
+    if (window.__FIRESTORE_DEBUG__) {
+      console.error("[Firestore Error Code]", err.code);
+      console.error("[Firestore Error Message]", err.message);
+      console.error("[Firestore Full Error]", err);
+    }
+    throw err;
+  }
+};
+
+const setDoc = async (docRef, data, options) => {
+  const sanitized = sanitizeFirestorePayload(data);
+  if (window.__FIRESTORE_DEBUG__) {
+    console.log("[Firestore Path]", docRef.path);
+    console.log("[Firestore Payload]", JSON.stringify(sanitized, null, 2));
+    console.log("[Auth UID]", auth.currentUser?.uid);
+    console.log("[Current Chat]", state.currentChatId);
+  }
+  if (!auth.currentUser?.uid) throw new Error("Auth not ready");
+  try {
+    return await rawSetDoc(docRef, sanitized, options);
+  } catch (err) {
+    if (window.__FIRESTORE_DEBUG__) {
+      console.error("[Firestore Error Code]", err.code);
+      console.error("[Firestore Error Message]", err.message);
+      console.error("[Firestore Full Error]", err);
+    }
+    throw err;
+  }
+};
+
+const updateDoc = async (docRef, data) => {
+  const sanitized = sanitizeFirestorePayload(data);
+  if (window.__FIRESTORE_DEBUG__) {
+    console.log("[Firestore Path]", docRef.path);
+    console.log("[Firestore Payload]", JSON.stringify(sanitized, null, 2));
+    console.log("[Auth UID]", auth.currentUser?.uid);
+    console.log("[Current Chat]", state.currentChatId);
+  }
+  if (!auth.currentUser?.uid) throw new Error("Auth not ready");
+  try {
+    return await rawUpdateDoc(docRef, sanitized);
+  } catch (err) {
+    if (window.__FIRESTORE_DEBUG__) {
+      console.error("[Firestore Error Code]", err.code);
+      console.error("[Firestore Error Message]", err.message);
+      console.error("[Firestore Full Error]", err);
+    }
+    throw err;
+  }
+};
+
 // ---------------------------------------------------------------------------
 
 const DEBUG_FETCH = false;

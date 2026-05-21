@@ -4223,21 +4223,104 @@ body.auth-page .modal {
   gap: 40px;
 }
 
+/* Release Card Animations */
+@keyframes changelogFadeInUp {
+  0% { opacity: 0; transform: translateY(20px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulseNewBadge {
+  0% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0.4); }
+  70% { box-shadow: 0 0 0 6px rgba(99, 102, 241, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(99, 102, 241, 0); }
+}
+
 /* Release Card */
 .release-card {
   background: var(--surface-soft);
   border: 1px solid var(--border);
   border-radius: 16px;
   padding: 30px;
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
+  display: block; /* Support for <details> element */
+  transition: all 0.3s ease;
+  animation: changelogFadeInUp 0.5s ease backwards;
+}
+
+.release-card[open] {
+  background: var(--surface);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.release-card.is-latest {
+  background: linear-gradient(145deg, var(--surface), var(--surface-soft));
+  border: 1px solid var(--primary-color);
+  box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+  position: relative;
+  overflow: hidden;
+}
+
+.release-card.is-latest::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: var(--primary-color);
+  box-shadow: 0 0 10px var(--primary-color);
 }
 
 .release-header {
   display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  list-style: none; /* Hide default details marker */
+  outline: none;
+}
+
+.release-header::-webkit-details-marker {
+  display: none;
+}
+
+.release-header-content {
+  display: flex;
   flex-direction: column;
   gap: 8px;
+}
+
+.accordion-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--text-soft);
+  transition: transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.release-card[open] .accordion-icon {
+  transform: rotate(180deg);
+}
+
+.release-sections {
+  margin-top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  animation: changelogFadeInUp 0.3s ease forwards;
+}
+
+.new-badge {
+  background: var(--primary-color);
+  color: #fff;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  box-shadow: 0 0 10px rgba(99, 102, 241, 0.4);
+  animation: pulseNewBadge 2s infinite;
 }
 
 .release-meta {
@@ -4290,11 +4373,6 @@ body.auth-page .modal {
   margin: 0;
 }
 
-.release-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
 
 .release-section {
   display: flex;

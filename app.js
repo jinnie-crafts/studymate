@@ -1695,42 +1695,46 @@ function loadChats(preferredChatId = state.currentChatId) {
 
     const chatsQuery = query(collection(db, "chats"), where("userId", "==", userId));
     state.chatsUnsubscribe = onSnapshot(chatsQuery, (snapshot) => {
-      const newChats = [];
-      const chatMap = new Map(state.chats.map(c => [c.id, c]));
+      try {
+        const newChats = [];
+        const chatMap = new Map(state.chats.map(c => [c.id, c]));
 
-      snapshot.docs.forEach((d) => {
-        const data = d.data({ serverTimestamps: "estimate" });
-        const existingChat = chatMap.get(d.id);
-        const parsed = {
-          id: d.id, 
-          userId: data.userId, 
-          title: data.title || "New Chat",
-          mode: normalizeMode(data.mode), 
-          hinglish: Boolean(data.hinglish),
-          notesMode: data.notesMode || "normal",
-          createdAt: data.createdAt || null,
-          updatedAt: data.updatedAt || data.createdAt || null
-        };
+        snapshot.docs.forEach((d) => {
+          const data = d.data({ serverTimestamps: "estimate" });
+          const existingChat = chatMap.get(d.id);
+          const parsed = {
+            id: d.id, 
+            userId: data.userId, 
+            title: data.title || "New Chat",
+            mode: normalizeMode(data.mode), 
+            hinglish: Boolean(data.hinglish),
+            notesMode: data.notesMode || "normal",
+            createdAt: data.createdAt || null,
+            updatedAt: data.updatedAt || data.createdAt || null
+          };
 
-        if (existingChat) {
-          // Patch existing chat to preserve messages, streaming state, object reference
-          Object.assign(existingChat, parsed);
-          newChats.push(existingChat);
-        } else {
-          // New chat
-          parsed.messages = [];
-          newChats.push(parsed);
+          if (existingChat) {
+            // Patch existing chat to preserve messages, streaming state, object reference
+            Object.assign(existingChat, parsed);
+            newChats.push(existingChat);
+          } else {
+            // New chat
+            parsed.messages = [];
+            newChats.push(parsed);
+          }
+        });
+
+        // Sort by updatedAt descending
+        state.chats = newChats.sort((a, b) => getTimestampValue(b.updatedAt) - getTimestampValue(a.updatedAt));
+
+        syncStateWithLatestChats(); syncHeaderWithActiveChat(); renderHistory();
+        if (state.currentChatId && state.chats.some(c => c.id === state.currentChatId) && !window.messagesUnsubscribe) {
+          loadMessages(state.currentChatId);
         }
-      });
-
-      // Sort by updatedAt descending
-      state.chats = newChats.sort((a, b) => getTimestampValue(b.updatedAt) - getTimestampValue(a.updatedAt));
-
-      syncStateWithLatestChats(); syncHeaderWithActiveChat(); renderHistory();
-      if (state.currentChatId && state.chats.some(c => c.id === state.currentChatId) && !window.messagesUnsubscribe) {
-        loadMessages(state.currentChatId);
+        renderMessages();
+      } catch (err) {
+        console.error("[Render Safety] chats snapshot callback failed:", err);
       }
-      renderMessages();
     }, (error) => {
       console.error(error);
       if (error.code === "permission-denied") {
@@ -1852,17 +1856,16 @@ function syncStateWithLatestChats() {
 // ---------------------------------------------------------------------------
 
 function renderMessages() {
-  const activeChat = getCurrentChat();
-  const showTyping = Boolean(state.showTypingIndicator);
-  const isStreaming = state.streamingResponse && state.streamingResponse.chatId === activeChat?.id;
+  try {
+    const activeChat = getCurrentChat();
+    const showTyping = Boolean(state.showTypingIndicator);
+    const isStreaming = state.streamingResponse && state.streamingResponse.chatId === activeChat?.id;
 
-  if (!activeChat || (activeChat.messages.length === 0 && !showTyping && !isStreaming)) {
-    ui.chatForm.style.display = "flex";
-  } else {
-    ui.chatMessages.innerHTML = `<div class="empty-state"><h3>Start a new conversation &#128640;</h3><p>Create a chat from the sidebar and ask your first question.</p></div>`;
-    return;
-  }
-
+    if (!activeChat || (activeChat.messages.length === 0 && !showTyping && !isStreaming)) {
+      ui.chatMessages.innerHTML = `<div class="empty-state"><h3>Start a new conversation &#128640;</h3><p>Create a chat from the sidebar and ask your first question.</p></div>`;
+      ui.chatForm.style.display = "flex";
+      return;
+    }
   const messageMarkup = activeChat.messages.map((message, index) => {
     const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
     // --- RAG Integration: Show "Live" badge on RAG-enhanced AI messages ---
@@ -1899,7 +1902,9 @@ function renderMessages() {
   ui.chatMessages.innerHTML = `${messageMarkup}${assistantBubbleMarkup}`;
   renderMermaidDiagrams();
   focusMessageEditor();
-  // Removed global auto-scroll from renderMessages to avoid jumping during streaming
+  } catch (err) {
+    console.error("[Render Safety] renderMessages failed:", err);
+  }
 }
 
 function openChat(chatId) {
@@ -2199,12 +2204,16 @@ async function streamAssistantMessage(chatId, source, controller = null) {
     // Legacy simulated streaming
     const words = source.split(" ");
     let current = "";
-    for (let i = 0; i < words.length; i++) {
-       if (!state.streamingResponse || state.streamingResponse.isCancelled) return;
-       current += (i === 0 ? words[i] : ` ${words[i]}`);
-       state.streamingResponse.visibleText = current;
-       updateStreamUI(current);
-       await delay(STREAM_WORD_DELAY_MS);
+    try {
+      for (let i = 0; i < words.length; i++) {
+         if (!state.streamingResponse || state.streamingResponse.isCancelled) return;
+         current += (i === 0 ? words[i] : ` ${words[i]}`);
+         state.streamingResponse.visibleText = current;
+         updateStreamUI(current);
+         await delay(STREAM_WORD_DELAY_MS);
+      }
+    } catch (err) {
+      console.error("[Render Safety] streamAssistantMessage legacy loop failed:", err);
     }
     stopStreamingResponse();
     return { text: source };
@@ -2248,6 +2257,8 @@ async function streamAssistantMessage(chatId, source, controller = null) {
         } catch (e) {}
       }
     }
+  } catch (err) {
+    console.error("[Render Safety] streamAssistantMessage real streaming failed:", err);
   } finally {
     stopStreamingResponse();
     // Handle graceful completion if stream was empty or broken
@@ -2339,19 +2350,22 @@ async function deleteChat(chatId) {
 // ---------------------------------------------------------------------------
 
 function syncHeaderWithActiveChat() {
-  const activeChat = getCurrentChat();
-  if (!activeChat) {
-    setSelectedMode(getSavedDefaultMode());
-    setSelectedNotesMode(getSavedDefaultNotesMode());
-    ui.hinglishToggle.checked = getSavedHinglishDefault();
-    return;
+  try {
+    const activeChat = getCurrentChat();
+    if (!activeChat) {
+      setSelectedMode(getSavedDefaultMode());
+      setSelectedNotesMode(getSavedDefaultNotesMode());
+      ui.hinglishToggle.checked = getSavedHinglishDefault();
+      return;
+    }
+    const currentMode = normalizeMode(activeChat.mode);
+    saveDefaultMode(currentMode);
+    setSelectedMode(currentMode);
+    setSelectedNotesMode(activeChat.notesMode || "normal");
+    ui.hinglishToggle.checked = Boolean(activeChat.hinglish);
+  } catch (err) {
+    console.error("[Render Safety] syncHeaderWithActiveChat failed:", err);
   }
-  const currentMode = normalizeMode(activeChat.mode);
-  saveDefaultMode(currentMode);
-  updateModeUI();
-  setSelectedMode(currentMode);
-  setSelectedNotesMode(activeChat.notesMode || "normal");
-  ui.hinglishToggle.checked = Boolean(activeChat.hinglish);
 }
 
 function setComposerLoading(isLoading) {
@@ -3005,14 +3019,21 @@ async function initDeviceSession(user) {
   const sessionRef = doc(db, "users", uid, "sessions", currentSessionId);
 
   try {
-    await setDoc(sessionRef, {
-      sessionId: currentSessionId,
-      userAgent: navigator.userAgent,
-      browser, os, deviceType,
-      createdAt: serverTimestamp(),
-      lastSeenAt: serverTimestamp(),
-      revokedAt: null
-    }, { merge: true });
+    const sessionSnap = await getDoc(sessionRef);
+    if (!sessionSnap.exists()) {
+      await setDoc(sessionRef, {
+        sessionId: currentSessionId,
+        userAgent: navigator.userAgent,
+        browser, os, deviceType,
+        createdAt: serverTimestamp(),
+        lastSeenAt: serverTimestamp(),
+        revokedAt: null
+      });
+    } else {
+      await updateDoc(sessionRef, {
+        lastSeenAt: serverTimestamp()
+      });
+    }
 
     startSessionHeartbeat(uid, currentSessionId);
     setupSessionRevocationListener(uid, currentSessionId);

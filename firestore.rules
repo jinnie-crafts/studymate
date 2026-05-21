@@ -68,6 +68,22 @@ service cloud.firestore {
         // Delete: Soft delete only (via revokedAt)
         allow delete: if false;
       }
+      // -------------------------
+      // 🧠 MEMORY SUBCOLLECTION
+      // -------------------------
+      match /memory/{memoryId} {
+        // Read: only owner
+        allow read: if isOwner(userId);
+        
+        // Write: only owner with strict schema validation
+        allow write: if isOwner(userId)
+          && request.resource.data.keys().hasAll(['fact', 'category', 'confidence', 'timestamp'])
+          && request.resource.data.keys().hasOnly(['fact', 'category', 'confidence', 'timestamp'])
+          && request.resource.data.fact is string
+          && request.resource.data.category is string
+          && (request.resource.data.confidence is number || request.resource.data.confidence is string)
+          && (request.resource.data.timestamp is number || request.resource.data.timestamp is timestamp);
+      }
     }
 
     // -------------------------
@@ -107,7 +123,8 @@ service cloud.firestore {
             'role', 'content', 'sources', 'intent', 'doubt', 'rag_enhanced', 'createdAt'
           ])
           && (!('intent' in request.resource.data) || request.resource.data.intent is string)
-          && (!('doubt' in request.resource.data) || request.resource.data.doubt is string)
+          // Support both bool and string for doubt to prevent regressions as AI payload formats evolve
+          && (!('doubt' in request.resource.data) || request.resource.data.doubt is bool || request.resource.data.doubt is string)
           && (!('rag_enhanced' in request.resource.data) || request.resource.data.rag_enhanced is bool);
 
         allow read: if isAuthenticated()

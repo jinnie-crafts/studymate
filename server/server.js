@@ -224,7 +224,12 @@ app.post("/api/chat", async (req, res) => {
     // --- MEMORY INTEGRATION ---
     const memoryContext = memoryRunner.retrieveContext(latestUserMessage, userMemory);
 
-    const systemPrompt = `${buildAgentPrompt(latestUserMessage, intent, normalizedMode, currentQuestion, autoQuestionEnabled)}\n[User Intent: ${intent}]${ragContext ? "\n" + ragContext : ""}${memoryContext ? "\n" + memoryContext : ""}`;
+    // --- PROMPT DECORATION (Multi-Part, Formatting, Tone) ---
+    const promptDecoration = AgentRunner.buildPromptDecoration({
+      intent, mode: normalizedMode, message: latestUserMessage
+    });
+
+    const systemPrompt = `${buildAgentPrompt(latestUserMessage, intent, normalizedMode, currentQuestion, autoQuestionEnabled)}${promptDecoration}\n[User Intent: ${intent}]${ragContext ? "\n" + ragContext : ""}${memoryContext ? "\n" + memoryContext : ""}`;
 
     const finalMessages = [
       { role: "system", content: systemPrompt }

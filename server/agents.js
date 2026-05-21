@@ -46,9 +46,32 @@ class AgentRunner {
     return { bypass: false };
   }
 
+  isMultiPartPrompt(text) {
+    if (!text) return false;
+    const lowerText = text.toLowerCase();
+    const hasNumberedList = /\b(1\.|firstly|first|step 1)\b/i.test(lowerText) && /\b(2\.|secondly|second|step 2)\b/i.test(lowerText);
+    const hasComparison = /\b(compare|vs|versus|difference|differences)\b/i.test(lowerText);
+    const hasCompoundRequests = /\b(pros and cons|advantages and disadvantages|explain and give|what is .* and how)\b/i.test(lowerText);
+    const hasListKeywords = /\b(list|steps|roadmap|guide|examples of)\b/i.test(lowerText) && lowerText.length > 50;
+    const isVeryLongQuestion = lowerText.split(/[.?!]+/).filter(s => s.trim().length > 15 && s.includes("?")).length >= 2;
+
+    return hasNumberedList || hasComparison || hasCompoundRequests || hasListKeywords || isVeryLongQuestion;
+  }
+
   buildPromptDecoration(context) {
     const { intent, mode, message } = context;
+    const text = String(message || "").toLowerCase();
     let decoration = "";
+
+    // 1. Multi-Part Orchestration
+    if (this.isMultiPartPrompt(text)) {
+      decoration += "\n\n[MULTI-PART ORCHESTRATION: This is a complex/multi-part prompt.]";
+      decoration += "\n- COMPLETENESS: Prioritize answering ALL sections completely before adding excessive detail to any single section.";
+      decoration += "\n- TOKEN BUDGET: Allocate response space proportionally across all detected parts.";
+      decoration += "\n- STRUCTURE: Force headings (##) and numbered sections for clear segmentation. Do NOT use emojis in code blocks or Mermaid diagrams.";
+      decoration += "\n- CONTINUATION: If your answer is extremely long, naturally state 'Continuing with the remaining parts...' to avoid fragmentation.";
+      decoration += "\n- SELF-CORRECTION: Before finalizing, internally verify that all parts of the user's request were answered.";
+    }
 
     if (intent === "CODING" || mode === "coding") {
       decoration += "\n[CRITICAL: Provide complete, working code with syntax highlighting.]";
@@ -62,6 +85,11 @@ class AgentRunner {
     if (this.agents.quiz.shouldSuggestQuiz("", intent)) {
       decoration += "\n[Follow-up: Ask exactly ONE natural, engaging question to deepen the conversation. No generic 'Want a quiz?' text.]";
     }
+
+    // UX EMOJI ENHANCEMENT & HALLUCINATION REDUCTION
+    decoration += "\n\n[UX & TONE]";
+    decoration += "\n- EMOJIS: Use tasteful, rule-based emojis (e.g., 💡 tips, ⚠️ warnings, ✅ completed steps, 🚀 improvements, 🔒 security) subtly to enhance readability. Target a premium productivity app tone. Avoid emojis in every heading, emotional spam, or childish tone.";
+    decoration += "\n- ACCURACY & RAG: Retrieved context has priority. Synthesize across all sources and avoid contradicting them. Only disclose uncertainty if evidence is weak or sources conflict. Maintain professional confidence otherwise.";
 
     return decoration;
   }

@@ -2572,51 +2572,19 @@ async function renderChangelog() {
   if (!ui.changelogContent) return;
   ui.changelogContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-soft)">Loading updates...</div>`;
   try {
-    const res = await fetch("config/changelog.json?t=" + Date.now());
-    if (!res.ok) throw new Error("Failed to load changelog.json");
+    const res = await fetch("/config/changelog.json?t=" + Date.now());
+    if (!res.ok) throw new Error("Failed to load");
     const data = await res.json();
-    
-    // Sort descending by date
-    let releases = Array.isArray(data.releases) ? data.releases : [];
-    releases.sort((a, b) => new Date(b.date) - new Date(a.date));
-    
-    // Deduplicate by version
-    const seenVersions = new Set();
-    releases = releases.filter(r => {
-      if (seenVersions.has(r.version)) return false;
-      seenVersions.add(r.version);
-      return true;
-    });
-
-    if (releases.length === 0) {
-      ui.changelogContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-soft)">No updates found.</div>`;
-      return;
-    }
-
-    ui.changelogContent.innerHTML = releases.map((release, index) => {
-      const isLatest = index === 0;
-      const latestClass = isLatest ? "is-latest" : "";
-      const newBadge = isLatest ? `<span class="release-badge new-badge">NEW</span>` : "";
-      const isExpanded = isLatest ? "open" : "";
-      
-      return `
-      <details class="release-card ${latestClass}" ${isExpanded}>
-        <summary class="release-header">
-          <div class="release-header-content">
-            <div class="release-meta">
-              <span class="release-version">${escapeHtml(release.version)}</span>
-              ${newBadge}
-              <span class="release-badge ${escapeAttribute(release.type)}">${escapeHtml(release.type)}</span>
-              <span class="release-date">${escapeHtml(release.date)}</span>
-            </div>
-            <h2 class="release-title">${escapeHtml(release.title)}</h2>
+    ui.changelogContent.innerHTML = data.releases.map(release => `
+      <article class="release-card">
+        <header class="release-header">
+          <div class="release-meta">
+            <span class="release-version">${escapeHtml(release.version)}</span>
+            <span class="release-badge ${escapeAttribute(release.type)}">${escapeHtml(release.type)}</span>
+            <span class="release-date">${escapeHtml(release.date)}</span>
           </div>
-          <div class="accordion-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </div>
-        </summary>
+          <h2 class="release-title">${escapeHtml(release.title)}</h2>
+        </header>
         <div class="release-sections">
           ${Object.entries(release.sections || {}).filter(([_, items]) => items && items.length > 0).map(([key, items]) => `
             <section class="release-section">
@@ -2627,23 +2595,22 @@ async function renderChangelog() {
             </section>
           `).join('')}
         </div>
-      </details>
+      </article>
     `}).join('');
-  } catch (err) {
-    ui.changelogContent.innerHTML = `
+} catch (err) {
+  ui.changelogContent.innerHTML = `
       <div style="text-align:center; padding: 40px; color: var(--danger-color)">
         <p style="margin-bottom: 1rem;">Unable to load changelog at this time.</p>
         <button class="ghost-btn" onclick="renderChangelog()">Retry</button>
       </div>`;
-    console.error("Changelog render error:", err);
-  }
+  console.error("Changelog render error:", err);
+}
 }
 
 window.addEventListener("popstate", () => {
   if (document.body.dataset.page !== "dashboard") return;
-  
-  const params = new URLSearchParams(window.location.search);
-  if (params.get("view") === "changelog") {
+
+  if (window.location.pathname === "/changelog") {
     toggleChangelogView(true);
   } else {
     toggleChangelogView(false);
@@ -2990,7 +2957,7 @@ async function initVersioning() {
     version = window.APP_VERSION;
   } else {
     try {
-      const res = await fetch("config/version.json?t=" + Date.now());
+      const res = await fetch("/config/version.json?t=" + Date.now());
       if (res.ok) {
         const data = await res.json();
         if (data.version) version = data.version;

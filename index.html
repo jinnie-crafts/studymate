@@ -270,6 +270,23 @@
         </div>
       </main>
     </div>
+    
+    <!-- SPA Changelog View -->
+    <div id="changelogView" class="changelog-view hidden">
+      <div class="changelog-header">
+        <button id="changelogBackBtn" class="changelog-back-btn" type="button" aria-label="Go Back">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          Back to Chat
+        </button>
+        <h1 class="changelog-page-title">What's New in StudyMate AI</h1>
+      </div>
+      <div class="changelog-content" id="changelogContent">
+        <!-- Rendered dynamically from config/changelog.json -->
+      </div>
+    </div>
   </div>
 
   <div id="editNameModal" class="modal modal-overlay">

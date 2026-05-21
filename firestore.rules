@@ -98,15 +98,17 @@ service cloud.firestore {
 
       match /messages/{messageId} {
 
-        // Allow both user and AI messages (AI messages include 'sources')
         allow create: if isAuthenticated()
           && request.auth.uid ==
             get(/databases/$(database)/documents/chats/$(chatId)).data.userId
           && request.resource.data.role in ["user", "ai"]
           && request.resource.data.content is string
           && request.resource.data.keys().hasOnly([
-            'role', 'content', 'sources', 'createdAt'
-          ]);
+            'role', 'content', 'sources', 'intent', 'doubt', 'rag_enhanced', 'createdAt'
+          ])
+          && (!('intent' in request.resource.data) || request.resource.data.intent is string)
+          && (!('doubt' in request.resource.data) || request.resource.data.doubt is string)
+          && (!('rag_enhanced' in request.resource.data) || request.resource.data.rag_enhanced is bool);
 
         allow read: if isAuthenticated()
           && request.auth.uid ==

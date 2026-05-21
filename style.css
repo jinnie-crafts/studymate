@@ -4142,9 +4142,214 @@ body.auth-page .modal {
 }
 
 .source-chip:hover {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--surface-strong);
   border-color: rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);
+}
+
+/* ======================================================================== 
+   SPA Changelog View 
+   ======================================================================== */
+.changelog-view {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: var(--bg-main);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  opacity: 1;
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  transform: translateY(0);
+}
+
+.changelog-view.hidden {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+}
+
+.changelog-header {
+  padding: 40px 20px 20px;
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.changelog-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-soft);
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 12px;
+  margin-left: -12px;
+  border-radius: 8px;
+  transition: background 0.2s, color 0.2s;
+  align-self: flex-start;
+}
+
+.changelog-back-btn:hover {
+  background: var(--surface-soft);
+  color: var(--text-main);
+}
+
+.changelog-page-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0;
+  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.changelog-content {
+  max-width: 800px;
+  margin: 0 auto;
+  width: 100%;
+  padding: 0 20px 80px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+/* Release Card */
+.release-card {
+  background: var(--surface-soft);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.release-header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.release-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.release-version {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.release-badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.release-badge.major {
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+.release-badge.minor {
+  background: rgba(167, 139, 250, 0.15);
+  color: #a78bfa;
+  border: 1px solid rgba(167, 139, 250, 0.3);
+}
+.release-badge.patch {
+  background: rgba(148, 163, 184, 0.15);
+  color: #94a3b8;
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.release-date {
+  color: var(--text-soft);
+  font-size: 0.9rem;
+}
+
+.release-title {
+  font-size: 1.2rem;
+  color: var(--text-main);
+  font-weight: 500;
+  margin: 0;
+}
+
+.release-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.release-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.section-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.section-title.added { color: #34d399; }
+.section-title.improved { color: #60a5fa; }
+.section-title.fixed { color: #fbbf24; }
+.section-title.security { color: #f87171; }
+.section-title.uiux { color: #c084fc; }
+.section-title.performance { color: #fb923c; }
+
+.section-items {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.section-items li {
+  color: var(--text-soft);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.section-items li::before {
+  content: "•";
+  color: var(--border-strong);
+  font-weight: bold;
+}
+
+@media (max-width: 768px) {
+  .changelog-page-title {
+    font-size: 2rem;
+  }
+  .release-card {
+    padding: 20px;
+  }
 }
 
 .source-favicon {

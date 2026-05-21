@@ -627,7 +627,11 @@ function initDashboardPage() {
     guestLimitText: document.getElementById("guestLimitText"),
     guestLoginBtn: document.getElementById("guestLoginBtn"),
     guestSignupBtn: document.getElementById("guestSignupBtn"),
-    guestLaterBtn: document.getElementById("guestLaterBtn")
+    guestLaterBtn: document.getElementById("guestLaterBtn"),
+    changelogView: document.getElementById("changelogView"),
+    changelogContent: document.getElementById("changelogContent"),
+    changelogBackBtn: document.getElementById("changelogBackBtn"),
+    changelogBtn: document.getElementById("changelogBtn")
   };
 
   hideOnboardingOverlay();
@@ -666,14 +670,6 @@ function initializeGuestDashboard() {
   bindHinglishToggle();
   initVersioning();
   
-  // Changelog button
-  const changelogBtn = document.getElementById("changelogBtn");
-  if (changelogBtn) {
-    changelogBtn.addEventListener("click", () => {
-      queueFlashToast("Changelog coming soon", "info");
-    });
-  }
-
   ui.hinglishToggle.checked = getSavedHinglishDefault();
 
   renderHistory();
@@ -851,6 +847,12 @@ function startDashboardApp(user) {
   loadChats(targetChatId || undefined);
 
   state.isHydratingChatRoute = false;
+
+  // 4. Handle initial SPA view routing (e.g. /changelog)
+  if (window.location.pathname === "/changelog") {
+    toggleChangelogView(true);
+  }
+
 
   loadTrackerData();
   initNotifications(uid);
@@ -1399,6 +1401,20 @@ function bindDashboardEvents() {
     if (cp) return await copyMessageContent(Number(cp.dataset.copyMessage));
     if (rg) return await regenerateAiMessage(Number(rg.dataset.regenerateMessage));
   });
+
+  if (ui.changelogBtn) {
+    ui.changelogBtn.addEventListener("click", () => {
+      closeSidebar();
+      history.pushState(null, "", "/changelog");
+      toggleChangelogView(true);
+    });
+  }
+
+  if (ui.changelogBackBtn) {
+    ui.changelogBackBtn.addEventListener("click", () => {
+      history.back(); // Triggers popstate which handles the hiding
+    });
+  }
 
   ui.menuToggleBtn.addEventListener("click", toggleSidebar);
   ui.sidebarOverlay.addEventListener("click", closeSidebar);
@@ -2494,8 +2510,66 @@ function updateChatUrl(chatId, replace = false) {
   }
 }
 
+let isTransitioningView = false;
+let savedChatScrollTop = 0;
+
+function toggleChangelogView(show) {
+  if (!ui.changelogView) return;
+  if (show) {
+    if (ui.chatMessages) savedChatScrollTop = ui.chatMessages.scrollTop;
+    ui.changelogView.classList.remove("hidden");
+    if (!ui.changelogContent.innerHTML.trim()) renderChangelog();
+  } else {
+    ui.changelogView.classList.add("hidden");
+    if (ui.chatMessages) ui.chatMessages.scrollTop = savedChatScrollTop;
+  }
+}
+
+async function renderChangelog() {
+  if (!ui.changelogContent) return;
+  ui.changelogContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-soft)">Loading updates...</div>`;
+  try {
+    const res = await fetch("/config/changelog.json");
+    if (!res.ok) throw new Error("Failed to load");
+    const data = await res.json();
+    ui.changelogContent.innerHTML = data.releases.map(release => `
+      <article class="release-card">
+        <header class="release-header">
+          <div class="release-meta">
+            <span class="release-version">${escapeHtml(release.version)}</span>
+            <span class="release-badge ${escapeAttribute(release.type)}">${escapeHtml(release.type)}</span>
+            <span class="release-date">${escapeHtml(release.date)}</span>
+          </div>
+          <h2 class="release-title">${escapeHtml(release.title)}</h2>
+        </header>
+        <div class="release-sections">
+          ${Object.entries(release.sections).filter(([_, items]) => items && items.length > 0).map(([key, items]) => `
+            <section class="release-section">
+              <h3 class="section-title ${escapeAttribute(key)}">${escapeHtml(key)}</h3>
+              <ul class="section-items">
+                ${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
+              </ul>
+            </section>
+          `).join('')}
+        </div>
+      </article>
+    `).join('');
+  } catch (err) {
+    ui.changelogContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-soft)">Unable to load changelog at this time.</div>`;
+    console.error("Changelog render error:", err);
+  }
+}
+
 window.addEventListener("popstate", () => {
   if (document.body.dataset.page !== "dashboard") return;
+  
+  if (window.location.pathname === "/changelog") {
+    toggleChangelogView(true);
+    return;
+  } else {
+    toggleChangelogView(false);
+  }
+
   const urlChatId = getChatIdFromUrl();
   
   if (urlChatId && urlChatId !== state.currentChatId) {

@@ -1,0 +1,41 @@
+{
+  "releases": [
+    {
+      "version": "v1.2.0",
+      "date": "2026-05-21",
+      "type": "major",
+      "title": "Routing & Session Upgrade",
+      "sections": {
+        "added": [
+          "Complete URL-Based Chat Routing for shareable links",
+          "Premium Floating Overlay Navbar",
+          "Dedicated Changelog page inside a seamless SPA view",
+          "Versioning and update notification framework"
+        ],
+        "improved": [
+          "Device Session real-time updates support partial diffs",
+          "URL Routing preserves realtime chat hydration natively",
+          "Mermaid rendering refactored for streaming compatibility",
+          "Send button completely circular with exact margins"
+        ],
+        "fixed": [
+          "Production Firestore rules bug rejecting AI metadata fields",
+          "URL overwriting regression on newly created chats"
+        ],
+        "security": [
+          "Preserved ownership limits within rewritten Device Session rules",
+          "Maintained deny-by-default architecture for partial message payload schemas"
+        ],
+        "uiux": [
+          "Full height scrolling messages view without glass borders",
+          "Modernized Sidebar layout with stable 'v1.2.0' injection",
+          "Floating composer perfectly anchored above iOS safe areas"
+        ],
+        "performance": [
+          "Optimized background-blur gradient mask to improve framerates",
+          "Bypassed full page reload entirely for changelog navigations"
+        ]
+      }
+    }
+  ]
+}

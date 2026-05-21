@@ -195,7 +195,7 @@ const state = {
   currentUser: null, chats: [], currentChatId: null, editingChatId: null,
   renameDraft: "", isSending: false, showTypingIndicator: false,
   editingMessageIndex: null, messageDraft: "", chatsUnsubscribe: null,
-  preferredChatId: null, streamingResponse: null, isHydratingChatRoute: false,
+  preferredChatId: null, streamingResponse: null,
   trackerData: { questionsToday: 0, streakCount: 0 },
   isGuestMode: false,
   guestQuestionsUsed: 0,
@@ -912,28 +912,11 @@ function startDashboardApp(user) {
   if (!uid || dashboardInitStartedForUid === uid) return;
   dashboardInitStartedForUid = uid;
 
-  // 1. Mark hydration in progress to prevent history pollution
-  state.isHydratingChatRoute = true;
+  // 1. Determine target chat from localStorage
+  const targetChatId = getPersistedLastActiveChatId(uid);
 
-  // 2. Determine target chat (URL priority -> localStorage fallback)
-  let targetChatId = getChatIdFromUrl();
-  if (!targetChatId) {
-    targetChatId = getPersistedLastActiveChatId(uid);
-    // If fallback used, quietly update URL via replaceState
-    if (targetChatId && !state.isGuestMode) {
-      state.isHydratingChatRoute = false; // temp disable guard
-      updateChatUrl(targetChatId, true);
-      state.isHydratingChatRoute = true;
-    }
-  } else if (!state.isGuestMode) {
-    // URL was used, ensure localStorage stays in sync
-    persistLastActiveChatId(targetChatId, uid);
-  }
-
-  // 3. Hydrate via existing listener path
+  // 2. Hydrate via existing listener path
   loadChats(targetChatId || undefined);
-
-  state.isHydratingChatRoute = false;
 
   // 4. Handle initial SPA view routing (e.g. /changelog)
   if (window.location.pathname === "/changelog") {
@@ -1617,12 +1600,11 @@ async function saveDisplayName() {
 // Chat CRUD
 // ---------------------------------------------------------------------------
 
-async function handleNewChat(skipUrlUpdate = false) {
+async function handleNewChat() {
   state.currentChatId = null;
   state.preferredChatId = null;
   // --- Chat Session Persistence: clear so refresh shows clean "New Chat" ---
   persistLastActiveChatId(null, state.currentUser?.uid);
-  if (!skipUrlUpdate && !state.isGuestMode) updateChatUrl(null);
   state.editingChatId = null;
   state.renameDraft = "";
   state.editingMessageIndex = null;
@@ -1674,7 +1656,6 @@ async function createNewChatDocument() {
   // --- Chat Session Persistence: persist newly created Firestore-backed chat ---
   if (!state.isGuestMode) {
     persistLastActiveChatId(docRef.id, state.currentUser?.uid);
-    updateChatUrl(docRef.id);
   }
 
   loadChats(docRef.id);
@@ -1714,22 +1695,36 @@ function loadChats(preferredChatId = state.currentChatId) {
 
     const chatsQuery = query(collection(db, "chats"), where("userId", "==", userId));
     state.chatsUnsubscribe = onSnapshot(chatsQuery, (snapshot) => {
-      const messagesMap = state.chats.reduce((acc, chat) => {
-        acc[chat.id] = chat.messages || [];
-        return acc;
-      }, {});
+      const newChats = [];
+      const chatMap = new Map(state.chats.map(c => [c.id, c]));
 
-      state.chats = snapshot.docs.map((d) => {
+      snapshot.docs.forEach((d) => {
         const data = d.data({ serverTimestamps: "estimate" });
-        return {
-          id: d.id, userId: data.userId, title: data.title || "New Chat",
-          mode: normalizeMode(data.mode), hinglish: Boolean(data.hinglish),
+        const existingChat = chatMap.get(d.id);
+        const parsed = {
+          id: d.id, 
+          userId: data.userId, 
+          title: data.title || "New Chat",
+          mode: normalizeMode(data.mode), 
+          hinglish: Boolean(data.hinglish),
           notesMode: data.notesMode || "normal",
-          messages: messagesMap[d.id] || [],
           createdAt: data.createdAt || null,
           updatedAt: data.updatedAt || data.createdAt || null
         };
-      }).sort((a, b) => getTimestampValue(b.updatedAt) - getTimestampValue(a.updatedAt));
+
+        if (existingChat) {
+          // Patch existing chat to preserve messages, streaming state, object reference
+          Object.assign(existingChat, parsed);
+          newChats.push(existingChat);
+        } else {
+          // New chat
+          parsed.messages = [];
+          newChats.push(parsed);
+        }
+      });
+
+      // Sort by updatedAt descending
+      state.chats = newChats.sort((a, b) => getTimestampValue(b.updatedAt) - getTimestampValue(a.updatedAt));
 
       syncStateWithLatestChats(); syncHeaderWithActiveChat(); renderHistory();
       if (state.currentChatId && state.chats.some(c => c.id === state.currentChatId) && !window.messagesUnsubscribe) {
@@ -1840,8 +1835,6 @@ function syncStateWithLatestChats() {
       }
       state.currentChatId = null;
       state.preferredChatId = null;
-      // Handle graceful recovery if chat was completely invalid/deleted
-      if (!state.isGuestMode) updateChatUrl(null, true);
     }
   }
 
@@ -1909,14 +1902,13 @@ function renderMessages() {
   // Removed global auto-scroll from renderMessages to avoid jumping during streaming
 }
 
-function openChat(chatId, skipUrlUpdate = false) {
+function openChat(chatId) {
   if (state.streamingResponse && state.streamingResponse.chatId !== chatId) stopStreamingResponse();
   state.currentChatId = chatId; state.editingChatId = null; state.renameDraft = "";
   state.editingMessageIndex = null; state.messageDraft = "";
   // --- Chat Session Persistence: persist on every explicit chat switch ---
   if (!state.isGuestMode) {
     persistLastActiveChatId(chatId, state.currentUser?.uid);
-    if (!skipUrlUpdate) updateChatUrl(chatId);
   }
   
   if (!state.isGuestMode) {
@@ -2545,57 +2537,6 @@ function getPersistedLastActiveChatId(userId) {
 // URL Routing Helpers (History API) & Security Validation
 // ---------------------------------------------------------------------------
 
-/**
- * isValidChatId(chatId)
- * Prevents enumeration, script injection, and traversal.
- * Validates Firestore auto-IDs (typically 20 alphanumeric chars).
- * We enforce 10-40 characters, strictly alphanumeric + hyphen + underscore.
- */
-function isValidChatId(chatId) {
-  if (!chatId || typeof chatId !== "string") return false;
-  return /^[a-zA-Z0-9_-]{10,40}$/.test(chatId);
-}
-
-function getChatIdFromUrl() {
-  const match = window.location.pathname.match(/^\/c\/([a-zA-Z0-9_-]+)\/?$/);
-  if (match) {
-    const id = match[1];
-    if (isValidChatId(id)) return id;
-    console.warn("[Security] Malformed or invalid Chat ID in URL blocked.");
-  }
-  return null;
-}
-
-let lastPushStateTime = 0;
-const ROUTE_SPAM_COOLDOWN_MS = 200;
-
-function updateChatUrl(chatId, replace = false) {
-  if (state.isGuestMode || state.isHydratingChatRoute) return;
-  
-  if (!chatId) {
-    if (window.location.pathname !== "/" && window.location.pathname !== "/index.html") {
-      history.replaceState(null, "", "/"); // Always replace for silent recovery/cleanup
-    }
-    return;
-  }
-  
-  const targetUrl = `/c/${chatId}`;
-  if (window.location.pathname !== targetUrl) {
-    const now = Date.now();
-    // Prevent history API spam / infinite loops
-    if (!replace && now - lastPushStateTime < ROUTE_SPAM_COOLDOWN_MS) {
-      console.warn("[Security] Route spam detected. Converting to replaceState.");
-      replace = true; 
-    }
-    
-    if (replace) {
-      history.replaceState({ chatId }, "", targetUrl);
-    } else {
-      history.pushState({ chatId }, "", targetUrl);
-      lastPushStateTime = now;
-    }
-  }
-}
 
 let isTransitioningView = false;
 let savedChatScrollTop = 0;
@@ -2652,17 +2593,8 @@ window.addEventListener("popstate", () => {
   
   if (window.location.pathname === "/changelog") {
     toggleChangelogView(true);
-    return;
   } else {
     toggleChangelogView(false);
-  }
-
-  const urlChatId = getChatIdFromUrl();
-  
-  if (urlChatId && urlChatId !== state.currentChatId) {
-    openChat(urlChatId, true);
-  } else if (!urlChatId && state.currentChatId) {
-    handleNewChat(true);
   }
 });
 

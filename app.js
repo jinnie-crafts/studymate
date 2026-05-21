@@ -87,7 +87,7 @@ const FLASH_TOAST_KEY = "studymate_flash_toast";
 const WELCOME_SEEN_KEY = "hasSeenWelcome";
 const GUEST_QUESTION_LIMIT = 5;
 const GUEST_USAGE_KEY = "studymate_guest_question_count";
-const STORAGE_KEYS = { theme: "theme", defaultMode: "defaultMode", hinglishDefault: "hinglishDefault", defaultNotesMode: "defaultNotesMode" };
+const STORAGE_KEYS = { theme: "theme", defaultMode: "defaultMode", hinglishDefault: "hinglishDefault", defaultNotesMode: "defaultNotesMode", lastActiveChatId: "studymate_lastActiveChatId", deviceSessionId: "studymate_device_session_id" };
 const MODES = ["general", "exam", "coding"];
 const MODE_LABELS = {
   general: "🧠 General",
@@ -108,7 +108,7 @@ const state = {
   currentUser: null, chats: [], currentChatId: null, editingChatId: null,
   renameDraft: "", isSending: false, showTypingIndicator: false,
   editingMessageIndex: null, messageDraft: "", chatsUnsubscribe: null,
-  preferredChatId: null, streamingResponse: null,
+  preferredChatId: null, streamingResponse: null, isHydratingChatRoute: false,
   trackerData: { questionsToday: 0, streakCount: 0 },
   isGuestMode: false,
   guestQuestionsUsed: 0,
@@ -146,6 +146,11 @@ markdownRenderer.code = (code, language) => {
 
   // Handle Mermaid diagrams
   if (lang === "mermaid") {
+    // If we are currently streaming a response, DO NOT render mermaid to prevent parser crashes.
+    // We output a placeholder/code block that will be transformed into SVG after streaming stops.
+    if (state.streamingResponse && !state.streamingResponse.isCancelled) {
+      return `<div class="code-block"><div class="code-header"><span>mermaid (rendering...)</span></div><pre><code class="hljs language-mermaid">${escapeHtml(rawCode)}</code></pre></div>`;
+    }
     return `<div class="mermaid-container"><div class="mermaid">${escapeHtml(rawCode)}</div></div>`;
   }
 
@@ -591,7 +596,6 @@ function initDashboardPage() {
     body: document.body,
     newChatBtn: document.getElementById("newChatBtn"),
     chatHistoryList: document.getElementById("chatHistoryList"),
-    chatTitle: document.getElementById("chatTitle"),
     chatMessages: document.getElementById("chatMessages"),
     chatForm: document.getElementById("chatForm"),
     userInput: document.getElementById("userInput"),
@@ -658,6 +662,18 @@ function initializeGuestDashboard() {
 
   setSelectedMode(getSavedDefaultMode());
   setSelectedNotesMode(getSavedDefaultNotesMode());
+  bindNotesModeControls();
+  bindHinglishToggle();
+  initVersioning();
+  
+  // Changelog button
+  const changelogBtn = document.getElementById("changelogBtn");
+  if (changelogBtn) {
+    changelogBtn.addEventListener("click", () => {
+      queueFlashToast("Changelog coming soon", "info");
+    });
+  }
+
   ui.hinglishToggle.checked = getSavedHinglishDefault();
 
   renderHistory();
@@ -812,7 +828,30 @@ function startDashboardApp(user) {
   const uid = user?.uid;
   if (!uid || dashboardInitStartedForUid === uid) return;
   dashboardInitStartedForUid = uid;
-  loadChats();
+
+  // 1. Mark hydration in progress to prevent history pollution
+  state.isHydratingChatRoute = true;
+
+  // 2. Determine target chat (URL priority -> localStorage fallback)
+  let targetChatId = getChatIdFromUrl();
+  if (!targetChatId) {
+    targetChatId = getPersistedLastActiveChatId(uid);
+    // If fallback used, quietly update URL via replaceState
+    if (targetChatId && !state.isGuestMode) {
+      state.isHydratingChatRoute = false; // temp disable guard
+      updateChatUrl(targetChatId, true);
+      state.isHydratingChatRoute = true;
+    }
+  } else if (!state.isGuestMode) {
+    // URL was used, ensure localStorage stays in sync
+    persistLastActiveChatId(targetChatId, uid);
+  }
+
+  // 3. Hydrate via existing listener path
+  loadChats(targetChatId || undefined);
+
+  state.isHydratingChatRoute = false;
+
   loadTrackerData();
   initNotifications(uid);
 }
@@ -1405,8 +1444,23 @@ async function handleLogout() {
     window.location.replace("login.html");
     return;
   }
-  try { cleanupChatSubscription(); await signOut(auth); queueFlashToast("Logged out successfully.", "success"); window.location.replace("login.html"); }
-  catch (err) { console.error("Logout error:", err); showToast(err.message, "error"); }
+  try {
+    cleanupChatSubscription();
+    cleanupDeviceSession();
+    if (!state.isGuestMode && state.currentUser?.uid) {
+      // Best-effort remote revocation before sign-out
+      revokeCurrentSession(state.currentUser.uid).catch(console.error);
+    }
+    // --- Chat Session Persistence: clear on logout to prevent stale state ---
+    persistLastActiveChatId(null, state.currentUser?.uid);
+    history.replaceState(null, "", "/"); // Route cleanup on logout
+    await signOut(auth);
+    queueFlashToast("Logged out successfully.", "success");
+    window.location.replace("login.html");
+  } catch (err) {
+    console.error("Logout error:", err);
+    showToast(err.message, "error");
+  }
 }
 
 function cleanupChatSubscription() {
@@ -1460,9 +1514,12 @@ async function saveDisplayName() {
 // Chat CRUD
 // ---------------------------------------------------------------------------
 
-async function handleNewChat() {
+async function handleNewChat(skipUrlUpdate = false) {
   state.currentChatId = null;
   state.preferredChatId = null;
+  // --- Chat Session Persistence: clear so refresh shows clean "New Chat" ---
+  persistLastActiveChatId(null, state.currentUser?.uid);
+  if (!skipUrlUpdate && !state.isGuestMode) updateChatUrl(null);
   state.editingChatId = null;
   state.renameDraft = "";
   state.editingMessageIndex = null;
@@ -1477,7 +1534,6 @@ async function handleNewChat() {
   setSelectedNotesMode(defaultNotesMode);
   ui.hinglishToggle.checked = defaultHinglish;
 
-  ui.chatTitle.textContent = "New Chat";
   ui.userInput.value = "";
   autoResizeTextarea(ui.userInput);
 
@@ -1512,6 +1568,11 @@ async function createNewChatDocument() {
 
   state.chats = [newChat, ...state.chats.filter((c) => c.id !== docRef.id)];
   state.currentChatId = docRef.id;
+  // --- Chat Session Persistence: persist newly created Firestore-backed chat ---
+  if (!state.isGuestMode) {
+    persistLastActiveChatId(docRef.id, state.currentUser?.uid);
+    updateChatUrl(docRef.id);
+  }
 
   loadChats(docRef.id);
   loadMessages(docRef.id);
@@ -1663,10 +1724,26 @@ function renderHistory() {
 }
 
 function syncStateWithLatestChats() {
-  if (state.preferredChatId && state.chats.some((c) => c.id === state.preferredChatId)) state.currentChatId = state.preferredChatId;
-  else if (state.currentChatId && state.chats.some((c) => c.id === state.currentChatId)) { /* keep */ }
-  else state.currentChatId = null;
-  state.preferredChatId = null;
+  if (state.preferredChatId && state.chats.some((c) => c.id === state.preferredChatId)) {
+    state.currentChatId = state.preferredChatId;
+    state.preferredChatId = null;
+  } else if (state.currentChatId && state.chats.some((c) => c.id === state.currentChatId)) {
+    // Keep current
+  } else {
+    // Only nullify if we actually have chats loaded, otherwise it might be a temporary empty cache state
+    if (state.chats.length > 0 || state.preferredChatId === null) {
+      if (state.preferredChatId && state.chats.length > 0) {
+        console.warn("[Security] Denied route access: Chat does not exist or belongs to another user. Falling back safely.");
+      }
+      state.currentChatId = null;
+      state.preferredChatId = null;
+      // Handle graceful recovery if chat was completely invalid/deleted
+      if (!state.isGuestMode) updateChatUrl(null, true);
+    }
+  }
+
+  // --- Chat Session Persistence: keep localStorage in sync after Firestore snapshot ---
+  if (!state.isGuestMode) persistLastActiveChatId(state.currentChatId, state.currentUser?.uid);
   if (!state.chats.some((c) => c.id === state.editingChatId)) { state.editingChatId = null; state.renameDraft = ""; }
   const activeChat = getCurrentChat();
   if (!activeChat || state.editingMessageIndex == null) { state.editingMessageIndex = null; state.messageDraft = ""; }
@@ -1684,11 +1761,11 @@ function renderMessages() {
   const isStreaming = state.streamingResponse && state.streamingResponse.chatId === activeChat?.id;
 
   if (!activeChat || (activeChat.messages.length === 0 && !showTyping && !isStreaming)) {
-    ui.chatTitle.textContent = activeChat?.title || "New Chat";
+    ui.chatForm.style.display = "flex";
+  } else {
     ui.chatMessages.innerHTML = `<div class="empty-state"><h3>Start a new conversation &#128640;</h3><p>Create a chat from the sidebar and ask your first question.</p></div>`;
     return;
   }
-  ui.chatTitle.textContent = activeChat?.title || "New Chat";
 
   const messageMarkup = activeChat.messages.map((message, index) => {
     const roleLabel = message.role === "user" ? "You" : "StudyMate AI";
@@ -1729,10 +1806,15 @@ function renderMessages() {
   // Removed global auto-scroll from renderMessages to avoid jumping during streaming
 }
 
-function openChat(chatId) {
+function openChat(chatId, skipUrlUpdate = false) {
   if (state.streamingResponse && state.streamingResponse.chatId !== chatId) stopStreamingResponse();
   state.currentChatId = chatId; state.editingChatId = null; state.renameDraft = "";
   state.editingMessageIndex = null; state.messageDraft = "";
+  // --- Chat Session Persistence: persist on every explicit chat switch ---
+  if (!state.isGuestMode) {
+    persistLastActiveChatId(chatId, state.currentUser?.uid);
+    if (!skipUrlUpdate) updateChatUrl(chatId);
+  }
   
   if (!state.isGuestMode) {
     loadMessages(chatId);
@@ -2143,8 +2225,18 @@ async function deleteChat(chatId) {
     showToast("Chat deleted.", "success");
     return;
   }
-  try { await deleteDoc(doc(db, "chats", chatId)); if (state.currentChatId === chatId) state.currentChatId = null; state.editingChatId = null; state.renameDraft = ""; showToast("Chat deleted.", "success"); }
-  catch (err) { console.error("Delete chat error:", err); showToast(err.message, "error"); }
+  try {
+    await deleteDoc(doc(db, "chats", chatId));
+    if (state.currentChatId === chatId) state.currentChatId = null;
+    // --- Chat Session Persistence: update after active chat deletion ---
+    persistLastActiveChatId(state.currentChatId, state.currentUser?.uid);
+    state.editingChatId = null;
+    state.renameDraft = "";
+    showToast("Chat deleted.", "success");
+  } catch (err) {
+    console.error("Delete chat error:", err);
+    showToast(err.message, "error");
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -2154,14 +2246,14 @@ async function deleteChat(chatId) {
 function syncHeaderWithActiveChat() {
   const activeChat = getCurrentChat();
   if (!activeChat) {
-    ui.chatTitle.textContent = "New Chat";
     setSelectedMode(getSavedDefaultMode());
     setSelectedNotesMode(getSavedDefaultNotesMode());
     ui.hinglishToggle.checked = getSavedHinglishDefault();
     return;
   }
   const currentMode = normalizeMode(activeChat.mode);
-  ui.chatTitle.textContent = `${MODE_LABELS[currentMode]} | ${activeChat.title || "New Chat"}`;
+  saveDefaultMode(currentMode);
+  updateModeUI();
   setSelectedMode(currentMode);
   setSelectedNotesMode(activeChat.notesMode || "normal");
   ui.hinglishToggle.checked = Boolean(activeChat.hinglish);
@@ -2306,6 +2398,112 @@ function normalizeMode(mode) {
   return MODES.includes(m) ? m : "general";
 }
 function normalizeNotesMode(mode) { return AVAILABLE_NOTES_MODES.includes(mode) ? mode : "normal"; }
+
+// ---------------------------------------------------------------------------
+// Chat Session Persistence (localStorage-backed, UID-scoped)
+// ---------------------------------------------------------------------------
+// Persists the active chatId so that page refresh / tab reopen restores the
+// last conversation instead of showing an empty "New Chat" state.
+// The key is scoped per Firebase UID to prevent cross-user collisions.
+// ---------------------------------------------------------------------------
+
+/**
+ * Persist the active chat ID to localStorage for session restoration.
+ * Only persists Firestore-backed chats (never guest/temp chats).
+ * Includes a defensive guard to skip redundant writes.
+ */
+function persistLastActiveChatId(chatId, userId) {
+  if (!userId) return; // No-op for guest / unauthenticated
+  const key = `${STORAGE_KEYS.lastActiveChatId}:${userId}`;
+  try {
+    if (chatId) {
+      // Guard: skip write if the value hasn't changed
+      if (localStorage.getItem(key) === chatId) return;
+      localStorage.setItem(key, chatId);
+    } else {
+      localStorage.removeItem(key);
+    }
+  } catch (_) {
+    // localStorage may be full or blocked — fail silently
+  }
+}
+
+function getPersistedLastActiveChatId(userId) {
+  if (!userId) return null;
+  const key = `${STORAGE_KEYS.lastActiveChatId}:${userId}`;
+  try {
+    return localStorage.getItem(key) || null;
+  } catch (_) {
+    return null; // Fail gracefully — same as "no persisted chat"
+  }
+}
+
+// ---------------------------------------------------------------------------
+// URL Routing Helpers (History API) & Security Validation
+// ---------------------------------------------------------------------------
+
+/**
+ * isValidChatId(chatId)
+ * Prevents enumeration, script injection, and traversal.
+ * Validates Firestore auto-IDs (typically 20 alphanumeric chars).
+ * We enforce 10-40 characters, strictly alphanumeric + hyphen + underscore.
+ */
+function isValidChatId(chatId) {
+  if (!chatId || typeof chatId !== "string") return false;
+  return /^[a-zA-Z0-9_-]{10,40}$/.test(chatId);
+}
+
+function getChatIdFromUrl() {
+  const match = window.location.pathname.match(/^\/c\/([a-zA-Z0-9_-]+)\/?$/);
+  if (match) {
+    const id = match[1];
+    if (isValidChatId(id)) return id;
+    console.warn("[Security] Malformed or invalid Chat ID in URL blocked.");
+  }
+  return null;
+}
+
+let lastPushStateTime = 0;
+const ROUTE_SPAM_COOLDOWN_MS = 200;
+
+function updateChatUrl(chatId, replace = false) {
+  if (state.isGuestMode || state.isHydratingChatRoute) return;
+  
+  if (!chatId) {
+    if (window.location.pathname !== "/" && window.location.pathname !== "/index.html") {
+      history.replaceState(null, "", "/"); // Always replace for silent recovery/cleanup
+    }
+    return;
+  }
+  
+  const targetUrl = `/c/${chatId}`;
+  if (window.location.pathname !== targetUrl) {
+    const now = Date.now();
+    // Prevent history API spam / infinite loops
+    if (!replace && now - lastPushStateTime < ROUTE_SPAM_COOLDOWN_MS) {
+      console.warn("[Security] Route spam detected. Converting to replaceState.");
+      replace = true; 
+    }
+    
+    if (replace) {
+      history.replaceState({ chatId }, "", targetUrl);
+    } else {
+      history.pushState({ chatId }, "", targetUrl);
+      lastPushStateTime = now;
+    }
+  }
+}
+
+window.addEventListener("popstate", () => {
+  if (document.body.dataset.page !== "dashboard") return;
+  const urlChatId = getChatIdFromUrl();
+  
+  if (urlChatId && urlChatId !== state.currentChatId) {
+    openChat(urlChatId, true);
+  } else if (!urlChatId && state.currentChatId) {
+    handleNewChat(true);
+  }
+});
 
 function renderSettingsPreferences() {
   if (!ui) return;
@@ -2523,23 +2721,78 @@ function formatMessage(content, role = "ai", intent = "GENERAL", doubt = false) 
 
 /**
  * renderMermaidDiagrams()
- * Force Mermaid to re-scan the DOM for new .mermaid blocks.
+ * Safely renders Mermaid diagrams sequentially to prevent parser crashes and concurrency issues.
  */
+let mermaidRenderQueue = Promise.resolve();
+const MAX_MERMAID_LENGTH = 30000;
+
 async function renderMermaidDiagrams() {
   if (typeof mermaid === "undefined") return;
-  try {
-    await mermaid.run({
-      nodes: document.querySelectorAll(".mermaid")
+  if (document.visibilityState !== "visible") {
+    // Re-queue when tab becomes visible
+    document.addEventListener("visibilitychange", function onVis() {
+      if (document.visibilityState === "visible") {
+        document.removeEventListener("visibilitychange", onVis);
+        renderMermaidDiagrams();
+      }
     });
-  } catch (err) {
-    console.error("Mermaid rendering failed:", err);
-    // Fallback: If mermaid fails, wrap it in a pre/code block for readability
-    document.querySelectorAll(".mermaid:not([data-processed])").forEach(node => {
-      node.style.whiteSpace = "pre";
-      node.style.fontFamily = "monospace";
-      node.style.color = "var(--text-soft)";
-    });
+    return;
   }
+
+  const nodes = Array.from(document.querySelectorAll(".mermaid:not([data-mermaid-processed='true'])"));
+  if (nodes.length === 0) return;
+
+  mermaidRenderQueue = mermaidRenderQueue.then(async () => {
+    for (const node of nodes) {
+      if (!node.isConnected) continue; // Skip detached nodes
+      if (node.getAttribute("data-mermaid-processed") === "true") continue;
+
+      const rawCode = node.textContent;
+      node.setAttribute("data-mermaid-processed", "true");
+
+      if (rawCode.length > MAX_MERMAID_LENGTH) {
+        node.innerHTML = `
+          <div class="glass-card" style="padding: 1rem; border-left: 4px solid var(--warning-color);">
+            <div style="color: var(--warning-color); font-weight: 600; margin-bottom: 0.5rem;">⚠ Diagram Too Large</div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">This Mermaid diagram exceeds the size limit (${MAX_MERMAID_LENGTH} characters) and cannot be safely rendered without freezing the browser.</p>
+            <details>
+              <summary style="cursor: pointer; color: var(--primary-color);">Show Raw Syntax</summary>
+              <pre style="margin-top: 0.5rem; padding: 0.5rem; background: var(--bg-dark); border-radius: 4px; overflow-x: auto; font-size: 0.85rem;"><code>${escapeHtml(rawCode)}</code></pre>
+            </details>
+          </div>
+        `;
+        continue;
+      }
+
+      const uniqueId = `mermaid-render-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
+      
+      try {
+        const { svg, bindFunctions } = await mermaid.render(uniqueId, rawCode);
+        if (!node.isConnected) continue; // Check again after async parse
+        
+        node.innerHTML = svg;
+        if (bindFunctions) bindFunctions(node);
+      } catch (err) {
+        console.error("Mermaid rendering failed for a diagram:", err);
+        // Clean up any orphaned elements mermaid.render might have left in the DOM
+        const orphanSvg = document.getElementById(uniqueId);
+        if (orphanSvg) orphanSvg.remove();
+
+        if (node.isConnected) {
+          node.innerHTML = `
+            <div class="glass-card" style="padding: 1rem; border-left: 4px solid var(--danger-color);">
+              <div style="color: var(--danger-color); font-weight: 600; margin-bottom: 0.5rem;">⚠ Invalid Diagram Syntax</div>
+              <p style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">The AI generated invalid Mermaid.js syntax.</p>
+              <details>
+                <summary style="cursor: pointer; color: var(--primary-color);">Show Raw Syntax</summary>
+                <pre style="margin-top: 0.5rem; padding: 0.5rem; background: var(--bg-dark); border-radius: 4px; overflow-x: auto; font-size: 0.85rem;"><code>${escapeHtml(rawCode)}</code></pre>
+              </details>
+            </div>
+          `;
+        }
+      }
+    }
+  }).catch(console.error);
 }
 function formatSidebarDate(timestamp) { const date = timestamp?.toDate ? timestamp.toDate() : new Date(); return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); }
 function getTimestampValue(timestamp) { return timestamp?.toMillis ? timestamp.toMillis() : 0; }
@@ -2578,6 +2831,341 @@ window.startQuizInteractive = function(button) {
   ui.userInput.value = "Start the quiz please!";
   handleSendMessage();
 };
+
+// ---------------------------------------------------------------------------
+// Versioning System
+// ---------------------------------------------------------------------------
+async function initVersioning() {
+  const versionDisplay = document.getElementById("appVersionDisplay");
+  if (!versionDisplay) return;
+
+  let version = "v1.0.0"; // fallback
+
+  if (window.APP_VERSION) {
+    version = window.APP_VERSION;
+  } else {
+    try {
+      const res = await fetch("/config/version.json");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.version) version = data.version;
+      }
+    } catch (_) {
+      // ignore
+    }
+  }
+  
+  versionDisplay.textContent = version;
+}
+
+// ---------------------------------------------------------------------------
+// Device Session Management
+// ---------------------------------------------------------------------------
+
+let currentSessionId = null;
+let sessionListenerUnsubscribe = null;
+let heartbeatIntervalId = null;
+
+function generateUUID() {
+  if (crypto && crypto.randomUUID) {
+    try { return crypto.randomUUID(); } catch (e) {}
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+}
+
+function getBrowserInfo(ua) {
+  ua = (ua || "").toLowerCase();
+  let browser = "Unknown Browser";
+  if (ua.includes("firefox")) browser = "Firefox";
+  else if (ua.includes("samsungbrowser")) browser = "Samsung Internet";
+  else if (ua.includes("opera") || ua.includes("opr")) browser = "Opera";
+  else if (ua.includes("edge") || ua.includes("edg")) browser = "Edge";
+  else if (ua.includes("chrome")) browser = "Chrome";
+  else if (ua.includes("safari")) browser = "Safari";
+
+  let os = "Unknown OS";
+  if (ua.includes("windows")) os = "Windows";
+  else if (ua.includes("mac os")) os = "macOS";
+  else if (ua.includes("android")) os = "Android";
+  else if (ua.includes("linux")) os = "Linux";
+  else if (ua.includes("iphone") || ua.includes("ipad") || ua.includes("ipod")) os = "iOS";
+
+  const deviceType = ua.includes("mobi") ? "Mobile" : "Desktop";
+  return { browser, os, deviceType };
+}
+
+async function initDeviceSession(user) {
+  if (!user || state.isGuestMode) return;
+  const uid = user.uid;
+
+  currentSessionId = localStorage.getItem(STORAGE_KEYS.deviceSessionId);
+  if (!currentSessionId) {
+    currentSessionId = generateUUID();
+    localStorage.setItem(STORAGE_KEYS.deviceSessionId, currentSessionId);
+  }
+
+  const { browser, os, deviceType } = getBrowserInfo(navigator.userAgent);
+  const sessionRef = doc(db, "users", uid, "sessions", currentSessionId);
+
+  try {
+    await setDoc(sessionRef, {
+      sessionId: currentSessionId,
+      userAgent: navigator.userAgent,
+      browser, os, deviceType,
+      createdAt: serverTimestamp(),
+      lastSeenAt: serverTimestamp(),
+      revokedAt: null
+    }, { merge: true });
+
+    startSessionHeartbeat(uid, currentSessionId);
+    setupSessionRevocationListener(uid, currentSessionId);
+  } catch (error) {
+    console.error("Failed to init device session:", error);
+  }
+}
+
+function startSessionHeartbeat(uid, sessionId) {
+  if (heartbeatIntervalId) clearInterval(heartbeatIntervalId);
+
+  const performHeartbeat = async () => {
+    // Multi-tab check: visibility + localStorage leader election
+    if (document.visibilityState === 'hidden') return;
+
+    // Leader election lock
+    const lockKey = `studymate_heartbeat_lock_${sessionId}`;
+    const now = Date.now();
+    const lockVal = localStorage.getItem(lockKey);
+    
+    // If another tab grabbed the lock within the last 110s, skip this heartbeat
+    if (lockVal && (now - parseInt(lockVal, 10)) < 110000) {
+      return;
+    }
+    
+    // Grab/Renew the lock
+    localStorage.setItem(lockKey, now.toString());
+
+    try {
+      await updateDoc(doc(db, "users", uid, "sessions", sessionId), {
+        lastSeenAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Heartbeat failed:", error);
+    }
+  };
+
+  // Run heartbeat every 2 minutes
+  heartbeatIntervalId = setInterval(performHeartbeat, 120000);
+
+  // Also trigger heartbeat on visibility change if visible
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      performHeartbeat();
+    }
+  });
+}
+
+function setupSessionRevocationListener(uid, sessionId) {
+  if (sessionListenerUnsubscribe) sessionListenerUnsubscribe();
+
+  sessionListenerUnsubscribe = onSnapshot(doc(db, "users", uid, "sessions", sessionId), (snapshot) => {
+    if (!snapshot.exists()) return;
+    const data = snapshot.data();
+    if (data.revokedAt != null) {
+      console.warn("Session revoked remotely. Logging out.");
+      // Stop streaming if active to avoid corrupting UI or hanging requests
+      if (state.streamingResponse) stopStreamingResponse();
+      
+      localStorage.removeItem(STORAGE_KEYS.deviceSessionId);
+      cleanupDeviceSession();
+      signOut(auth).then(() => {
+        window.location.replace("login.html?revoked=true");
+      });
+    }
+  });
+}
+
+function cleanupDeviceSession() {
+  if (heartbeatIntervalId) {
+    clearInterval(heartbeatIntervalId);
+    heartbeatIntervalId = null;
+  }
+  if (sessionListenerUnsubscribe) {
+    sessionListenerUnsubscribe();
+    sessionListenerUnsubscribe = null;
+  }
+}
+
+window.addEventListener("beforeunload", () => {
+  cleanupDeviceSession();
+});
+
+async function revokeCurrentSession(uid) {
+  if (!currentSessionId || !uid) return;
+  try {
+    const sessionRef = doc(db, "users", uid, "sessions", currentSessionId);
+    await updateDoc(sessionRef, { revokedAt: serverTimestamp() });
+  } catch (err) {
+    console.error("Failed to revoke current session:", err);
+  }
+  localStorage.removeItem(STORAGE_KEYS.deviceSessionId);
+}
+
+// ---------------------------------------------------------------------------
+// Settings UI: Load and Manage Sessions
+// ---------------------------------------------------------------------------
+
+function loadSessions(user) {
+  if (!state.currentUser?.uid) {
+    console.warn("[Sessions] Skipping session load: auth not ready");
+    return;
+  }
+  if (state.isGuestMode) return;
+  
+  const sessionsContainer = document.getElementById("sessionsListContainer");
+  if (!sessionsContainer) return;
+
+  const q = query(
+    collection(db, "users", state.currentUser.uid, "sessions"),
+    where("revokedAt", "==", null)
+  );
+
+  onSnapshot(q, (snapshot) => {
+    // Filter out stale sessions (>30 days old without a heartbeat)
+    const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
+    const activeSessions = snapshot.docs.filter(d => {
+      const data = d.data();
+      const lastSeen = getTimestampValue(data.lastSeenAt);
+      return lastSeen > thirtyDaysAgo;
+    });
+
+    if (activeSessions.length === 0) {
+      sessionsContainer.innerHTML = '<div class="session-loading">No active sessions found.</div>';
+      return;
+    }
+
+    // Sort: Current device first, then by lastSeenAt descending
+    activeSessions.sort((a, b) => {
+      const aIsCurrent = a.id === currentSessionId;
+      const bIsCurrent = b.id === currentSessionId;
+      if (aIsCurrent && !bIsCurrent) return -1;
+      if (!aIsCurrent && bIsCurrent) return 1;
+      return getTimestampValue(b.data().lastSeenAt) - getTimestampValue(a.data().lastSeenAt);
+    });
+
+    sessionsContainer.innerHTML = activeSessions.map(d => {
+      const data = d.data();
+      const isCurrent = data.sessionId === currentSessionId;
+      const badgeHtml = isCurrent ? '<span class="badge success-badge">Current Device</span>' : '';
+      const actionHtml = isCurrent 
+        ? '' 
+        : `<button class="ghost-btn danger-btn" id="revokeBtn_${data.sessionId}" onclick="window.revokeSession('${data.sessionId}')" style="padding: 0.25rem 0.75rem; font-size: 0.85rem;">Log Out</button>`;
+      
+      const lastSeenStr = formatSidebarDate(data.lastSeenAt);
+      
+      return `
+        <div class="glass-card" style="padding: 1rem; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display: flex; flex-direction: column; gap: 0.25rem;">
+            <div style="font-weight: 600; display: flex; align-items: center; gap: 0.5rem;">
+              ${escapeHtml(data.browser)} on ${escapeHtml(data.os)}
+              ${badgeHtml}
+            </div>
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              Last active: ${lastSeenStr}
+            </div>
+          </div>
+          <div>
+            ${actionHtml}
+          </div>
+        </div>
+      `;
+    }).join("");
+  }, (error) => {
+    console.error("[Sessions] Firestore error:", error);
+    console.error("[Sessions] Error code:", error.code);
+    console.error("[Sessions] Error message:", error.message);
+    
+    sessionsContainer.innerHTML = `
+      <div class="session-loading" style="color: var(--danger-color); text-align: left;">
+        <div style="font-weight: 600; margin-bottom: 0.5rem;">⚠ Failed to load sessions</div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 1rem;">${escapeHtml(error.message)}</div>
+        <button class="ghost-btn" onclick="window.location.reload()" style="padding: 0.25rem 0.75rem;">Retry</button>
+      </div>
+    `;
+  });
+}
+
+window.revokeSession = async function(sessionIdToRevoke) {
+  const uid = state.currentUser?.uid;
+  if (!uid || sessionIdToRevoke === currentSessionId) return;
+
+  const btn = document.getElementById(`revokeBtn_${sessionIdToRevoke}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = "Logging out...";
+  }
+
+  try {
+    const sessionRef = doc(db, "users", uid, "sessions", sessionIdToRevoke);
+    await updateDoc(sessionRef, { revokedAt: serverTimestamp() });
+    showToast("Device logged out successfully.", "success");
+  } catch (error) {
+    console.error("Failed to revoke session:", error);
+    showToast("Failed to logout device.", "error");
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = "Log Out";
+    }
+  }
+};
+
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => {
+    const logoutAllBtn = document.getElementById("logoutAllSessionsBtn");
+    if (logoutAllBtn) {
+      logoutAllBtn.addEventListener("click", async () => {
+        const uid = state.currentUser?.uid;
+        if (!uid || !currentSessionId) return;
+
+        logoutAllBtn.disabled = true;
+        logoutAllBtn.textContent = "Logging out...";
+
+        try {
+          const q = query(
+            collection(db, "users", uid, "sessions"),
+            where("revokedAt", "==", null)
+          );
+          const snapshot = await getDocs(q);
+          const batchOp = writeBatch(db);
+          let count = 0;
+          
+          snapshot.forEach(docSnap => {
+            if (docSnap.id !== currentSessionId) {
+              batchOp.update(docSnap.ref, { revokedAt: serverTimestamp() });
+              count++;
+            }
+          });
+          
+          if (count > 0) {
+            await batchOp.commit();
+            showToast(`Successfully logged out ${count} other device(s).`, "success");
+          } else {
+            showToast("No other active devices found.", "info");
+          }
+        } catch (error) {
+          console.error("Failed to revoke all sessions:", error);
+          showToast("Failed to logout other devices.", "error");
+        } finally {
+          logoutAllBtn.disabled = false;
+          logoutAllBtn.textContent = "Logout All Other Devices";
+        }
+      });
+    }
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Initialization & Boot Sequence
@@ -2627,20 +3215,28 @@ async function initApp(user) {
     
     // Core Shared Init
     const page = document.body.dataset.page;
-    if (page === "dashboard" || page === "settings") {
-      await loadUserSettings();
-      await loadUserMemory();
-    }
 
     if (page === "dashboard") {
+      // 1. Initialize core data
+      await loadUserSettings();
+      await loadUserMemory();
       populateUserInfo(user);
-      await maybeHandleOnboardingForUser(user);
+      
+      // 2. Load Chats and Hydrate Persistence FIRST
+      // This MUST happen before any Firestore writes (like Session initialization) 
+      // to prevent empty cache snapshots from destroying preferredChatId.
       startDashboardApp(user);
-    }
-
-    if (page === "settings") {
+      
+      // 3. Post-load operations
+      await maybeHandleOnboardingForUser(user);
+      await initDeviceSession(user);
+    } else if (page === "settings") {
+      await loadUserSettings();
+      await loadUserMemory();
       populateUserInfo(user);
       await loadUsageStats();
+      loadSessions(user);
+      await initDeviceSession(user);
     }
   } catch (err) {
     console.error("App Initialization Error:", err);
@@ -2720,15 +3316,8 @@ async function bootstrap() {
     applySavedTheme();
     consumeFlashToast();
 
-    // 2. Initialize Mermaid (Lazy)
-    if (typeof mermaid !== "undefined") {
-      mermaid.initialize({
-        startOnLoad: false,
-        theme: document.body.classList.contains("light") ? "default" : "dark",
-        securityLevel: "loose",
-        flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis" }
-      });
-    }
+    // 2. Initialize Mermaid (Lazy Singleton)
+    initMermaidSingleton();
     
     // 3. Initialize Page-Specific UI Bindings
     const page = document.body.dataset.page;
@@ -2755,7 +3344,21 @@ function updateStreamUI(text) {
   
   // Directly update inner HTML of the active stream bubble
   streamContainer.innerHTML = formatMessage(text, "ai");
-  renderMermaidDiagrams();
+  // CRITICAL: DO NOT call renderMermaidDiagrams() here. 
+  // It causes parser crashes during incomplete token streams.
+}
+
+function initMermaidSingleton() {
+  if (typeof mermaid === "undefined") return;
+  if (!window.__MERMAID_INITIALIZED__) {
+    mermaid.initialize({
+      startOnLoad: false,
+      theme: document.body.classList.contains("light") ? "default" : "dark",
+      securityLevel: "loose",
+      flowchart: { useMaxWidth: true, htmlLabels: true, curve: "basis" }
+    });
+    window.__MERMAID_INITIALIZED__ = true;
+  }
 }
 
 function generateSafeFallbackReply() {

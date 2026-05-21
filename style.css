@@ -255,6 +255,11 @@ a:hover {
   padding: 16px;
   padding-bottom: calc(24px + env(safe-area-inset-bottom));
   box-sizing: border-box;
+
+  .chat-input-container {
+    padding: 0 10px 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+  }
 }
 
 .auth-shell {
@@ -512,6 +517,11 @@ a:hover {
   align-items: center;
 }
 
+.brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
 .brand-overline {
   margin: 0;
   color: var(--text-soft);
@@ -522,6 +532,29 @@ a:hover {
   margin: 6px 0 0;
   font-size: 1.08rem;
   line-height: 1.3;
+}
+
+.sidebar-version {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-soft);
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-family: monospace;
+  color: var(--text-soft);
+}
+
+.version-status {
+  padding: 2px 6px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  font-family: "Outfit", sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .history-panel {
@@ -546,10 +579,37 @@ a:hover {
   padding: 12px;
   border-top: 1px solid var(--border);
   display: flex;
+  flex-direction: column;
   gap: 12px;
+  flex-shrink: 0;
+}
+
+.footer-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   font-size: 0.8rem;
   color: var(--text-soft);
-  flex-shrink: 0;
+}
+
+.changelog-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface-soft);
+  color: var(--text-main);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all var(--transition);
+}
+
+.changelog-btn:hover {
+  background: var(--surface-strong);
+  transform: translateY(-1px);
 }
 
 .history-empty {
@@ -639,7 +699,7 @@ a:hover {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  gap: 10px;
+  gap: 0;
   position: relative;
   overflow: hidden;
 }
@@ -649,33 +709,28 @@ a:hover {
   display: flex;
   flex-direction: column;
   gap: 12px;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
   z-index: 1000;
   overflow: visible;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  pointer-events: none;
+  background: linear-gradient(to bottom, var(--bg-main) 20%, transparent 100%);
+  padding-bottom: 30px;
 }
 
-/* Row 1 â€” Hamburger | Title | Profile */
+.topbar>* {
+  pointer-events: auto;
+}
+
+/* Row 1 â€” Hamburger | Profile */
 .topbar-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 14px;
   width: 100%;
-}
-
-.topbar-title-block {
-  flex: 1;
-  min-width: 0;
-}
-
-.chat-title {
-  margin: 4px 0 0;
-  font-size: 1.35rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* Row 2 â€” Mode, Notes, Hinglish controls */
@@ -993,15 +1048,16 @@ a:hover {
    Chat messages
    ======================================================================== */
 
-.chat-container {
+.chat-messages {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
   min-height: 0;
   overflow-y: auto;
-  padding: 16px;
-  box-sizing: border-box;
+  padding: 100px 20px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+  scroll-behavior: smooth;
 }
 
 .empty-state {
@@ -1140,8 +1196,15 @@ a:hover {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .message-content ul,
@@ -1334,6 +1397,8 @@ a:hover {
   gap: 12px;
   flex-shrink: 0;
   align-items: end;
+  background: var(--bg-main);
+  z-index: 100;
 }
 
 .composer textarea {
@@ -1352,7 +1417,7 @@ a:hover {
   border: 1px solid #3b82f6;
 }
 
-.composer .primary-btn {
+.send-btn {
   align-self: end;
   width: 46px;
   height: 46px;
@@ -1361,10 +1426,35 @@ a:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  transition: transform var(--transition), opacity var(--transition);
 }
 
-.composer .primary-btn:hover:not(:disabled) {
+.send-btn:hover:not(:disabled) {
   transform: scale(1.05);
+}
+
+.send-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.send-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+/* Let the bottom auto-scroll element stay out of sight */
+.bottom-anchor {
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ========================================================================
@@ -1846,8 +1936,10 @@ a:hover {
   .sidebar {
     position: absolute;
     top: 0;
-    left: -100%; /* Default hidden on mobile */
-    z-index: 1001; /* Must be above overlay */
+    left: -100%;
+    /* Default hidden on mobile */
+    z-index: 1001;
+    /* Must be above overlay */
     width: 280px;
     height: 100%;
     border-radius: 0 24px 24px 0;
@@ -1866,15 +1958,18 @@ a:hover {
 
   .sidebar-overlay {
     z-index: 1000;
-    pointer-events: none; /* do NOT block anything by default */
+    pointer-events: none;
+    /* do NOT block anything by default */
     opacity: 0;
     transition: opacity 0.3s;
   }
 
   .sidebar-overlay.active {
-    pointer-events: auto; /* only active when sidebar is open */
+    pointer-events: auto;
+    /* only active when sidebar is open */
     opacity: 1;
-    visibility: visible; /* keep visibility for accessibility */
+    visibility: visible;
+    /* keep visibility for accessibility */
   }
 }
 
@@ -2264,7 +2359,8 @@ select,
 }
 
 body.sidebar-open {
-  overflow: hidden; /* Lock background scroll */
+  overflow: hidden;
+  /* Lock background scroll */
 }
 
 @media (min-width: 981px) {
@@ -3054,7 +3150,7 @@ body.auth-page .modal {
   font-size: 2.5rem;
   font-weight: 800;
   margin-top: 5px;
-  background: linear-gradient(135deg, #fff 0%, rgba(255,255,255,0.7) 100%);
+  background: linear-gradient(135deg, #fff 0%, rgba(255, 255, 255, 0.7) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -3074,24 +3170,28 @@ body.auth-page .modal {
   .settings-grid {
     grid-template-columns: 1fr;
   }
+
   .settings-container {
     padding: 10px;
     width: 100%;
     overflow-x: hidden;
   }
+
   .settings-card {
     padding: 15px;
     width: 100%;
     max-width: 100%;
   }
+
   .settings-row {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 15px;
-      width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    width: 100%;
   }
+
   .settings-select {
-      width: 100%;
+    width: 100%;
   }
 }
 
@@ -3229,7 +3329,8 @@ body.auth-page .modal {
 }
 
 .settings-select option {
-  background-color: #0f172a; /* Matches --bg-main */
+  background-color: #0f172a;
+  /* Matches --bg-main */
   color: white;
 }
 
@@ -3261,10 +3362,21 @@ body.auth-page .modal {
   border-radius: 8px;
 }
 
-.dark-preview { background: #0f172a; }
-.light-preview { background: #f8fafc; }
-.blue-preview { background: #1e3a8a; }
-.purple-preview { background: #4c1d95; }
+.dark-preview {
+  background: #0f172a;
+}
+
+.light-preview {
+  background: #f8fafc;
+}
+
+.blue-preview {
+  background: #1e3a8a;
+}
+
+.purple-preview {
+  background: #4c1d95;
+}
 
 /* Usage Stats */
 .usage-stats-grid {
@@ -3389,103 +3501,118 @@ body.auth-page .modal {
 
 /* ======================================================================== 
    Thinking Dots Animation 
-   ======================================================================== */ 
-.thinking-dots { 
-  display: flex; 
-  align-items: center; 
-  gap: 4px; 
-  padding: 4px 0; 
-} 
+   ======================================================================== */
+.thinking-dots {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+}
 
-.thinking-dots span { 
-  width: 8px; 
-  height: 8px; 
-  background-color: var(--accent); 
-  border-radius: 50%; 
-  opacity: 0.4; 
-  animation: thinking-bounce 1.4s infinite ease-in-out both; 
-} 
+.thinking-dots span {
+  width: 8px;
+  height: 8px;
+  background-color: var(--accent);
+  border-radius: 50%;
+  opacity: 0.4;
+  animation: thinking-bounce 1.4s infinite ease-in-out both;
+}
 
-.thinking-dots span:nth-child(1) { animation-delay: -0.32s; } 
-.thinking-dots span:nth-child(2) { animation-delay: -0.16s; } 
+.thinking-dots span:nth-child(1) {
+  animation-delay: -0.32s;
+}
 
-@keyframes thinking-bounce { 
-  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 
-  40% { transform: scale(1); opacity: 1; } 
-} 
+.thinking-dots span:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes thinking-bounce {
+
+  0%,
+  80%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+
+  40% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
 
 /* ======================================================================== 
    Settings Page Refactor - Navigation Style 
-   ======================================================================== */ 
-.settings-shell { 
-  max-width: 1200px; 
-  margin: 0 auto; 
-  padding: 40px 20px; 
-} 
+   ======================================================================== */
+.settings-shell {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
 
-.settings-layout { 
-  display: grid; 
-  grid-template-columns: 280px 1fr; 
-  gap: 40px; 
-  margin-top: 30px; 
-} 
+.settings-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 40px;
+  margin-top: 30px;
+}
 
-/* Sidebar Nav (Desktop) */ 
-.settings-nav { 
-  display: flex; 
-  flex-direction: column; 
-  gap: 8px; 
-} 
+/* Sidebar Nav (Desktop) */
+.settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 
-.nav-item { 
-  display: flex; 
-  align-items: center; 
-  gap: 12px; 
-  padding: 12px 18px; 
-  border-radius: 14px; 
-  color: var(--text-soft); 
-  font-weight: 500; 
-  cursor: pointer; 
-  transition: all var(--transition); 
-  background: transparent; 
-  border: 1px solid transparent; 
-} 
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 18px;
+  border-radius: 14px;
+  color: var(--text-soft);
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition);
+  background: transparent;
+  border: 1px solid transparent;
+}
 
-.nav-item:hover { 
-  background: var(--surface-soft); 
-  color: var(--text-main); 
-} 
+.nav-item:hover {
+  background: var(--surface-soft);
+  color: var(--text-main);
+}
 
-.nav-item.active { 
-  background: var(--surface-strong); 
-  color: var(--accent); 
-  border-color: var(--border-strong); 
-  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.1); 
-} 
+.nav-item.active {
+  background: var(--surface-strong);
+  color: var(--accent);
+  border-color: var(--border-strong);
+  box-shadow: 0 4px 20px rgba(56, 189, 248, 0.1);
+}
 
-.nav-item svg { 
-  opacity: 0.7; 
-  transition: opacity var(--transition); 
-} 
+.nav-item svg {
+  opacity: 0.7;
+  transition: opacity var(--transition);
+}
 
-.nav-item.active svg { 
-  opacity: 1; 
-} 
+.nav-item.active svg {
+  opacity: 1;
+}
 
-/* Section Visibility */ 
-.settings-card.hidden { 
-  display: none !important; 
-} 
+/* Section Visibility */
+.settings-card.hidden {
+  display: none !important;
+}
 
-/* Mobile Tabs (Override Sidebar) → Mobile Card Menu */ 
-@media (max-width: 768px) { 
+/* Mobile Tabs (Override Sidebar) → Mobile Card Menu */
+@media (max-width: 768px) {
   .settings-page {
     padding: 20px 0;
   }
 
-  .settings-shell { 
-    padding: 16px 16px; 
-  } 
+  .settings-shell {
+    padding: 16px 16px;
+  }
 
   .settings-container {
     padding: 0;
@@ -3513,43 +3640,43 @@ body.auth-page .modal {
     width: 100%;
     justify-content: center;
   }
-  
-  .settings-layout { 
-    grid-template-columns: 1fr; 
-    gap: 0; 
-  } 
-  
+
+  .settings-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
   /* ---- Mobile Nav: Vertical Card Menu ---- */
-  .settings-nav { 
-    flex-direction: column; 
+  .settings-nav {
+    flex-direction: column;
     overflow-x: visible;
     padding: 0;
     margin: 0;
     gap: 6px;
-  } 
-
-  /* Hide scrollbar overrides no longer needed */
-  .settings-nav::-webkit-scrollbar { 
-    display: block;
-  } 
-  
-  .nav-item { 
-    flex: none;
-    padding: 14px 16px; 
-    font-size: 1rem; 
-    white-space: normal;
-    border-radius: 14px;
-    background: var(--surface-soft, rgba(255,255,255,0.03));
-    border: 1px solid var(--border, rgba(255,255,255,0.06));
-    min-height: 56px;
-  } 
-
-  .nav-item.active {
-    background: var(--surface-strong, rgba(255,255,255,0.06));
-    border-color: var(--border-strong, rgba(255,255,255,0.1));
   }
 
-  .nav-item > svg:first-child {
+  /* Hide scrollbar overrides no longer needed */
+  .settings-nav::-webkit-scrollbar {
+    display: block;
+  }
+
+  .nav-item {
+    flex: none;
+    padding: 14px 16px;
+    font-size: 1rem;
+    white-space: normal;
+    border-radius: 14px;
+    background: var(--surface-soft, rgba(255, 255, 255, 0.03));
+    border: 1px solid var(--border, rgba(255, 255, 255, 0.06));
+    min-height: 56px;
+  }
+
+  .nav-item.active {
+    background: var(--surface-strong, rgba(255, 255, 255, 0.06));
+    border-color: var(--border-strong, rgba(255, 255, 255, 0.1));
+  }
+
+  .nav-item>svg:first-child {
     flex-shrink: 0;
     width: 22px;
     height: 22px;
@@ -3621,12 +3748,12 @@ body.auth-page .modal {
   }
 
   /* ---- Mobile Settings Cards ---- */
-  .settings-card { 
+  .settings-card {
     padding: 20px 16px;
     border-radius: 16px;
     width: 100%;
     max-width: 100%;
-  } 
+  }
 
   .card-header {
     margin-bottom: 20px;
@@ -3715,9 +3842,9 @@ body.auth-page .modal {
     padding: 12px 8px;
   }
 
-  .stat-value { 
-    font-size: 1.3rem; 
-  } 
+  .stat-value {
+    font-size: 1.3rem;
+  }
 
   .stat-label {
     font-size: 0.65rem;
@@ -3736,13 +3863,13 @@ body.auth-page .modal {
   }
 
   /* ---- Mobile Actions ---- */
-  .card-actions { 
-    flex-direction: column; 
-  } 
-  
+  .card-actions {
+    flex-direction: column;
+  }
+
   .card-actions .primary-btn,
   .card-actions .ghost-btn {
-    width: 100%; 
+    width: 100%;
   }
 
   .card-actions-minimal {
@@ -3773,7 +3900,8 @@ body.auth-page .modal {
   /* ---- Mobile Inputs ---- */
   .input-group input {
     padding: 14px 16px;
-    font-size: 16px; /* Prevents iOS zoom on focus */
+    font-size: 16px;
+    /* Prevents iOS zoom on focus */
   }
 
   /* ---- Mobile Toggle Groups in Settings Rows ---- */
@@ -3874,13 +4002,29 @@ body.auth-page .modal {
 }
 
 @keyframes ragPulse {
-  0%, 100% { opacity: 0.4; transform: scale(0.85); }
-  50% { opacity: 1; transform: scale(1.15); }
+
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.15);
+  }
 }
 
 @keyframes ragFadeIn {
-  from { opacity: 0; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* --- RAG Live Badge (on messages that used retrieval) --- */
@@ -3941,7 +4085,8 @@ body.auth-page .modal {
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  border: 2px solid var(--bg-main, #0f172a); /* Match background color to create overlap cutout effect */
+  border: 2px solid var(--bg-main, #0f172a);
+  /* Match background color to create overlap cutout effect */
   background: white;
   margin-right: -8px;
   position: relative;
@@ -3959,7 +4104,7 @@ body.auth-page .modal {
   font-weight: bold;
 }
 
-.overlapping-icons > *:last-child {
+.overlapping-icons>*:last-child {
   margin-right: 0;
 }
 
@@ -4008,7 +4153,8 @@ body.auth-page .modal {
   border-radius: 50%;
   object-fit: cover;
   flex-shrink: 0;
-  background: white; /* Fallback for transparent favicons */
+  background: white;
+  /* Fallback for transparent favicons */
 }
 
 .source-favicon-fallback {
@@ -4039,21 +4185,25 @@ body.auth-page .modal {
   .rag-search-indicator {
     font-size: 0.78rem;
   }
+
   .rag-badge {
     font-size: 0.62rem;
     padding: 1px 6px;
   }
+
   .source-chips-container {
     flex-wrap: nowrap;
     overflow-x: auto;
     padding-bottom: 4px;
     -webkit-overflow-scrolling: touch;
     /* Hide scrollbar for cleaner look */
-    scrollbar-width: none; 
+    scrollbar-width: none;
   }
+
   .source-chips-container::-webkit-scrollbar {
     display: none;
   }
+
   .source-chip {
     flex-shrink: 0;
     max-width: 180px;

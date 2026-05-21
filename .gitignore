@@ -31,6 +31,7 @@ yarn-error.log*
 pnpm-debug.log*
 firebase-debug.log
 firebase-debug.*.log
+ui-debug.log
 
 # --- Build and Dist ---
 dist/
@@ -82,3 +83,4 @@ scratch/
 # --- Other temporary files ---
 tmp/
 temp/
+graphify-out/

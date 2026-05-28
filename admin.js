@@ -1,11 +1,19 @@
-import { auth } from "./firebase.js";
+import { auth, db } from "./firebase.js";
 import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+import { collection, doc, setDoc, getDocs, deleteDoc, query, orderBy, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 import { sendAdminNotification } from "./services/notificationService.js";
 
 // â”€â”€ DOM Elements â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 const dom = {
   body: document.body,
   authLoader: document.getElementById("authLoader"),
+  toastContainer: document.getElementById("toastContainer"),
+  
+  // Tabs
+  tabBtns: document.querySelectorAll(".admin-tab-btn"),
+  tabContents: document.querySelectorAll(".admin-tab-content"),
+  
+  // Notification Control
   form: document.getElementById("adminNotifForm"),
   titleInput: document.getElementById("notifTitle"),
   messageInput: document.getElementById("notifMessage"),
@@ -21,7 +29,29 @@ const dom = {
   titleError: document.getElementById("titleError"),
   messageError: document.getElementById("messageError"),
   uidError: document.getElementById("uidError"),
-  toastContainer: document.getElementById("toastContainer")
+
+  // Changelog Management
+  clForm: document.getElementById("adminChangelogForm"),
+  clIdInput: document.getElementById("changelogId"),
+  clVersion: document.getElementById("changelogVersion"),
+  clType: document.getElementById("changelogType"),
+  clTitle: document.getElementById("changelogTitle"),
+  clSummary: document.getElementById("changelogSummary"),
+  clContent: document.getElementById("changelogContentInput"),
+  clTags: document.getElementById("changelogTags"),
+  clPublished: document.getElementById("changelogPublished"),
+  clNotify: document.getElementById("changelogNotify"),
+  clSaveBtn: document.getElementById("saveChangelogBtn"),
+  clClearBtn: document.getElementById("clearChangelogBtn"),
+  clErrorMsg: document.getElementById("changelogErrorMsg"),
+  clPreview: document.getElementById("changelogPreviewSlot"),
+  clHistoryList: document.getElementById("changelogHistoryList"),
+  runMigrationBtn: document.getElementById("runMigrationBtn"),
+  
+  // Modals
+  deleteConfirmModal: document.getElementById("deleteConfirmModal"),
+  confirmDeleteBtn: document.getElementById("confirmDeleteBtn"),
+  cancelDeleteBtn: document.getElementById("cancelDeleteBtn")
 };
 
 const NOTIFICATION_TYPE_ICONS = {
@@ -43,13 +73,18 @@ const initAuth = () => {
 
     const showDashboard = () => {
       const elapsed = Date.now() - startTime;
-      const delay = Math.max(0, 300 - elapsed);
+      const minVisible = Math.max(0, 250 - elapsed);
       setTimeout(() => {
-        if (skeleton) skeleton.style.display = "none";
+        if (skeleton) {
+          skeleton.classList.add("skeleton-hidden");
+          skeleton.addEventListener("transitionend", () => skeleton.remove(), { once: true });
+          // Safety fallback: remove after 400ms if transitionend doesn't fire
+          setTimeout(() => { if (skeleton.parentNode) skeleton.remove(); }, 400);
+        }
         if (content) content.style.display = "block";
         document.body.style.opacity = "1";
         document.body.style.pointerEvents = "auto";
-      }, delay);
+      }, minVisible);
     };
 
     if (user) {
@@ -77,10 +112,23 @@ const setupUI = () => {
   if (dom.authLoader) dom.authLoader.style.display = "none";
   dom.body.classList.add("ready");
   
+  // Tab Switching
+  dom.tabBtns.forEach(btn => {
+    btn.addEventListener("click", () => {
+      dom.tabBtns.forEach(b => b.classList.remove("active"));
+      dom.tabContents.forEach(c => c.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById(btn.dataset.tab).classList.add("active");
+    });
+  });
+
   // Initialize dynamic listeners
   bindEvents();
   updatePreview(); // Initial preview
   dom.titleInput.focus();
+  
+  // Initialize Changelog system
+  initChangelogSystem();
 };
 
 // â”€â”€ Live Preview & Debounce â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -269,6 +317,315 @@ const getErrorMessage = (err) => {
   if (typeof err.message === "string" && err.message.trim()) return err.message;
   if (typeof err.detail === "string" && err.detail.trim()) return err.detail;
   return "An error occurred during dispatch.";
+};
+
+// â”€â”€ Changelog Management Logic â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+let changelogs = [];
+let deleteTargetId = null;
+
+const initChangelogSystem = () => {
+  dom.clContent.addEventListener("input", () => {
+    debounce(updateChangelogPreview, 300);
+    saveChangelogDraft();
+  });
+  dom.clVersion.addEventListener("input", saveChangelogDraft);
+  dom.clTitle.addEventListener("input", saveChangelogDraft);
+  dom.clSummary.addEventListener("input", saveChangelogDraft);
+  dom.clType.addEventListener("change", updateChangelogPreview);
+  
+  dom.clForm.addEventListener("submit", handleChangelogSubmit);
+  dom.clClearBtn.addEventListener("click", clearChangelogForm);
+  
+  dom.runMigrationBtn.addEventListener("click", migrateJsonToFirestore);
+  
+  dom.cancelDeleteBtn.addEventListener("click", () => {
+    dom.deleteConfirmModal.style.display = "none";
+    deleteTargetId = null;
+  });
+  dom.confirmDeleteBtn.addEventListener("click", confirmDeleteChangelog);
+
+  loadChangelogDraft();
+  fetchChangelogHistory();
+};
+
+const updateChangelogPreview = () => {
+  const content = dom.clContent.value.trim();
+  const title = dom.clTitle.value.trim() || "Update Title";
+  const version = dom.clVersion.value.trim() || "vX.X.X";
+  const type = dom.clType.value;
+  
+  // Protect Math blocks from Markdown parser
+  let text = content;
+  const mathBlocks = [];
+  text = text.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\(.*?\\\)|\$[^$\n]+?\$)/g, (match) => {
+    const id = `__MATH_BLOCK_${mathBlocks.length}__`;
+    mathBlocks.push(match);
+    return id;
+  });
+
+  let html = "";
+  try {
+    html = typeof marked !== 'undefined' ? marked.parse(text) : escapeHtml(text);
+  } catch (err) {
+    html = escapeHtml(text);
+  }
+
+  // Restore Math blocks
+  mathBlocks.forEach((block, i) => {
+    html = html.replace(`__MATH_BLOCK_${i}__`, () => block);
+  });
+
+  dom.clPreview.innerHTML = `
+    <div style="margin-bottom: 16px; border-bottom: 1px solid var(--border-color); padding-bottom: 12px;">
+      <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 8px;">
+        <span style="font-weight: bold; color: var(--primary);">${escapeHtml(version)}</span>
+        <span class="release-badge ${type}">${type}</span>
+      </div>
+      <h2 style="margin: 0; font-size: 1.5rem;">${escapeHtml(title)}</h2>
+    </div>
+    <div class="changelog-markdown-body">
+      ${html || "<span style='color: var(--text-soft);'>Markdown content preview will appear here...</span>"}
+    </div>
+  `;
+
+  // Render Math
+  if (typeof renderMathInElement !== "undefined") {
+    try {
+      renderMathInElement(dom.clPreview, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '\\[', right: '\\]', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false}
+        ],
+        ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"],
+        throwOnError: false
+      });
+    } catch(e) {}
+  }
+};
+
+const saveChangelogDraft = () => {
+  const draft = {
+    version: dom.clVersion.value,
+    title: dom.clTitle.value,
+    summary: dom.clSummary.value,
+    content: dom.clContent.value,
+    type: dom.clType.value,
+    tags: dom.clTags.value
+  };
+  localStorage.setItem("admin_changelog_draft", JSON.stringify(draft));
+};
+
+const loadChangelogDraft = () => {
+  try {
+    const draft = JSON.parse(localStorage.getItem("admin_changelog_draft"));
+    if (draft && !dom.clIdInput.value) {
+      dom.clVersion.value = draft.version || "";
+      dom.clTitle.value = draft.title || "";
+      dom.clSummary.value = draft.summary || "";
+      dom.clContent.value = draft.content || "";
+      dom.clType.value = draft.type || "patch";
+      dom.clTags.value = draft.tags || "";
+      updateChangelogPreview();
+    }
+  } catch(e) {}
+};
+
+const clearChangelogForm = () => {
+  dom.clForm.reset();
+  dom.clIdInput.value = "";
+  dom.clType.value = "patch";
+  localStorage.removeItem("admin_changelog_draft");
+  updateChangelogPreview();
+};
+
+const fetchChangelogHistory = async () => {
+  try {
+    const q = query(collection(db, "changelogs"), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    changelogs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    renderChangelogHistory();
+  } catch (err) {
+    console.error("Failed to fetch changelogs", err);
+    dom.clHistoryList.innerHTML = `<div style="text-align:center; color: #e74c3c;">Failed to load history</div>`;
+  }
+};
+
+const renderChangelogHistory = () => {
+  if (changelogs.length === 0) {
+    dom.clHistoryList.innerHTML = `<div style="text-align:center; color: var(--text-soft);">No changelogs found</div>`;
+    return;
+  }
+  
+  dom.clHistoryList.innerHTML = changelogs.map(cl => {
+    const date = cl.createdAt ? new Date(cl.createdAt.toMillis()).toLocaleDateString() : "Draft";
+    const pubBadge = cl.published 
+      ? `<span class="release-badge success" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71;">Published</span>` 
+      : `<span class="release-badge draft">Draft</span>`;
+      
+    return `
+      <div class="changelog-history-item">
+        <div class="history-item-header">
+          <span class="history-item-title">${escapeHtml(cl.version)} - ${escapeHtml(cl.title)}</span>
+          ${pubBadge}
+        </div>
+        <div class="history-item-meta">
+          <span class="release-badge ${escapeHtml(cl.releaseType)}">${escapeHtml(cl.releaseType)}</span>
+          <span>${date}</span>
+        </div>
+        <div class="history-item-actions">
+          <button class="history-btn" onclick="window.editChangelog('${cl.id}')">Edit</button>
+          <button class="history-btn delete" onclick="window.requestDeleteChangelog('${cl.id}')">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+};
+
+window.editChangelog = (id) => {
+  const cl = changelogs.find(c => c.id === id);
+  if (!cl) return;
+  dom.clIdInput.value = cl.id;
+  dom.clVersion.value = cl.version;
+  dom.clTitle.value = cl.title;
+  dom.clSummary.value = cl.summary || "";
+  dom.clContent.value = cl.content || "";
+  dom.clType.value = cl.releaseType || "patch";
+  dom.clTags.value = (cl.tags || []).join(", ");
+  dom.clPublished.checked = cl.published;
+  updateChangelogPreview();
+  // Scroll to top
+  document.querySelector("#tab-changelogs section").scrollTop = 0;
+};
+
+window.requestDeleteChangelog = (id) => {
+  deleteTargetId = id;
+  dom.deleteConfirmModal.style.display = "flex";
+};
+
+const confirmDeleteChangelog = async () => {
+  if (!deleteTargetId) return;
+  const btn = dom.confirmDeleteBtn;
+  btn.textContent = "Deleting...";
+  btn.disabled = true;
+  try {
+    await deleteDoc(doc(db, "changelogs", deleteTargetId));
+    changelogs = changelogs.filter(c => c.id !== deleteTargetId);
+    renderChangelogHistory();
+    if (dom.clIdInput.value === deleteTargetId) clearChangelogForm();
+    showToast("Changelog deleted successfully.");
+  } catch (err) {
+    console.error("Delete error", err);
+    showToast("Failed to delete changelog", "error");
+  } finally {
+    btn.textContent = "Delete";
+    btn.disabled = false;
+    dom.deleteConfirmModal.style.display = "none";
+    deleteTargetId = null;
+  }
+};
+
+const handleChangelogSubmit = async (e) => {
+  e.preventDefault();
+  const btn = dom.clSaveBtn;
+  
+  if (!dom.clVersion.value.trim() || !dom.clTitle.value.trim() || !dom.clContent.value.trim()) {
+    dom.clErrorMsg.textContent = "Version, Title, and Content are required.";
+    return;
+  }
+  dom.clErrorMsg.textContent = "";
+  
+  btn.disabled = true;
+  btn.innerHTML = `<span>Saving...</span>`;
+  
+  const id = dom.clIdInput.value || Date.now().toString(); // Use timestamp as simple ID
+  const tags = dom.clTags.value.split(",").map(t => t.trim()).filter(Boolean);
+  
+  const payload = {
+    version: dom.clVersion.value.trim(),
+    title: dom.clTitle.value.trim(),
+    summary: dom.clSummary.value.trim(),
+    content: dom.clContent.value.trim(),
+    releaseType: dom.clType.value,
+    tags: tags,
+    published: dom.clPublished.checked,
+    updatedAt: serverTimestamp(),
+  };
+
+  if (!dom.clIdInput.value) {
+    payload.createdAt = serverTimestamp();
+    payload.author = auth.currentUser?.uid || "admin";
+  }
+
+  try {
+    await setDoc(doc(db, "changelogs", id), payload, { merge: true });
+    showToast("Changelog saved successfully!");
+    
+    // Broadcast notification
+    if (dom.clNotify.checked && dom.clPublished.checked) {
+      await sendAdminNotification({
+        title: `StudyMate updated to ${payload.version} 🚀`,
+        message: payload.title + " - " + payload.summary,
+        type: "info"
+      });
+      showToast("Broadcast notification sent!");
+    }
+    
+    clearChangelogForm();
+    fetchChangelogHistory(); // Re-fetch to get real timestamps
+  } catch (err) {
+    console.error("Save error", err);
+    dom.clErrorMsg.textContent = err.message || "Failed to save changelog.";
+    showToast("Failed to save changelog", "error");
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Save Changelog</span>`;
+  }
+};
+
+const migrateJsonToFirestore = async () => {
+  const btn = dom.runMigrationBtn;
+  if (!confirm("This will import existing releases from config/changelog.json into Firestore. Proceed?")) return;
+  
+  btn.disabled = true;
+  btn.textContent = "Migrating...";
+  try {
+    const res = await fetch("config/changelog.json?t=" + Date.now());
+    if (!res.ok) throw new Error("Failed to load JSON");
+    const data = await res.json();
+    const releases = data.releases || [];
+    
+    let count = 0;
+    for (const r of releases) {
+      // Check if version already exists
+      if (changelogs.find(c => c.version === r.version)) continue;
+      
+      const markdownContent = `## Added\n${(r.sections?.added || []).map(i => "- " + i).join("\n")}\n\n## Improved\n${(r.sections?.improved || []).map(i => "- " + i).join("\n")}\n\n## Fixed\n${(r.sections?.fixed || []).map(i => "- " + i).join("\n")}`;
+      
+      const payload = {
+        version: r.version,
+        title: r.title || "Update",
+        summary: "Legacy imported changelog",
+        content: markdownContent.trim(),
+        releaseType: r.type || "patch",
+        tags: ["legacy"],
+        published: true,
+        createdAt: new Date(r.date),
+        updatedAt: new Date(r.date)
+      };
+      await setDoc(doc(db, "changelogs", Date.now().toString() + count), payload);
+      count++;
+    }
+    showToast(`Migrated ${count} changelogs.`);
+    fetchChangelogHistory();
+  } catch (err) {
+    console.error("Migration error", err);
+    showToast("Migration failed", "error");
+  } finally {
+    btn.disabled = false;
+    btn.textContent = "Migrate json";
+  }
 };
 
 // â”€â”€ Startup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€

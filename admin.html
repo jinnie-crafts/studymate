@@ -14,19 +14,44 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="notification.css">
   <link rel="stylesheet" href="admin.css">
+  <link rel="stylesheet" href="skeleton.css">
 </head>
 <body class="admin-body admin-root">
 
   <!-- Auth Skeleton (Show while checking admin claim) -->
-  <div id="adminSkeleton" class="admin-dashboard admin-container skeleton-pulse">
-    <div class="admin-panel-left glass-card">
-      <div class="skeleton skeleton-text" style="height:32px; width:60%; margin-bottom:30px;"></div>
-      <div class="skeleton-card" style="height:120px; border-radius:12px;"></div>
-      <div class="skeleton-card" style="height:120px; border-radius:12px;"></div>
-      <div class="skeleton-card" style="height:80px; border-radius:12px; width:50%;"></div>
-    </div>
-    <div class="admin-panel-right">
-      <div class="skeleton-card" style="height:300px; border-radius:24px;"></div>
+  <div id="adminSkeleton" class="skeleton-overlay skeleton-overlay--fullscreen skel-admin" role="presentation" aria-hidden="true">
+    <div class="skeleton skeleton-text" style="width:150px;margin-bottom:24px"></div>
+    <div class="skeleton skeleton-text xl" style="width:250px"></div>
+    <div class="skeleton skeleton-text" style="width:380px;margin-bottom:8px"></div>
+    <div class="skel-admin-grid">
+      <div class="skel-admin-form">
+        <div class="skel-form-group">
+          <div class="skeleton skeleton-text xs"></div>
+          <div class="skeleton skeleton-input"></div>
+        </div>
+        <div class="skel-form-group">
+          <div class="skeleton skeleton-text xs"></div>
+          <div class="skeleton skeleton-input" style="height:120px;border-radius:12px"></div>
+        </div>
+        <div class="skel-form-group">
+          <div class="skeleton skeleton-text xs"></div>
+          <div class="skeleton skeleton-dropdown" style="width:100%"></div>
+        </div>
+        <div class="skel-form-group">
+          <div class="skeleton skeleton-text xs"></div>
+          <div class="skeleton-row" style="gap:12px">
+            <div class="skeleton skeleton-card" style="min-height:50px;margin-bottom:0"></div>
+            <div class="skeleton skeleton-card" style="min-height:50px;margin-bottom:0"></div>
+          </div>
+        </div>
+        <div class="skeleton skeleton-btn" style="border-radius:12px;margin-top:8px"></div>
+      </div>
+      <div class="skel-admin-preview">
+        <div class="skeleton skeleton-text xs" style="width:100px"></div>
+        <div class="skel-admin-preview-box">
+          <div class="skeleton skeleton-card" style="min-height:100px;margin-bottom:0;border-radius:16px"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -39,10 +64,32 @@
       <span>Back to Dashboard</span>
     </a>
 
-    <header class="admin-header">
-      <h1>Notification Control</h1>
-      <p>Compose and dispatch system-wide or targeted notifications.</p>
-    </header>
+    <!-- Tab Navigation -->
+    <div class="admin-tabs">
+      <button class="admin-tab-btn active" data-tab="tab-notifications">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"></path>
+        </svg>
+        Notifications
+      </button>
+      <button class="admin-tab-btn" data-tab="tab-changelogs">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+          <polyline points="14 2 14 8 20 8"></polyline>
+          <line x1="16" y1="13" x2="8" y2="13"></line>
+          <line x1="16" y1="17" x2="8" y2="17"></line>
+          <polyline points="10 9 9 9 8 9"></polyline>
+        </svg>
+        Changelog
+      </button>
+    </div>
+
+    <div class="admin-tab-content active" id="tab-notifications">
+      <header class="admin-header">
+        <h1>Notification Control</h1>
+        <p>Compose and dispatch system-wide or targeted notifications.</p>
+      </header>
 
     <div class="admin-grid">
       <!-- Left: Form -->
@@ -137,11 +184,147 @@
         </div>
       </aside>
     </div>
+    </div> <!-- End Notification Tab -->
+
+    <div class="admin-tab-content" id="tab-changelogs">
+      <header class="admin-header">
+        <h1>Changelog Management</h1>
+        <p>Draft, publish, and manage application updates and release notes.</p>
+      </header>
+
+      <div class="admin-grid">
+        <!-- Left: Form -->
+        <section class="glass-card" style="max-height: 80vh; overflow-y: auto; padding-right: 15px;">
+          <form id="adminChangelogForm" novalidate>
+            <input type="hidden" id="changelogId"> <!-- For editing -->
+            
+            <div class="admin-row" style="display: flex; gap: 16px;">
+              <div class="admin-form-group" style="flex: 1;">
+                <label for="changelogVersion" class="admin-label">Version</label>
+                <input type="text" id="changelogVersion" class="admin-input" placeholder="e.g. v2.1.0" required>
+              </div>
+              <div class="admin-form-group" style="flex: 1;">
+                <label for="changelogType" class="admin-label">Release Type</label>
+                <select id="changelogType" class="admin-select">
+                  <option value="major">Major</option>
+                  <option value="minor">Minor</option>
+                  <option value="patch" selected>Patch</option>
+                  <option value="hotfix">Hotfix</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="admin-form-group">
+              <label for="changelogTitle" class="admin-label">Update Title</label>
+              <input type="text" id="changelogTitle" class="admin-input" placeholder="e.g. The AI Performance Update" required>
+            </div>
+
+            <div class="admin-form-group">
+              <label for="changelogSummary" class="admin-label">Short Summary (1-2 sentences)</label>
+              <textarea id="changelogSummary" class="admin-textarea" style="height: 60px;" placeholder="Brief overview of what changed..."></textarea>
+            </div>
+
+            <div class="admin-form-group">
+              <div class="admin-label-row">
+                <label for="changelogContentInput" class="admin-label">Detailed Content (Markdown & KaTeX supported)</label>
+              </div>
+              <textarea id="changelogContentInput" class="admin-textarea" style="height: 200px; font-family: monospace;" placeholder="## New Features&#10;- Bullet points&#10;$$ Math $$"></textarea>
+            </div>
+
+            <div class="admin-form-group">
+              <label for="changelogTags" class="admin-label">Tags (comma separated)</label>
+              <input type="text" id="changelogTags" class="admin-input" placeholder="e.g. UI, AI, Performance">
+            </div>
+
+            <div class="admin-form-group checkbox-group" style="display: flex; align-items: center; gap: 12px; margin-top: 16px;">
+              <input type="checkbox" id="changelogPublished" checked style="width: 20px; height: 20px; accent-color: var(--primary);">
+              <label for="changelogPublished" style="color: var(--text-main); font-weight: 500; cursor: pointer;">Publish Immediately</label>
+            </div>
+
+            <div class="admin-form-group checkbox-group" style="display: flex; align-items: center; gap: 12px; margin-top: 8px;">
+              <input type="checkbox" id="changelogNotify" style="width: 20px; height: 20px; accent-color: var(--primary);">
+              <label for="changelogNotify" style="color: var(--text-main); font-weight: 500; cursor: pointer;">Send Broadcast Notification</label>
+            </div>
+
+            <div style="margin-top: 32px; display: flex; gap: 12px;">
+              <button type="submit" id="saveChangelogBtn" class="admin-send-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Save Changelog</span>
+              </button>
+              <button type="button" id="clearChangelogBtn" class="admin-send-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main);">
+                Clear Form
+              </button>
+            </div>
+            <div id="changelogErrorMsg" class="error-msg" style="margin-top: 12px;"></div>
+          </form>
+        </section>
+
+        <!-- Right: Preview and List -->
+        <div class="admin-right-column" style="display: flex; flex-direction: column; gap: 24px; max-height: 80vh;">
+          <aside class="preview-panel" style="flex: 1; overflow-y: auto;">
+            <div class="preview-label">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              Markdown Preview
+            </div>
+            <div class="preview-container changelog-preview" id="changelogPreviewSlot" style="background: var(--bg-surface); color: var(--text-main); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); font-size: 0.95rem;">
+              <!-- Rendered via JS -->
+            </div>
+          </aside>
+
+          <aside class="history-panel" style="flex: 1; overflow-y: auto; background: var(--bg-surface-glass); border-radius: 16px; border: 1px solid var(--border-color); padding: 20px;">
+            <div class="preview-label" style="justify-content: space-between; display: flex; width: 100%;">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                History & Migration
+              </span>
+              <button id="runMigrationBtn" class="admin-send-btn" style="padding: 4px 12px; font-size: 0.8rem; background: var(--primary);">Migrate json</button>
+            </div>
+            <div id="changelogHistoryList" style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+              <div style="text-align:center; color: var(--text-soft); font-size: 0.9rem;">Loading history...</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div> <!-- End Changelog Tab -->
+
   </main>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteConfirmModal" class="skeleton-overlay" style="display: none; align-items: center; justify-content: center; z-index: 9999;">
+    <div class="glass-card" style="max-width: 400px; width: 90%; text-align: center; padding: 32px;">
+      <h2 style="color: var(--text-main); margin-bottom: 12px;">Delete Changelog?</h2>
+      <p style="color: var(--text-soft); margin-bottom: 24px;">This action cannot be undone. Are you sure you want to permanently delete this entry?</p>
+      <div style="display: flex; gap: 12px; justify-content: center;">
+        <button id="cancelDeleteBtn" class="admin-send-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main);">Cancel</button>
+        <button id="confirmDeleteBtn" class="admin-send-btn" style="background: #e74c3c; color: white;">Delete</button>
+      </div>
+    </div>
+  </div>
 
   <div id="toastContainer" class="toast-container"></div>
 
   <!-- Scripts -->
+  <!-- Marked.js -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+  
   <script type="module" src="admin.js"></script>
 </body>
 </html>

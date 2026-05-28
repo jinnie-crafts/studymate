@@ -14,9 +14,60 @@
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="skeleton.css" />
 </head>
 
 <body data-page="settings" class="settings-page">
+  <!-- Settings Skeleton Overlay -->
+  <div id="settingsSkeleton" class="skeleton-overlay skeleton-overlay--fullscreen skel-settings" role="presentation" aria-hidden="true">
+    <div class="skel-settings-container">
+      <div class="skel-settings-header">
+        <div class="skel-settings-header-info">
+          <div class="skeleton skeleton-text xs"></div>
+          <div class="skeleton skeleton-text xl" style="width:160px"></div>
+          <div class="skeleton skeleton-text" style="width:340px"></div>
+        </div>
+        <div class="skeleton skeleton-btn sm"></div>
+      </div>
+      <div class="skel-settings-layout">
+        <div class="skel-settings-nav">
+          <div class="skeleton-nav-item"><div class="skeleton skeleton-icon"></div><div class="skeleton-nav-text"><div class="skeleton skeleton-text" style="width:70px;margin-bottom:0"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div></div>
+          <div class="skeleton-nav-item"><div class="skeleton skeleton-icon"></div><div class="skeleton-nav-text"><div class="skeleton skeleton-text" style="width:70px;margin-bottom:0"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div></div>
+          <div class="skeleton-nav-item"><div class="skeleton skeleton-icon"></div><div class="skeleton-nav-text"><div class="skeleton skeleton-text" style="width:80px;margin-bottom:0"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div></div>
+          <div class="skeleton-nav-item"><div class="skeleton skeleton-icon"></div><div class="skeleton-nav-text"><div class="skeleton skeleton-text" style="width:50px;margin-bottom:0"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div></div>
+          <div class="skeleton-nav-item"><div class="skeleton skeleton-icon"></div><div class="skeleton-nav-text"><div class="skeleton skeleton-text" style="width:90px;margin-bottom:0"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div></div>
+          <div class="skeleton-nav-item"><div class="skeleton skeleton-icon"></div><div class="skeleton-nav-text"><div class="skeleton skeleton-text" style="width:72px;margin-bottom:0"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div></div>
+          <div class="skeleton-nav-item"><div class="skeleton skeleton-icon"></div><div class="skeleton-nav-text"><div class="skeleton skeleton-text" style="width:60px;margin-bottom:0"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div></div>
+        </div>
+        <div class="skel-settings-content">
+          <div class="skeleton skeleton-text lg" style="width:100px"></div>
+          <div class="skeleton skeleton-text" style="width:280px"></div>
+          <div class="skel-profile-block">
+            <div class="skeleton skeleton-avatar lg"></div>
+            <div class="skel-profile-info">
+              <div class="skeleton skeleton-text lg" style="width:140px"></div>
+              <div class="skeleton skeleton-text" style="width:200px"></div>
+            </div>
+          </div>
+          <div class="skel-form-fields">
+            <div class="skel-form-group">
+              <div class="skeleton skeleton-text xs"></div>
+              <div class="skeleton skeleton-input"></div>
+            </div>
+            <div class="skel-form-group">
+              <div class="skeleton skeleton-text xs"></div>
+              <div class="skeleton skeleton-input"></div>
+              <div class="skeleton skeleton-text xs" style="width:180px"></div>
+            </div>
+          </div>
+          <div style="padding-top:8px">
+            <div class="skeleton skeleton-btn" style="width:140px"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <main class="settings-shell">
     <div class="settings-container">
       <header class="settings-header">

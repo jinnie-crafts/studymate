@@ -78,6 +78,7 @@ coverage/
 .gemini/
 .antigravity/
 .antigravityignore
+.agent/
 scratch/
 
 # --- Other temporary files ---

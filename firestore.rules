@@ -165,6 +165,19 @@ service cloud.firestore {
     }
 
     // -------------------------
+    // 📝 CHANGELOGS COLLECTION
+    // -------------------------
+
+    match /changelogs/{changelogId} {
+      
+      // READ: Publicly allowed (so the app can fetch the feed)
+      allow read: if true;
+
+      // CREATE / UPDATE / DELETE: Only admin
+      allow create, update, delete: if isAdmin();
+    }
+
+    // -------------------------
     // 🚫 DEFAULT DENY
     // -------------------------
 

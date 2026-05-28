@@ -1060,25 +1060,34 @@ a:hover {
   scroll-behavior: smooth;
 }
 
-.empty-state {
+.greeting-container {
   margin: auto;
-  max-width: 520px;
-  padding: 30px;
+  max-width: 640px;
+  padding: 40px 20px;
   text-align: center;
-  border-radius: var(--radius-lg);
-  background: var(--surface-soft);
-  border: 1px solid var(--border);
 }
 
-.empty-state h3 {
-  margin: 0 0 10px;
-  font-size: 1.6rem;
+.greeting-title {
+  margin: 0 0 12px;
+  font-size: clamp(1.8rem, 4vw, 2.4rem);
+  font-weight: 600;
+  color: var(--text-main);
 }
 
-.empty-state p {
+.greeting-subtitle {
   margin: 0;
+  font-size: clamp(1rem, 2.5vw, 1.15rem);
   color: var(--text-soft);
-  line-height: 1.7;
+  line-height: 1.6;
+}
+
+.fade-in-text {
+  animation: fadeInText 0.8s ease-out forwards;
+}
+
+@keyframes fadeInText {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .message-row {
@@ -1126,16 +1135,16 @@ a:hover {
 }
 
 .message-row.ai .message-bubble {
-  background: rgba(255, 255, 255, 0.04);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border-radius: 18px 18px 18px 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 12px 0;
+  max-width: 100%;
 }
 
 .message-row.ai .message-bubble:hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: transparent;
 }
 
 .message-meta {
@@ -1391,14 +1400,17 @@ a:hover {
    ======================================================================== */
 
 .composer {
-  padding: 12px 14px;
+  padding: 0 14px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   flex-shrink: 0;
   align-items: end;
-  background: var(--bg-main);
+  background: transparent;
   z-index: 100;
+  max-width: 840px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 .composer textarea {
@@ -2318,7 +2330,6 @@ select,
   bottom: auto;
   width: 100%;
   padding: 12px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
   background: transparent !important;
   z-index: auto;
 }
@@ -2374,6 +2385,23 @@ body.sidebar-open {
   flex-direction: column;
   gap: 10px;
   padding: 10px;
+}
+
+/* =========================================
+   KaTeX Math Rendering Adjustments
+   ========================================= */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 0.5rem 0;
+  margin: 1em 0;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Ensure inline math doesn't break line-heights awkwardly */
+.katex {
+  font-size: 1.05em;
+  line-height: normal;
 }
 
 /* Redundant Overrides - Deprecated */

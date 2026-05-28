@@ -1,0 +1,643 @@
+/* ========================================================================
+   StudyMate AI — Skeleton Loading System
+   Reusable, theme-aware, accessible, performance-optimized
+   ======================================================================== */
+
+/* ---------------------------------------------------------------------------
+   Shimmer Animation
+   --------------------------------------------------------------------------- */
+
+@keyframes skeletonShimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Base Skeleton Element
+   All skeleton primitives extend this. Uses existing theme CSS variables
+   for automatic dark/light/blue/purple support.
+   --------------------------------------------------------------------------- */
+
+.skeleton {
+  background: var(--surface-strong, rgba(255, 255, 255, 0.08));
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-strong, rgba(255, 255, 255, 0.08)) 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    var(--surface-strong, rgba(255, 255, 255, 0.08)) 80%
+  );
+  background-size: 800px 100%;
+  background-repeat: no-repeat;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+/* Light theme shimmer adjustment */
+body.light .skeleton {
+  background: var(--surface-strong, rgba(15, 23, 42, 0.08));
+  background-image: linear-gradient(
+    90deg,
+    var(--surface-strong, rgba(15, 23, 42, 0.08)) 0%,
+    rgba(15, 23, 42, 0.04) 40%,
+    var(--surface-strong, rgba(15, 23, 42, 0.08)) 80%
+  );
+  background-size: 800px 100%;
+  background-repeat: no-repeat;
+  animation: skeletonShimmer 1.6s ease-in-out infinite;
+}
+
+/* ---------------------------------------------------------------------------
+   Prefers Reduced Motion
+   Disables shimmer animation for accessibility; uses static opacity pulse.
+   --------------------------------------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background-image: none;
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   Skeleton Primitives
+   --------------------------------------------------------------------------- */
+
+/* Text line placeholder */
+.skeleton-text {
+  height: 14px;
+  width: 100%;
+  margin-bottom: 10px;
+  border-radius: 6px;
+}
+
+.skeleton-text.short {
+  width: 60%;
+}
+
+.skeleton-text.xs {
+  width: 40%;
+}
+
+.skeleton-text.lg {
+  height: 20px;
+}
+
+.skeleton-text.xl {
+  height: 28px;
+}
+
+/* Card block placeholder */
+.skeleton-card {
+  width: 100%;
+  min-height: 80px;
+  border-radius: 18px;
+  margin-bottom: 12px;
+}
+
+/* Circular avatar placeholder */
+.skeleton-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.skeleton-avatar.lg {
+  width: 64px;
+  height: 64px;
+}
+
+.skeleton-avatar.sm {
+  width: 28px;
+  height: 28px;
+}
+
+/* Button placeholder */
+.skeleton-btn {
+  height: 44px;
+  width: 100%;
+  border-radius: 999px;
+}
+
+.skeleton-btn.sm {
+  height: 36px;
+  width: 120px;
+}
+
+/* Image placeholder */
+.skeleton-image {
+  width: 100%;
+  height: 200px;
+  border-radius: var(--radius-md, 18px);
+}
+
+/* Input field placeholder */
+.skeleton-input {
+  height: 48px;
+  width: 100%;
+  border-radius: 16px;
+}
+
+/* Toggle placeholder */
+.skeleton-toggle {
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+/* Dropdown placeholder */
+.skeleton-dropdown {
+  height: 42px;
+  width: 120px;
+  border-radius: 12px;
+}
+
+/* Sidebar label placeholder */
+.skeleton-label {
+  height: 12px;
+  width: 80px;
+  border-radius: 4px;
+  margin-bottom: 12px;
+}
+
+/* Small icon placeholder */
+.skeleton-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* Nav item placeholder (settings page) */
+.skeleton-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+}
+
+.skeleton-nav-item .skeleton-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.skeleton-nav-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+/* ---------------------------------------------------------------------------
+   Skeleton Row Helpers
+   --------------------------------------------------------------------------- */
+
+.skeleton-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skeleton-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.skeleton-row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+}
+
+.skeleton-row-between + .skeleton-row-between {
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+}
+
+/* ---------------------------------------------------------------------------
+   Page-Level Skeleton Overlays
+   Positioned absolutely over real content. Fade out when content is ready.
+   --------------------------------------------------------------------------- */
+
+.skeleton-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 900;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+/* Full-screen variant for pages without relative parent */
+.skeleton-overlay--fullscreen {
+  position: fixed;
+}
+
+.skeleton-overlay.skeleton-hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------------------
+   Dashboard Skeleton Layout
+   --------------------------------------------------------------------------- */
+
+.skel-dashboard {
+  display: flex;
+  height: 100%;
+  gap: 18px;
+  padding: 18px;
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left, rgba(56, 189, 248, 0.18)), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right, rgba(14, 165, 233, 0.1)), transparent 24%),
+    linear-gradient(140deg, var(--bg-main, #0f172a) 0%, #081120 52%, var(--bg-deep, #020617) 100%);
+}
+
+body.light .skel-dashboard {
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right), transparent 24%),
+    linear-gradient(140deg, var(--bg-main) 0%, #eef4fb 50%, var(--bg-deep) 100%);
+}
+
+body.blue .skel-dashboard {
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right), transparent 24%),
+    linear-gradient(140deg, var(--bg-main) 0%, #071428 52%, var(--bg-deep) 100%);
+}
+
+body.purple .skel-dashboard {
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right), transparent 24%),
+    linear-gradient(140deg, var(--bg-main) 0%, #140830 52%, var(--bg-deep) 100%);
+}
+
+/* Sidebar skeleton */
+.skel-sidebar {
+  width: 260px;
+  min-width: 260px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  background: var(--surface, rgba(15, 23, 42, 0.74));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-xl, 28px);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: var(--shadow-md, 0 18px 55px rgba(2, 6, 23, 0.32));
+  overflow: hidden;
+}
+
+.skel-sidebar-top {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.skel-brand {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.skel-brand-logo {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+}
+
+.skel-brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.skel-version {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+  border-radius: 12px;
+}
+
+.skel-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.skel-control-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.skel-tracker {
+  display: flex;
+  gap: 16px;
+  padding: 10px 12px;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+  border-radius: 14px;
+}
+
+.skel-tracker-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.skel-history {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.skel-history-card {
+  padding: 12px;
+  border-radius: 18px;
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.skel-footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* Main panel skeleton */
+.skel-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  position: relative;
+}
+
+.skel-topbar {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
+}
+
+.skel-chat-area {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.skel-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.skel-input-bar {
+  padding: 12px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.skel-input {
+  flex: 1;
+  height: 52px;
+  border-radius: var(--radius-xl, 28px);
+  background: var(--surface, rgba(15, 23, 42, 0.74));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+}
+
+.skel-send-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+
+/* ---------------------------------------------------------------------------
+   Settings Skeleton Layout
+   --------------------------------------------------------------------------- */
+
+.skel-settings {
+  min-height: 100dvh;
+  display: flex;
+  justify-content: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left, rgba(56, 189, 248, 0.18)), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right, rgba(14, 165, 233, 0.1)), transparent 24%),
+    linear-gradient(140deg, var(--bg-main, #0f172a) 0%, #081120 52%, var(--bg-deep, #020617) 100%);
+}
+
+body.light .skel-settings {
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right), transparent 24%),
+    linear-gradient(140deg, var(--bg-main) 0%, #eef4fb 50%, var(--bg-deep) 100%);
+}
+
+body.blue .skel-settings {
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right), transparent 24%),
+    linear-gradient(140deg, var(--bg-main) 0%, #071428 52%, var(--bg-deep) 100%);
+}
+
+body.purple .skel-settings {
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right), transparent 24%),
+    linear-gradient(140deg, var(--bg-main) 0%, #140830 52%, var(--bg-deep) 100%);
+}
+
+.skel-settings-container {
+  width: min(1200px, 100%);
+  padding-top: 20px;
+}
+
+.skel-settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 18px;
+  margin-bottom: 32px;
+}
+
+.skel-settings-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.skel-settings-layout {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.skel-settings-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.skel-settings-content {
+  background: var(--surface, rgba(15, 23, 42, 0.74));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: var(--radius-xl, 28px);
+  padding: 32px;
+  box-shadow: var(--shadow-lg, 0 28px 80px rgba(2, 6, 23, 0.45));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.skel-profile-block {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+}
+
+.skel-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.skel-form-fields {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.skel-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ---------------------------------------------------------------------------
+   Admin Skeleton (extends base — used by existing admin.html markup)
+   --------------------------------------------------------------------------- */
+
+.skel-admin {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+  background:
+    radial-gradient(circle at top left, var(--gradient-top-left, rgba(56, 189, 248, 0.18)), transparent 28%),
+    radial-gradient(circle at bottom right, var(--gradient-bottom-right, rgba(14, 165, 233, 0.1)), transparent 24%),
+    linear-gradient(140deg, var(--bg-main, #0f172a) 0%, #081120 52%, var(--bg-deep, #020617) 100%);
+}
+
+.skel-admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+  gap: 32px;
+  margin-top: 32px;
+}
+
+.skel-admin-form {
+  background: var(--surface-soft, rgba(255, 255, 255, 0.05));
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  border-radius: 20px;
+  padding: 24px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.skel-admin-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.skel-admin-preview-box {
+  padding: 24px;
+  border-radius: 20px;
+  border: 1px dashed var(--border, rgba(255, 255, 255, 0.1));
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ---------------------------------------------------------------------------
+   Mobile Responsive Overrides
+   --------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .skel-sidebar {
+    display: none;
+  }
+
+  .skel-dashboard {
+    padding: 0;
+    gap: 0;
+  }
+
+  .skel-main {
+    border-radius: 0;
+  }
+
+  .skel-topbar {
+    padding: 12px 16px;
+  }
+
+  .skel-settings-layout {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .skel-settings-nav {
+    gap: 4px;
+  }
+
+  .skel-settings-content {
+    display: none;
+  }
+
+  .skel-admin-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+}

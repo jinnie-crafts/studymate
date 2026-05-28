@@ -222,6 +222,9 @@ const feedbackUi = {
   confirmCancelBtn: null, confirmOkBtn: null, confirmResolver: null
 };
 
+// Skeleton boot timestamp — captured immediately at module parse time
+const __skeletonBootTime = Date.now();
+
 const markdownRenderer = new marked.Renderer();
 
 markdownRenderer.code = (code, language) => {
@@ -267,6 +270,36 @@ function getCurrentUserId() {
   const user = auth.currentUser;
   if (!user) throw new Error("User not authenticated");
   return user.uid;
+}
+
+// ---------------------------------------------------------------------------
+// Skeleton Loading System
+// ---------------------------------------------------------------------------
+
+/**
+ * Hides a skeleton overlay with a minimum visible duration and smooth fade-out.
+ * @param {string} skeletonId - The DOM id of the skeleton overlay element.
+ * @param {number} [minVisibleMs=250] - Minimum time the skeleton stays visible.
+ */
+function hideSkeletonOverlay(skeletonId, minVisibleMs = 250) {
+  const el = document.getElementById(skeletonId);
+  if (!el) return;
+
+  const elapsed = Date.now() - __skeletonBootTime;
+  const remaining = Math.max(0, minVisibleMs - elapsed);
+
+  setTimeout(() => {
+    el.classList.add("skeleton-hidden");
+
+    // Remove from DOM after the CSS opacity transition completes
+    const onEnd = () => el.remove();
+    el.addEventListener("transitionend", onEnd, { once: true });
+
+    // Safety fallback if transitionend doesn't fire (e.g. display:none, detached)
+    setTimeout(() => {
+      if (el.parentNode) el.remove();
+    }, 400);
+  }, remaining);
 }
 
 // ---------------------------------------------------------------------------
@@ -761,6 +794,9 @@ function initializeGuestDashboard() {
 
   renderHistory();
   renderMessages();
+
+  // Hide skeleton after guest dashboard is fully rendered
+  hideSkeletonOverlay("dashboardSkeleton");
 }
 
 function loadGuestQuestionUsage() {
@@ -1856,6 +1892,24 @@ function syncStateWithLatestChats() {
 // Messages rendering
 // ---------------------------------------------------------------------------
 
+function getGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 17) return "Good afternoon";
+  if (hour < 21) return "Good evening";
+  return "Working late?";
+}
+
+function getHelperText() {
+  const texts = [
+    "How can I help you today?",
+    "Ask anything.",
+    "Need help with something?",
+    "What would you like to learn?"
+  ];
+  return texts[Math.floor(Math.random() * texts.length)];
+}
+
 function renderMessages() {
   try {
     const activeChat = getCurrentChat();
@@ -1863,7 +1917,14 @@ function renderMessages() {
     const isStreaming = state.streamingResponse && state.streamingResponse.chatId === activeChat?.id;
 
     if (!activeChat || (activeChat.messages.length === 0 && !showTyping && !isStreaming)) {
-      ui.chatMessages.innerHTML = `<div class="empty-state"><h3>Start a new conversation &#128640;</h3><p>Create a chat from the sidebar and ask your first question.</p></div>`;
+      const greeting = getGreeting();
+      const helperText = getHelperText();
+      ui.chatMessages.innerHTML = `
+        <div class="greeting-container fade-in-text">
+          <h2 class="greeting-title">${greeting}</h2>
+          <p class="greeting-subtitle">${helperText}</p>
+        </div>
+      `;
       ui.chatForm.style.display = "flex";
       return;
     }
@@ -1901,10 +1962,33 @@ function renderMessages() {
     }
 
     ui.chatMessages.innerHTML = `${messageMarkup}${assistantBubbleMarkup}`;
+    renderMath();
     renderMermaidDiagrams();
     focusMessageEditor();
   } catch (err) {
     console.error("[Render Safety] renderMessages failed:", err);
+  }
+}
+
+/**
+ * renderMath()
+ * Safely parses and renders LaTeX mathematical expressions within the chat using KaTeX.
+ */
+function renderMath() {
+  if (typeof renderMathInElement === "undefined" || !ui.chatMessages) return;
+  try {
+    renderMathInElement(ui.chatMessages, {
+      delimiters: [
+        {left: '$$', right: '$$', display: true},
+        {left: '\\[', right: '\\]', display: true},
+        {left: '$', right: '$', display: false},
+        {left: '\\(', right: '\\)', display: false}
+      ],
+      ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"],
+      throwOnError: false
+    });
+  } catch (err) {
+    console.error("KaTeX math render error:", err);
   }
 }
 
@@ -2561,7 +2645,7 @@ function toggleChangelogView(show) {
   if (show) {
     if (ui.chatMessages) savedChatScrollTop = ui.chatMessages.scrollTop;
     ui.changelogView.classList.remove("hidden");
-    if (!ui.changelogContent.innerHTML.trim()) renderChangelog();
+    if (ui.changelogContent.children.length === 0) renderChangelog();
   } else {
     ui.changelogView.classList.add("hidden");
     if (ui.chatMessages) ui.chatMessages.scrollTop = savedChatScrollTop;
@@ -2571,40 +2655,177 @@ function toggleChangelogView(show) {
 async function renderChangelog() {
   if (!ui.changelogContent) return;
   ui.changelogContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-soft)">Loading updates...</div>`;
+  
+  let releases = [];
+  
   try {
-    const res = await fetch("/config/changelog.json?t=" + Date.now());
-    if (!res.ok) throw new Error("Failed to load");
-    const data = await res.json();
-    ui.changelogContent.innerHTML = data.releases.map(release => `
-      <article class="release-card">
-        <header class="release-header">
-          <div class="release-meta">
-            <span class="release-version">${escapeHtml(release.version)}</span>
-            <span class="release-badge ${escapeAttribute(release.type)}">${escapeHtml(release.type)}</span>
-            <span class="release-date">${escapeHtml(release.date)}</span>
+    // 1. Try fetching from Firestore
+    const q = query(collection(db, "changelogs"), where("published", "==", true), orderBy("createdAt", "desc"));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      releases = snap.docs.map(doc => {
+        const data = doc.data();
+        let formattedDate = "Recently";
+        try {
+          if (data.createdAt && typeof data.createdAt.toMillis === 'function') {
+            formattedDate = new Date(data.createdAt.toMillis()).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          } else if (data.createdAt instanceof Date) {
+            formattedDate = data.createdAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          } else if (typeof data.createdAt === 'string') {
+            formattedDate = new Date(data.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          } else if (data.createdAt?.seconds) {
+            formattedDate = new Date(data.createdAt.seconds * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+          }
+        } catch(e) {
+          console.warn("Date formatting error:", e);
+        }
+
+        return {
+          version: data.version || "Update",
+          title: data.title || "",
+          date: formattedDate,
+          type: data.releaseType || "patch",
+          content: data.content || "",
+          tags: data.tags || []
+        };
+      });
+    }
+  } catch (err) {
+    console.warn("Firestore changelog fetch failed. Falling back to JSON.", err);
+  }
+
+  // 2. Fallback to local JSON if Firestore is empty or fails
+  if (releases.length === 0) {
+    try {
+      const res = await fetch("/config/changelog.json?t=" + Date.now());
+      if (!res.ok) throw new Error("Failed to load changelog.json");
+      const data = await res.json();
+      
+      let rawReleases = Array.isArray(data.releases) ? data.releases : [];
+      // Safe sort
+      rawReleases.sort((a, b) => {
+        const dA = new Date(a.date).getTime();
+        const dB = new Date(b.date).getTime();
+        return (isNaN(dB) ? 0 : dB) - (isNaN(dA) ? 0 : dA);
+      });
+      
+      const seenVersions = new Set();
+      releases = rawReleases.filter(r => {
+        if (!r.version) return false;
+        if (seenVersions.has(r.version)) return false;
+        seenVersions.add(r.version);
+        return true;
+      }).map(r => {
+        const contentStr = `## Added\n${(r.sections?.added || []).map(i => "- " + i).join("\n")}\n\n## Improved\n${(r.sections?.improved || []).map(i => "- " + i).join("\n")}\n\n## Fixed\n${(r.sections?.fixed || []).map(i => "- " + i).join("\n")}`;
+        return {
+          version: r.version,
+          title: r.title || "Update",
+          date: r.date || "Recently",
+          type: r.type || "patch",
+          content: contentStr,
+          tags: ["legacy"]
+        };
+      });
+    } catch (err) {
+      console.error("JSON Fallback failed:", err);
+      ui.changelogContent.innerHTML = `
+        <div style="text-align:center; padding: 40px; color: var(--danger-color)">
+          <p style="margin-bottom: 1rem;">Unable to load changelog at this time.</p>
+          <button class="ghost-btn" onclick="renderChangelog()">Retry</button>
+        </div>`;
+      return;
+    }
+  }
+
+  if (releases.length === 0) {
+    ui.changelogContent.innerHTML = `<div style="text-align:center; padding: 40px; color: var(--text-soft)">No updates found.</div>`;
+    return;
+  }
+
+  ui.changelogContent.innerHTML = releases.map((release, index) => {
+    const isLatest = index === 0;
+    const latestClass = isLatest ? "is-latest" : "";
+    const newBadge = isLatest ? `<span class="release-badge new-badge" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c; border: 1px solid rgba(231,76,60,0.4); padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">NEW</span>` : "";
+    const isExpanded = isLatest ? "open" : "";
+    
+    // Determine badge color class based on type
+    let typeClass = "";
+    if (release.type === "major") typeClass = "major";
+    else if (release.type === "minor") typeClass = "minor";
+    else if (release.type === "patch") typeClass = "patch";
+    else if (release.type === "hotfix") typeClass = "hotfix";
+
+    // Markdown rendering with Math protection
+    let text = release.content || "";
+    const mathBlocks = [];
+    text = text.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\(.*?\\\)|\$[^$\n]+?\$)/g, (match) => {
+      const id = `__MATH_BLOCK_${mathBlocks.length}__`;
+      mathBlocks.push(match);
+      return id;
+    });
+
+    let htmlContent = "";
+    try {
+      if (typeof marked !== 'undefined') {
+        htmlContent = marked.parse(text);
+        if (typeof sanitizeRenderedHtml === 'function') {
+           htmlContent = sanitizeRenderedHtml(String(htmlContent));
+        }
+      } else {
+        htmlContent = escapeHtml(text);
+      }
+    } catch (err) {
+      console.error("Marked error in changelog:", err);
+      htmlContent = escapeHtml(text);
+    }
+
+    mathBlocks.forEach((block, i) => {
+      htmlContent = htmlContent.replace(`__MATH_BLOCK_${i}__`, () => block);
+    });
+
+    return `
+    <details class="release-card ${latestClass}" ${isExpanded}>
+      <summary class="release-header">
+        <div class="release-header-content">
+          <div class="release-meta" style="display: flex; gap: 8px; align-items: center;">
+            <span class="release-version" style="font-weight: bold; color: var(--primary);">${escapeHtml(release.version)}</span>
+            ${newBadge}
+            <span class="release-badge ${typeClass}" style="text-transform: uppercase; font-size: 0.75rem; padding: 2px 6px; border-radius: 4px;">${escapeHtml(release.type)}</span>
+            <span class="release-date" style="color: var(--text-soft); font-size: 0.85rem;">${escapeHtml(release.date)}</span>
           </div>
-          <h2 class="release-title">${escapeHtml(release.title)}</h2>
-        </header>
-        <div class="release-sections">
-          ${Object.entries(release.sections || {}).filter(([_, items]) => items && items.length > 0).map(([key, items]) => `
-            <section class="release-section">
-              <h3 class="section-title ${escapeAttribute(key)}">${escapeHtml(key)}</h3>
-              <ul class="section-items">
-                ${items.map(item => `<li>${escapeHtml(item)}</li>`).join('')}
-              </ul>
-            </section>
-          `).join('')}
+          <h2 class="release-title" style="margin-top: 8px;">${escapeHtml(release.title)}</h2>
         </div>
-      </article>
-    `}).join('');
-} catch (err) {
-  ui.changelogContent.innerHTML = `
-      <div style="text-align:center; padding: 40px; color: var(--danger-color)">
-        <p style="margin-bottom: 1rem;">Unable to load changelog at this time.</p>
-        <button class="ghost-btn" onclick="renderChangelog()">Retry</button>
-      </div>`;
-  console.error("Changelog render error:", err);
-}
+        <div class="accordion-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 12 15 18 9"></polyline>
+          </svg>
+        </div>
+      </summary>
+      <div class="release-sections changelog-markdown-body" style="padding: 16px; font-size: 0.95rem; line-height: 1.6; color: var(--text-main);">
+        ${htmlContent}
+      </div>
+    </details>
+  `}).join('');
+
+  // Apply Math rendering to the newly rendered changelog content AFTER DOM is updated
+  requestAnimationFrame(() => {
+    if (typeof renderMathInElement !== "undefined" && ui.changelogContent) {
+      try {
+        renderMathInElement(ui.changelogContent, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '\\[', right: '\\]', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false}
+          ],
+          ignoredTags: ["script", "noscript", "style", "textarea", "pre", "code", "option"],
+          throwOnError: false
+        });
+      } catch(e) {
+        console.error("KaTeX error in changelog:", e);
+      }
+    }
+  });
 }
 
 window.addEventListener("popstate", () => {
@@ -2808,6 +3029,15 @@ function formatMessage(content, role = "ai", intent = "GENERAL", doubt = false) 
   // 1. Remove "Quiz:" if present in the raw text (backend safety)
   text = text.replace(/Quiz:\s*.*$/is, "").trim();
 
+  // Protect Math blocks from Markdown parser (prevent _ and * from mangling LaTeX)
+  const mathBlocks = [];
+  // Regex matches: $$...$$, \[...\], \(...\), and $...$ (non-greedy)
+  text = text.replace(/(\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]|\\\(.*?\\\)|\$[^$\n]+?\$)/g, (match) => {
+    const id = `__MATH_BLOCK_${mathBlocks.length}__`;
+    mathBlocks.push(match);
+    return id;
+  });
+
   // 2. Parse main content
   let html = "";
   try {
@@ -2816,6 +3046,11 @@ function formatMessage(content, role = "ai", intent = "GENERAL", doubt = false) 
     console.error("Markdown render error:", err);
     html = escapeHtml(text).replace(/\n/g, "<br>");
   }
+
+  // Restore Math blocks
+  mathBlocks.forEach((block, i) => {
+    html = html.replace(`__MATH_BLOCK_${i}__`, () => block); // Use function to avoid $ replacement issues
+  });
 
   // 3. Append Reactive UI buttons only if explicitly invited by AI
   if (text.includes("Want a quiz on this?")) {
@@ -3349,6 +3584,9 @@ async function initApp(user) {
       // 3. Post-load operations
       await maybeHandleOnboardingForUser(user);
       await initDeviceSession(user);
+
+      // 4. Hide skeleton — all critical UI and async data are now rendered
+      hideSkeletonOverlay("dashboardSkeleton");
     } else if (page === "settings") {
       await loadUserSettings();
       await loadUserMemory();
@@ -3356,9 +3594,16 @@ async function initApp(user) {
       await loadUsageStats();
       loadSessions(user);
       await initDeviceSession(user);
+
+      // Hide skeleton — settings data is fully loaded and rendered
+      hideSkeletonOverlay("settingsSkeleton");
     }
   } catch (err) {
     console.error("App Initialization Error:", err);
+    // Still hide skeletons on error to avoid permanent loading state
+    const page = document.body.dataset.page;
+    if (page === "dashboard") hideSkeletonOverlay("dashboardSkeleton");
+    if (page === "settings") hideSkeletonOverlay("settingsSkeleton");
   }
 }
 

@@ -15,12 +15,96 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
     rel="stylesheet" />
+  <!-- KaTeX for Math Rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
   <link rel="stylesheet" href="style.css" />
   <link rel="stylesheet" href="notification.css" />
+  <link rel="stylesheet" href="skeleton.css" />
   <link rel="icon" type="image/png" href="img/study-mate.png" />
 </head>
 
 <body data-page="dashboard">
+  <!-- Dashboard Skeleton Overlay -->
+  <div id="dashboardSkeleton" class="skeleton-overlay skeleton-overlay--fullscreen skel-dashboard" role="presentation" aria-hidden="true">
+    <!-- Sidebar Skeleton -->
+    <div class="skel-sidebar">
+      <div class="skel-sidebar-top">
+        <div class="skel-brand">
+          <div class="skeleton skel-brand-logo"></div>
+          <div class="skel-brand-text">
+            <div class="skeleton skeleton-text short" style="margin-bottom:4px"></div>
+            <div class="skeleton skeleton-text"></div>
+          </div>
+        </div>
+        <div class="skel-version">
+          <div class="skeleton skeleton-text xs" style="margin-bottom:0"></div>
+          <div class="skeleton skeleton-text xs" style="margin-bottom:0;width:50px"></div>
+        </div>
+        <div class="skeleton skeleton-btn"></div>
+        <div class="skel-controls">
+          <div class="skel-control-row">
+            <div class="skeleton skeleton-label" style="margin-bottom:0"></div>
+            <div class="skeleton skeleton-dropdown"></div>
+          </div>
+          <div class="skel-control-row">
+            <div class="skeleton skeleton-label" style="margin-bottom:0"></div>
+            <div class="skeleton skeleton-dropdown"></div>
+          </div>
+          <div class="skel-control-row">
+            <div class="skeleton skeleton-label" style="margin-bottom:0"></div>
+            <div class="skeleton skeleton-toggle"></div>
+          </div>
+        </div>
+        <div class="skel-tracker">
+          <div class="skel-tracker-stat">
+            <div class="skeleton skeleton-icon"></div>
+            <div class="skeleton skeleton-text xs" style="margin-bottom:0;width:70px"></div>
+          </div>
+          <div class="skel-tracker-stat">
+            <div class="skeleton skeleton-icon"></div>
+            <div class="skeleton skeleton-text xs" style="margin-bottom:0;width:80px"></div>
+          </div>
+        </div>
+      </div>
+      <div class="skel-history">
+        <div class="skeleton skeleton-label"></div>
+        <div class="skel-history-card"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div>
+        <div class="skel-history-card"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div>
+        <div class="skel-history-card"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div>
+        <div class="skel-history-card"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div>
+        <div class="skel-history-card"><div class="skeleton skeleton-text"></div><div class="skeleton skeleton-text short" style="margin-bottom:0"></div></div>
+      </div>
+      <div class="skel-footer">
+        <div class="skeleton skeleton-btn" style="border-radius:12px;height:38px"></div>
+        <div class="skeleton-row" style="justify-content:space-between">
+          <div class="skeleton skeleton-text xs" style="margin-bottom:0"></div>
+          <div class="skeleton skeleton-text xs" style="margin-bottom:0"></div>
+          <div class="skeleton skeleton-text xs" style="margin-bottom:0;width:50px"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Main Panel Skeleton -->
+    <div class="skel-main">
+      <div class="skel-topbar">
+        <div class="skeleton skeleton-icon"></div>
+        <div class="skeleton skeleton-avatar sm"></div>
+        <div class="skeleton skeleton-text xs" style="margin-bottom:0;width:60px"></div>
+      </div>
+      <div class="skel-chat-area">
+        <div class="skel-empty-state">
+          <div class="skeleton skeleton-text xl" style="width:220px"></div>
+          <div class="skeleton skeleton-text" style="width:300px"></div>
+        </div>
+      </div>
+      <div class="skel-input-bar">
+        <div class="skeleton skel-input"></div>
+        <div class="skeleton skel-send-btn"></div>
+      </div>
+    </div>
+  </div>
+
   <!-- Onboarding Overlay -->
   <div id="onboarding" class="onboarding welcome-modal hidden">
     <div class="onboarding-card">
@@ -257,14 +341,14 @@
         </header>
 
         <section id="chatMessages" class="chat-messages chat-container">
-          <div class="empty-state">
-            <h3>Start a new conversation &#128640;</h3>
-            <p>Create a chat from the sidebar and ask your first question.</p>
+          <div class="greeting-container fade-in-text">
+            <h2 class="greeting-title">Good morning</h2>
+            <p class="greeting-subtitle">How can I help you today?</p>
           </div>
         </section>
 
         <div class="chat-input-container">
-          <form id="chatForm" class="composer glass-card" autocomplete="off">
+          <form id="chatForm" class="composer" autocomplete="off">
             <textarea id="userInput" rows="1" placeholder="Ask anything..."></textarea>
             <button id="sendBtn" class="send-btn" type="submit" aria-label="Send Message">
               <img src="img/send.png" alt="Send" class="send-icon" />

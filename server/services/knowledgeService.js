@@ -1,9 +1,12 @@
 const fs = require('fs');
 const path = require('path');
 
+const { kbDir, initKnowledgeBase } = require('./kbManager');
+
 class KnowledgeService {
   constructor() {
-    this.kbPath = path.join(__dirname, '../knowledge');
+    initKnowledgeBase();
+    this.kbPath = kbDir;
     this.entries = [];
     this.synonyms = {
       "built": ["created", "made", "developed", "programmed", "coded"],
@@ -45,6 +48,9 @@ class KnowledgeService {
         console.error(`[KnowledgeService] Failed to load ${file}:`, e.message);
       }
     }
+    
+    // Log every loaded file per user requirements
+    console.log(`[KnowledgeService] Successfully loaded files:`, files.join(', '));
     console.log("Knowledge Base loaded");
     console.log(`[KnowledgeService] Loaded ${this.entries.length} knowledge entries into memory.`);
   }

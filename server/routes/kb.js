@@ -4,7 +4,7 @@ const path = require('path');
 const knowledgeService = require('../services/knowledgeService');
 
 const router = express.Router();
-const kbDir = path.join(__dirname, '../knowledge');
+const { kbDir } = require('../services/kbManager');
 
 // Helper to save file
 const saveFile = (filename, data) => {
@@ -14,7 +14,13 @@ const saveFile = (filename, data) => {
 
 // Get all KB categories
 router.get('/', (req, res) => {
-  if (!fs.existsSync(kbDir)) return res.json([]);
+  if (!fs.existsSync(kbDir)) {
+    return res.status(404).json({
+      error: 'Knowledge directory not found',
+      expectedPath: kbDir,
+      workingDirectory: process.cwd()
+    });
+  }
   
   const files = fs.readdirSync(kbDir).filter(f => f.endsWith('.json'));
   const allData = files.map(file => {
@@ -44,7 +50,12 @@ router.post('/entry', (req, res) => {
 
   const filePath = path.join(kbDir, filename);
   if (!fs.existsSync(filePath)) {
-    return res.status(404).json({ error: 'Category file not found' });
+    return res.status(404).json({
+      error: 'Category file not found',
+      expectedPath: filePath,
+      workingDirectory: process.cwd(),
+      missingFileName: filename
+    });
   }
 
   try {
@@ -75,7 +86,14 @@ router.delete('/entry', (req, res) => {
   if (!filename || !id) return res.status(400).json({ error: 'Missing parameters' });
 
   const filePath = path.join(kbDir, filename);
-  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'File not found' });
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({
+      error: 'File not found',
+      expectedPath: filePath,
+      workingDirectory: process.cwd(),
+      missingFileName: filename
+    });
+  }
 
   try {
     const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -99,7 +117,11 @@ router.post('/sync', async (req, res) => {
     const { db, FieldValue } = require('../services/firebaseAdmin');
 
     if (!fs.existsSync(kbDir)) {
-      return res.status(404).json({ error: 'Knowledge directory not found' });
+      return res.status(404).json({
+        error: 'Knowledge directory not found',
+        expectedPath: kbDir,
+        workingDirectory: process.cwd()
+      });
     }
 
     const files = fs.readdirSync(kbDir).filter(f => f.endsWith('.json'));

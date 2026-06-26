@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const kbDir = path.join(__dirname, '../knowledge');
+const { kbDir } = require('../services/kbManager');
 const rootDir = path.join(__dirname, '../../');
 
 function buildPublicDocs() {

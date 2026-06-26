@@ -11,7 +11,7 @@ try {
   console.error("❌ CRITICAL: Failed to initialize Firebase Admin. Set GOOGLE_APPLICATION_CREDENTIALS.", e);
   process.exit(1);
 }
-const kbDir = path.join(__dirname, '../knowledge');
+const { kbDir } = require('../services/kbManager');
 
 async function syncKnowledge() {
   console.log("Knowledge sync started");

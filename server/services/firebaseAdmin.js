@@ -8,10 +8,7 @@ require('dotenv').config();
 
 // Helper to determine project ID
 function getProjectId() {
-  return process.env.GOOGLE_CLOUD_PROJECT || 
-         process.env.GCLOUD_PROJECT || 
-         process.env.FIREBASE_PROJECT_ID ||
-         "";
+  return process.env.FIREBASE_PROJECT_ID || "";
 }
 
 let app;
@@ -20,40 +17,37 @@ try {
   const getApps = admin.apps || (admin.app ? [admin.app()] : []);
   
   if (!Array.isArray(getApps) || getApps.length === 0) {
-    let credential = undefined;
-    let projectId = getProjectId();
+    const projectId = getProjectId();
+    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+    let privateKey = process.env.FIREBASE_PRIVATE_KEY;
     
-    // Check if GOOGLE_APPLICATION_CREDENTIALS is set and valid
-    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
-      const fs = require('fs');
-      if (fs.existsSync(process.env.GOOGLE_APPLICATION_CREDENTIALS)) {
-        try {
-          const serviceAccount = JSON.parse(fs.readFileSync(process.env.GOOGLE_APPLICATION_CREDENTIALS, 'utf8'));
-          
-          if (!serviceAccount.project_id || !serviceAccount.client_email || !serviceAccount.private_key) {
-             throw new Error("Service account is missing required fields (project_id, client_email, private_key)");
-          }
-          
-          if (!projectId) projectId = serviceAccount.project_id;
-          credential = cert(serviceAccount);
-        } catch(e) {
-          throw new Error(`Invalid service account file: ${e.message}`);
-        }
-      } else {
-        throw new Error(`GOOGLE_APPLICATION_CREDENTIALS file not found at: ${process.env.GOOGLE_APPLICATION_CREDENTIALS}`);
-      }
+    const missingVars = [];
+    if (!projectId) missingVars.push('FIREBASE_PROJECT_ID');
+    if (!clientEmail) missingVars.push('FIREBASE_CLIENT_EMAIL');
+    if (!privateKey) missingVars.push('FIREBASE_PRIVATE_KEY');
+
+    if (missingVars.length > 0) {
+      throw new Error(`Missing required Firebase environment variables: ${missingVars.join(', ')}`);
     }
+
+    // Convert escaped newlines to actual newlines
+    privateKey = privateKey.replace(/\\n/g, '\n');
     
-    if (!projectId && !credential) {
-      throw new Error("Unable to detect a Project Id. Set FIREBASE_PROJECT_ID or GOOGLE_APPLICATION_CREDENTIALS.");
-    }
+    const credential = cert({
+      projectId,
+      clientEmail,
+      privateKey
+    });
     
-    const initOptions = {};
-    if (credential) initOptions.credential = credential;
-    if (projectId) initOptions.projectId = projectId;
+    const initOptions = {
+      credential,
+      projectId
+    };
     
     app = admin.initializeApp(initOptions);
-    console.log(`[Firebase Admin] Initialized successfully. Project ID: ${projectId || "unknown"}`);
+    console.log(`[Firebase Admin] Firebase initialized`);
+    console.log(`[Firebase Admin] Project ID: ${projectId}`);
+    console.log(`[Firebase Admin] Authentication ready`);
   } else {
     app = getApps[0];
   }

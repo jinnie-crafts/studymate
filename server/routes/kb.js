@@ -21,8 +21,13 @@ router.get('/', (req, res) => {
     const raw = fs.readFileSync(path.join(kbDir, file), 'utf8');
     try {
       const parsed = JSON.parse(raw);
-      return { filename: file, category: parsed.category, entries: parsed.entries || [] };
+      return { 
+        filename: file, 
+        category: parsed.category || 'Uncategorized', 
+        entries: Array.isArray(parsed.entries) ? parsed.entries : [] 
+      };
     } catch(e) {
+      console.error(`[KB] Error parsing ${file}:`, e);
       return null;
     }
   }).filter(Boolean);
@@ -44,6 +49,9 @@ router.post('/entry', (req, res) => {
 
   try {
     const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!Array.isArray(data.entries)) {
+      data.entries = [];
+    }
     const existingIndex = data.entries.findIndex(e => e.id === entry.id);
     
     if (existingIndex >= 0) {
@@ -71,6 +79,9 @@ router.delete('/entry', (req, res) => {
 
   try {
     const data = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    if (!Array.isArray(data.entries)) {
+      data.entries = [];
+    }
     data.entries = data.entries.filter(e => e.id !== id);
     data.lastUpdated = new Date().toISOString().split('T')[0];
     saveFile(filename, data);
@@ -83,8 +94,12 @@ router.delete('/entry', (req, res) => {
 // Sync to Firestore
 router.post('/sync', async (req, res) => {
   try {
+    console.log("Payload:", req.body);
     const admin = require('firebase-admin');
-    if (!admin.apps.length) {
+    
+    // Defensive check for admin.apps (handles Firebase Admin v12+)
+    const getApps = admin.apps || (admin.app ? [admin.app()] : []);
+    if (!Array.isArray(getApps) || getApps.length === 0) {
       try {
         admin.initializeApp();
       } catch(e) {
@@ -99,13 +114,25 @@ router.post('/sync', async (req, res) => {
 
     const files = fs.readdirSync(kbDir).filter(f => f.endsWith('.json'));
     let totalEntries = 0;
+    
+    let allCategories = [];
 
     for (const file of files) {
       const raw = fs.readFileSync(path.join(kbDir, file), 'utf8');
       const data = JSON.parse(raw);
       const category = data.category;
+      
+      allCategories.push(category);
 
-      if (!data.entries || !Array.isArray(data.entries)) continue;
+      console.log("Knowledge:", data);
+
+      if (!data.entries || !Array.isArray(data.entries)) {
+        console.log(`Skipping file ${file}: entries is not an array.`);
+        continue;
+      }
+      
+      const entries = data.entries;
+      console.log("Entries:", entries);
 
       const batch = db.batch();
       
@@ -122,6 +149,8 @@ router.post('/sync', async (req, res) => {
       
       await batch.commit();
     }
+    
+    console.log("Categories:", allCategories);
 
     res.json({ success: true, count: totalEntries });
   } catch (err) {

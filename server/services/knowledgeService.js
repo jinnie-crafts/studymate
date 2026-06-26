@@ -27,14 +27,14 @@ class KnowledgeService {
       try {
         const raw = fs.readFileSync(path.join(this.kbPath, file), 'utf8');
         const data = JSON.parse(raw);
-        if (data && data.entries) {
+        if (data && Array.isArray(data.entries)) {
           data.entries.forEach(entry => {
             this.entries.push({
               id: entry.id,
               category: data.category,
-              question: entry.question,
-              answer: entry.answer,
-              keywords: entry.keywords || [],
+              question: entry.question || "",
+              answer: entry.answer || "",
+              keywords: Array.isArray(entry.keywords) ? entry.keywords : [],
               version: data.version,
               lastUpdated: data.lastUpdated,
               source: "StudyMate AI Knowledge Base"
@@ -59,10 +59,11 @@ class KnowledgeService {
   }
 
   tokenize(text) {
+    if (!text || typeof text !== 'string') return [];
     return text.toLowerCase()
       .replace(/[^\w\s]/g, '')
       .split(/\s+/)
-      .filter(w => w.length > 2); // Ignore very short stop words
+      .filter(w => w && w.length > 2); // Ignore very short stop words
   }
 
   expandSynonyms(tokens) {
@@ -97,7 +98,8 @@ class KnowledgeService {
       }
 
       // 2. Keyword matching
-      const entryKeywords = this.expandSynonyms(entry.keywords.map(k => k.toLowerCase()));
+      const safeKeywords = Array.isArray(entry.keywords) ? entry.keywords : [];
+      const entryKeywords = this.expandSynonyms(safeKeywords.map(k => String(k).toLowerCase()));
       let keywordHits = 0;
       for (const token of expandedTokens) {
         if (entryKeywords.includes(token)) keywordHits++;

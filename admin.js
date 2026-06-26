@@ -198,8 +198,8 @@ const bindEvents = () => {
 };
 
 const updateCounters = () => {
-  dom.titleCounter.textContent = `${dom.titleInput.value.length} / 100`;
-  dom.messageCounter.textContent = `${dom.messageInput.value.length} / 300`;
+  dom.titleCounter.textContent = `${(dom.titleInput.value || "").length} / 100`;
+  dom.messageCounter.textContent = `${(dom.messageInput.value || "").length} / 300`;
 };
 
 const validateForm = () => {
@@ -214,11 +214,11 @@ const validateForm = () => {
   dom.messageError.classList.remove("show");
   dom.uidError.classList.remove("show");
 
-  if (title.length < 3) {
+  if (!title || title.length < 3) {
     dom.titleError.classList.add("show");
     isValid = false;
   }
-  if (message.length < 5) {
+  if (!message || message.length < 5) {
     dom.messageError.classList.add("show");
     isValid = false;
   }
@@ -456,7 +456,7 @@ const fetchChangelogHistory = async () => {
 };
 
 const renderChangelogHistory = () => {
-  if (changelogs.length === 0) {
+  if (!Array.isArray(changelogs) || changelogs.length === 0) {
     dom.clHistoryList.innerHTML = `<div style="text-align:center; color: var(--text-soft);">No changelogs found</div>`;
     return;
   }
@@ -685,11 +685,15 @@ const fetchKbEntries = async () => {
     
     // Flatten entries for easy rendering and searching
     kbEntries = [];
-    data.forEach(cat => {
-      cat.entries.forEach(e => {
-        kbEntries.push({ ...e, filename: cat.filename });
+    if (Array.isArray(data)) {
+      data.forEach(cat => {
+        if (cat && Array.isArray(cat.entries)) {
+          cat.entries.forEach(e => {
+            kbEntries.push({ ...e, filename: cat.filename });
+          });
+        }
       });
-    });
+    }
     
     renderKbEntries();
   } catch(e) {
@@ -700,7 +704,7 @@ const fetchKbEntries = async () => {
 
 const renderKbEntries = () => {
   const currentCategory = kbDom.category.value;
-  const filtered = kbEntries.filter(e => e.filename === currentCategory);
+  const filtered = Array.isArray(kbEntries) ? kbEntries.filter(e => e.filename === currentCategory) : [];
 
   if (filtered.length === 0) {
     kbDom.list.innerHTML = `<div style="text-align:center; color: var(--text-soft);">No entries found in ${currentCategory}</div>`;
@@ -714,7 +718,7 @@ const renderKbEntries = () => {
         <span class="release-badge patch" style="background: rgba(155,89,182,0.2); color: #9b59b6;">${escapeHtml(entry.id)}</span>
       </div>
       <div style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.4;">
-        ${escapeHtml(entry.answer.slice(0, 100))}${entry.answer.length > 100 ? '...' : ''}
+        ${escapeHtml((entry.answer || "").slice(0, 100))}${(entry.answer || "").length > 100 ? '...' : ''}
       </div>
       <div class="history-item-actions" style="margin-top: 8px;">
         <button type="button" class="history-btn" onclick="window.editKbEntry('${entry.id}')">Edit</button>

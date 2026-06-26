@@ -40,12 +40,14 @@ class KnowledgeService {
           const entry = {
             id: doc.id,
             category: data.category || 'Uncategorized',
-            question: data.question || "",
+            question: data.question || data.title || "",
             answer: data.answer || "",
             keywords: Array.isArray(data.keywords) ? data.keywords : [],
             sourceFile: data.sourceFile || 'uncategorized.json',
             version: data.version || "1.0",
-            lastUpdated: data.lastUpdated || new Date().toISOString().split('T')[0]
+            lastUpdated: data.lastUpdated || new Date().toISOString().split('T')[0],
+            verified: data.verified !== undefined ? data.verified : true,
+            source: data.source || "Official StudyMate AI Documentation"
           };
 
           this.entries.push(entry);
@@ -94,17 +96,18 @@ class KnowledgeService {
               entries: data.entries
             };
 
-            data.entries.forEach(entry => {
+            data.entries.forEach(e => {
               this.entries.push({
-                id: entry.id,
+                id: e.id,
                 category: data.category,
-                question: entry.question || "",
-                answer: entry.answer || "",
-                keywords: Array.isArray(entry.keywords) ? entry.keywords : [],
+                question: e.question || e.title || "",
+                answer: e.answer || "",
+                keywords: Array.isArray(e.keywords) ? e.keywords : [],
                 version: data.version,
-                lastUpdated: data.lastUpdated,
+                lastUpdated: e.lastUpdated || data.lastUpdated || new Date().toISOString().split('T')[0],
                 sourceFile: file,
-                source: "StudyMate AI Knowledge Base"
+                verified: e.verified !== undefined ? e.verified : true,
+                source: e.source || "Official StudyMate AI Documentation"
               });
             });
           }
@@ -149,6 +152,7 @@ class KnowledgeService {
       ...entry,
       category: categoryName,
       sourceFile: filename,
+      verified: entry.verified !== undefined ? entry.verified : false,
       updatedAt: FieldValue.serverTimestamp()
     };
 
@@ -242,6 +246,9 @@ class KnowledgeService {
     let highestScore = 0;
 
     for (const entry of this.entries) {
+      // RULE 6: Only verified entries may be used
+      if (entry.verified !== true) continue;
+
       let score = 0;
 
       if (entry.question.toLowerCase() === rawQuery) {

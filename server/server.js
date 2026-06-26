@@ -178,7 +178,19 @@ app.post("/api/chat", async (req, res) => {
 
     // 6. Check cache (with bypass logic)
     // --- RAG Integration: Use classifier to determine if retrieval is needed ---
-    const ragResult = await ragRunner.execute(latestUserMessage);
+    const ragResult = await ragRunner.execute(latestUserMessage, userId);
+    
+    // RULE 3: Intercept Missing Knowledge for StudyMate
+    if (ragResult.missingKnowledge) {
+      return res.json({
+        text: "I don't have verified information about that topic in the official StudyMate AI Knowledge Base. If you're the administrator, you can add this information through the Knowledge Base Admin Panel.",
+        reply: "I don't have verified information about that topic in the official StudyMate AI Knowledge Base. If you're the administrator, you can add this information through the Knowledge Base Admin Panel.",
+        sources: [],
+        model_used: "KB-Fallback",
+        cached: false
+      });
+    }
+
     const isRealtime = ragResult.enhanced; // RAG classifier supersedes old regex
     const cacheKey = generateCacheKey({
       message: latestUserMessage,
@@ -510,9 +522,9 @@ function buildAgentPrompt(message, intent, mode, currentQuestion, autoQuestionEn
     chatPrompt += "\n[CRITICAL: User is asking for code. You MUST provide a complete, working code block with proper syntax highlighting. Do NOT just give theory.]";
   }
 
-  // KB Strict Rules
+  // KB Strict Rules (RULE 4)
   if (kbExactMatch) {
-    chatPrompt += "\n[CRITICAL KNOWLEDGE BASE RULES: You have been provided with an official [STUDYMATE AI KNOWLEDGE BASE RESULT]. You MUST answer the user's question USING ONLY the provided Knowledge Base Answer. Do NOT invent, hallucinate, or guess any product features. If the KB answer does not fully address the question, say: 'I don't have official information about that feature yet.']";
+    chatPrompt += "\n[CRITICAL KNOWLEDGE BASE RULES: You have been provided with an official [VERIFIED STUDYMATE AI KNOWLEDGE BASE RESULT]. You MUST answer the user's question USING ONLY the provided Knowledge Base Answer. Never fabricate, guess, or infer company information. You may use friendly wording and markdown, but do not introduce new facts.]";
   }
 
   // Encourage Mermaid for diagrams

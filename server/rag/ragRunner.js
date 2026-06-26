@@ -33,7 +33,7 @@ const RAG_CACHE_MAX_SIZE = 200;
  *   debug: object
  * }>}
  */
-async function execute(query) {
+async function execute(query, userId = "anonymous") {
   const pipelineStart = Date.now();
   const debug = {
     classifier: null,
@@ -72,22 +72,31 @@ async function execute(query) {
       };
       debug.totalTimeMs = Date.now() - pipelineStart;
       
-      const formattedKB = `[STUDYMATE AI KNOWLEDGE BASE RESULT]\nQuestion: ${kbResult.bestMatch.question}\nAnswer: ${kbResult.bestMatch.answer}`;
+      const formattedKB = `[VERIFIED STUDYMATE AI KNOWLEDGE BASE RESULT]\nSource: StudyMate AI Knowledge Base\nCategory: ${kbResult.bestMatch.category}\nVerified: Yes\nQuestion: ${kbResult.bestMatch.question}\nAnswer: ${kbResult.bestMatch.answer}`;
       
       return {
         enhanced: true,
         promptContext: formattedKB,
-        sources: [{ title: kbResult.bestMatch.source, url: "#" }],
+        sources: [{ title: 'StudyMate AI Knowledge Base', url: "#" }],
         debug,
         kbExactMatch: true
       };
     } else if (classification.category === CATEGORIES.STUDYMATE_KB) {
-      console.log(`[RAG Pipeline] KB Match too weak (${kbResult.confidence}). Falling back to standard RAG...`);
-      // We will log this miss to analytics in Phase 10
+      console.log(`[RAG Pipeline] KB Match too weak (${kbResult.confidence}). Falling back to missing knowledge...`);
+      // We log this miss to analytics
       try {
         const kbAnalytics = require("../analytics/kbAnalytics");
-        kbAnalytics.logMissedQuery(query, classification.category, kbResult.confidence);
-      } catch(e) {} // Analytics might not be ready yet
+        kbAnalytics.logMissedQuery(query, classification.category, kbResult.confidence, userId);
+      } catch(e) {} 
+      
+      // RULE 3: Intercept and do not fall back to LLM
+      return {
+        enhanced: true,
+        promptContext: "",
+        sources: [],
+        debug,
+        missingKnowledge: true
+      };
     }
 
     // Fast exit if no retrieval needed

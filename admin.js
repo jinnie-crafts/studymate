@@ -640,6 +640,7 @@ const kbDom = {
   question: document.getElementById("kbQuestion"),
   answer: document.getElementById("kbAnswer"),
   keywords: document.getElementById("kbKeywords"),
+  verified: document.getElementById("kbVerified"),
   saveBtn: document.getElementById("saveKbBtn"),
   clearBtn: document.getElementById("clearKbBtn"),
   syncBtn: document.getElementById("syncKbBtn"),
@@ -717,7 +718,10 @@ const renderKbEntries = () => {
     <div class="changelog-history-item" style="flex-direction: column; align-items: stretch; gap: 8px;">
       <div class="history-item-header" style="justify-content: space-between; display: flex;">
         <span class="history-item-title" style="font-size: 1rem;">${escapeHtml(entry.question)}</span>
-        <span class="release-badge patch" style="background: rgba(155,89,182,0.2); color: #9b59b6;">${escapeHtml(entry.id)}</span>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          ${entry.verified ? '<span class="release-badge" style="background: rgba(46, 204, 113, 0.2); color: #2ecc71;">Verified</span>' : '<span class="release-badge" style="background: rgba(231, 76, 60, 0.2); color: #e74c3c;">Unverified</span>'}
+          <span class="release-badge patch" style="background: rgba(155,89,182,0.2); color: #9b59b6;">${escapeHtml(entry.id)}</span>
+        </div>
       </div>
       <div style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.4;">
         ${escapeHtml((entry.answer || "").slice(0, 100))}${(entry.answer || "").length > 100 ? '...' : ''}
@@ -735,6 +739,7 @@ const renderKbEntries = () => {
 const clearKbForm = () => {
   kbDom.form.reset();
   kbDom.entryId.readOnly = false;
+  if(kbDom.verified) kbDom.verified.checked = false;
 };
 
 const editKbEntry = (id) => {
@@ -746,6 +751,7 @@ const editKbEntry = (id) => {
   kbDom.question.value = entry.question;
   kbDom.answer.value = entry.answer;
   kbDom.keywords.value = (entry.keywords || []).join(", ");
+  if (kbDom.verified) kbDom.verified.checked = !!entry.verified;
   
   kbDom.entryId.readOnly = true;
   
@@ -761,7 +767,8 @@ const handleKbSubmit = async (e) => {
       id: kbDom.entryId.value.trim(),
       question: kbDom.question.value.trim(),
       answer: kbDom.answer.value.trim(),
-      keywords: kbDom.keywords.value.split(",").map(k => k.trim()).filter(Boolean)
+      keywords: kbDom.keywords.value.split(",").map(k => k.trim()).filter(Boolean),
+      verified: kbDom.verified ? kbDom.verified.checked : false
     }
   };
 

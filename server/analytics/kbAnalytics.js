@@ -41,9 +41,9 @@ class KBAnalytics {
     }
   }
 
-  async logMissedQuery(question, category, confidence) {
+  async logMissedQuery(question, category, confidence, userId = "anonymous") {
     // Log the normal query first
-    await this.logQuery(question, category, confidence, false);
+    await this.logQuery(question, category, confidence, false, userId);
 
     const docId = this._sanitizeId(question);
     
@@ -60,6 +60,9 @@ class KBAnalytics {
           await ref.set({
             question,
             frequency: 1,
+            userId,
+            suggestedCategory: category,
+            timestamp: new Date().toISOString(),
             lastAsked: new Date().toISOString()
           });
         }
@@ -75,6 +78,9 @@ class KBAnalytics {
         memoryAnalytics.missingKnowledge.push({
           question,
           frequency: 1,
+          userId,
+          suggestedCategory: category,
+          timestamp: new Date().toISOString(),
           lastAsked: new Date().toISOString()
         });
       }

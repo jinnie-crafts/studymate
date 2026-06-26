@@ -647,7 +647,9 @@ const kbDom = {
 };
 
 let kbEntries = [];
-const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "http://localhost:3001" : "";
+const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1")
+  ? (window.location.port === "3000" || window.location.port === "5500" ? "http://localhost:3001" : "")
+  : (window.location.hostname.includes("onrender.com") ? "" : "https://api.aadirishi.in");
 
 const initKbSystem = () => {
   if (!kbDom.form) return;

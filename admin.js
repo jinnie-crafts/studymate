@@ -667,6 +667,7 @@ const initKbSystem = () => {
 
 const fetchKbEntries = async () => {
   try {
+    console.log("Loading Knowledge...");
     console.log(`[KB] Fetching entries from ${API_BASE_URL}/api/kb`);
     const res = await fetch(`${API_BASE_URL}/api/kb`);
     
@@ -707,7 +708,8 @@ const renderKbEntries = () => {
   const filtered = Array.isArray(kbEntries) ? kbEntries.filter(e => e.filename === currentCategory) : [];
 
   if (filtered.length === 0) {
-    kbDom.list.innerHTML = `<div style="text-align:center; color: var(--text-soft);">No entries found in ${currentCategory}</div>`;
+    kbDom.list.innerHTML = `<div style="text-align:center; color: var(--text-soft); padding: 20px;">No Knowledge Entries Found</div>`;
+    console.log("UI Render Complete");
     return;
   }
 
@@ -726,6 +728,8 @@ const renderKbEntries = () => {
       </div>
     </div>
   `).join("");
+  
+  console.log("UI Render Complete");
 };
 
 const clearKbForm = () => {
@@ -833,6 +837,7 @@ const syncKbToFirestore = async () => {
     const data = await res.json();
     console.log(`[KB] Firestore Sync Success: ${data.count} entries`);
     showToast(`Synced ${data.count} entries to Firestore!`, "success");
+    await fetchKbEntries();
   } catch(err) {
     console.error("[KB] Firestore Sync Failed:", err);
     showToast(`Sync failed: ${err.message}`, "error");

@@ -16,7 +16,8 @@ const CATEGORIES = {
   RECENT_NEWS: "RECENT_NEWS",       // News, headlines, current affairs
   TRENDING: "TRENDING",             // Trending topics, viral content
   EDUCATIONAL_UPDATE: "EDUCATIONAL_UPDATE", // Exam results, syllabus changes
-  STATIC_KNOWLEDGE: "STATIC_KNOWLEDGE"     // Textbook concepts, definitions
+  STATIC_KNOWLEDGE: "STATIC_KNOWLEDGE",     // Textbook concepts, definitions
+  STUDYMATE_KB: "STUDYMATE_KB"              // StudyMate product, features, creator, pricing
 };
 
 // ---------------------------------------------------------------------------
@@ -67,7 +68,8 @@ const TOPIC_PATTERNS = [
   { regex: /\b(release|launched|announced|unveiled|introduced)\b/i, category: CATEGORIES.RECENT_NEWS },
   { regex: /\b(viral|trending|meme|controversy|scandal)\b/i, category: CATEGORIES.TRENDING },
   { regex: /\b(exam result|board result|neet|jee|upsc|syllabus change|admission)\b/i, category: CATEGORIES.EDUCATIONAL_UPDATE },
-  { regex: /\b(cuet|gate|cat result|cutoff|merit list)\b/i, category: CATEGORIES.EDUCATIONAL_UPDATE }
+  { regex: /\b(cuet|gate|cat result|cutoff|merit list)\b/i, category: CATEGORIES.EDUCATIONAL_UPDATE },
+  { regex: /\b(studymate|study mate|your creator|who made you|who built you|coding mode|exam mode|smart notes|pricing tier|privacy policy)\b/i, category: CATEGORIES.STUDYMATE_KB }
 ];
 
 /**
@@ -150,7 +152,14 @@ function classify(query) {
     if (regex.test(text)) {
       const match = text.match(regex)?.[0] || "topic";
       signals.push(`topic:${match.toLowerCase()}`);
-      score += 0.15;
+      
+      // If it's a KB query, give a massive confidence boost
+      if (category === CATEGORIES.STUDYMATE_KB) {
+        score += 0.85; // High confidence it requires KB
+      } else {
+        score += 0.15;
+      }
+      
       // Use the most specific topic category detected
       if (detectedCategory === CATEGORIES.STATIC_KNOWLEDGE) {
         detectedCategory = category;

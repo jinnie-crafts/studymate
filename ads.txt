@@ -1,0 +1,4 @@
+# StudyMate AI ads.txt
+# Placeholder - Update when serving digital ads
+# FORMAT: <Field #1>, <Field #2>, <Field #3>, <Field #4>
+placeholder.com, 12345, DIRECT, placeholder_id

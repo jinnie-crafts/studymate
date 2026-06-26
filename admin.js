@@ -129,6 +129,9 @@ const setupUI = () => {
   
   // Initialize Changelog system
   initChangelogSystem();
+  
+  // Initialize KB System
+  initKbSystem();
 };
 
 // â”€â”€ Live Preview & Debounce â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -628,5 +631,211 @@ const migrateJsonToFirestore = async () => {
   }
 };
 
-// â”€â”€ Startup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ── Knowledge Base Management Logic ──────────────────────────────────────────
+
+const kbDom = {
+  form: document.getElementById("adminKbForm"),
+  category: document.getElementById("kbCategory"),
+  entryId: document.getElementById("kbEntryId"),
+  question: document.getElementById("kbQuestion"),
+  answer: document.getElementById("kbAnswer"),
+  keywords: document.getElementById("kbKeywords"),
+  saveBtn: document.getElementById("saveKbBtn"),
+  clearBtn: document.getElementById("clearKbBtn"),
+  syncBtn: document.getElementById("syncKbBtn"),
+  list: document.getElementById("kbEntriesList"),
+};
+
+let kbEntries = [];
+const API_BASE_URL = (window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1") ? "http://localhost:3001" : "";
+
+const initKbSystem = () => {
+  if (!kbDom.form) return;
+  kbDom.form.addEventListener("submit", handleKbSubmit);
+  kbDom.clearBtn.addEventListener("click", clearKbForm);
+  kbDom.syncBtn.addEventListener("click", syncKbToFirestore);
+  kbDom.category.addEventListener("change", fetchKbEntries);
+  
+  // Expose to window for inline onclicks
+  window.editKbEntry = editKbEntry;
+  window.deleteKbEntry = deleteKbEntry;
+
+  fetchKbEntries();
+};
+
+const fetchKbEntries = async () => {
+  try {
+    console.log(`[KB] Fetching entries from ${API_BASE_URL}/api/kb`);
+    const res = await fetch(`${API_BASE_URL}/api/kb`);
+    
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`Server returned ${res.status}: ${text.substring(0, 100)}`);
+    }
+
+    const contentType = res.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      throw new Error(`Expected JSON but received: ${contentType}`);
+    }
+
+    const data = await res.json();
+    console.log("[KB] Successfully loaded knowledge entries");
+    
+    // Flatten entries for easy rendering and searching
+    kbEntries = [];
+    data.forEach(cat => {
+      cat.entries.forEach(e => {
+        kbEntries.push({ ...e, filename: cat.filename });
+      });
+    });
+    
+    renderKbEntries();
+  } catch(e) {
+    console.error("[KB] Failed to fetch KB", e);
+    kbDom.list.innerHTML = `<div style="text-align:center; color: #e74c3c;">Failed to load KB: ${escapeHtml(e.message)}</div>`;
+  }
+};
+
+const renderKbEntries = () => {
+  const currentCategory = kbDom.category.value;
+  const filtered = kbEntries.filter(e => e.filename === currentCategory);
+
+  if (filtered.length === 0) {
+    kbDom.list.innerHTML = `<div style="text-align:center; color: var(--text-soft);">No entries found in ${currentCategory}</div>`;
+    return;
+  }
+
+  kbDom.list.innerHTML = filtered.map(entry => `
+    <div class="changelog-history-item" style="flex-direction: column; align-items: stretch; gap: 8px;">
+      <div class="history-item-header" style="justify-content: space-between; display: flex;">
+        <span class="history-item-title" style="font-size: 1rem;">${escapeHtml(entry.question)}</span>
+        <span class="release-badge patch" style="background: rgba(155,89,182,0.2); color: #9b59b6;">${escapeHtml(entry.id)}</span>
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-soft); line-height: 1.4;">
+        ${escapeHtml(entry.answer.slice(0, 100))}${entry.answer.length > 100 ? '...' : ''}
+      </div>
+      <div class="history-item-actions" style="margin-top: 8px;">
+        <button type="button" class="history-btn" onclick="window.editKbEntry('${entry.id}')">Edit</button>
+        <button type="button" class="history-btn delete" onclick="window.deleteKbEntry('${entry.filename}', '${entry.id}')">Delete</button>
+      </div>
+    </div>
+  `).join("");
+};
+
+const clearKbForm = () => {
+  kbDom.form.reset();
+  kbDom.entryId.readOnly = false;
+};
+
+const editKbEntry = (id) => {
+  const entry = kbEntries.find(e => e.id === id);
+  if (!entry) return;
+
+  kbDom.category.value = entry.filename;
+  kbDom.entryId.value = entry.id;
+  kbDom.question.value = entry.question;
+  kbDom.answer.value = entry.answer;
+  kbDom.keywords.value = (entry.keywords || []).join(", ");
+  
+  kbDom.entryId.readOnly = true;
+  
+  document.querySelector("#tab-knowledge section").scrollTop = 0;
+};
+
+const handleKbSubmit = async (e) => {
+  e.preventDefault();
+  
+  const payload = {
+    filename: kbDom.category.value,
+    entry: {
+      id: kbDom.entryId.value.trim(),
+      question: kbDom.question.value.trim(),
+      answer: kbDom.answer.value.trim(),
+      keywords: kbDom.keywords.value.split(",").map(k => k.trim()).filter(Boolean)
+    }
+  };
+
+  kbDom.saveBtn.disabled = true;
+  kbDom.saveBtn.innerHTML = `<span>Saving...</span>`;
+
+  try {
+    console.log(`[KB] Saving entry to ${API_BASE_URL}/api/kb/entry`);
+    const res = await fetch(`${API_BASE_URL}/api/kb/entry`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+    
+    if (!res.ok) {
+      const errTxt = await res.text();
+      throw new Error(`Failed to save entry: ${errTxt}`);
+    }
+    
+    showToast("KB Entry saved successfully!");
+    clearKbForm();
+    await fetchKbEntries();
+  } catch(err) {
+    console.error("[KB] Error saving entry:", err);
+    showToast(`Error saving KB entry: ${err.message}`, "error");
+  } finally {
+    kbDom.saveBtn.disabled = false;
+    kbDom.saveBtn.innerHTML = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg><span>Save Entry</span>`;
+  }
+};
+
+const deleteKbEntry = async (filename, id) => {
+  if (!confirm(`Are you sure you want to delete KB entry: ${id}?`)) return;
+
+  try {
+    console.log(`[KB] Deleting entry ${id} from ${API_BASE_URL}/api/kb/entry`);
+    const res = await fetch(`${API_BASE_URL}/api/kb/entry`, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ filename, id })
+    });
+    
+    if (!res.ok) {
+      const errTxt = await res.text();
+      throw new Error(`Failed to delete entry: ${errTxt}`);
+    }
+    
+    showToast("KB Entry deleted!");
+    if (kbDom.entryId.value === id) clearKbForm();
+    await fetchKbEntries();
+  } catch(err) {
+    console.error("[KB] Error deleting entry:", err);
+    showToast(`Error deleting KB entry: ${err.message}`, "error");
+  }
+};
+
+const syncKbToFirestore = async () => {
+  kbDom.syncBtn.disabled = true;
+  kbDom.syncBtn.textContent = "Syncing...";
+  console.log("[KB] Firestore Sync Started");
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/kb/sync`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" }
+    });
+    
+    if (!res.ok) {
+      const errTxt = await res.text();
+      throw new Error(`Failed to sync: ${errTxt}`);
+    }
+
+    const data = await res.json();
+    console.log(`[KB] Firestore Sync Success: ${data.count} entries`);
+    showToast(`Synced ${data.count} entries to Firestore!`, "success");
+  } catch(err) {
+    console.error("[KB] Firestore Sync Failed:", err);
+    showToast(`Sync failed: ${err.message}`, "error");
+  } finally {
+    kbDom.syncBtn.disabled = false;
+    kbDom.syncBtn.textContent = "Sync to Firestore";
+  }
+};
+
+// ── Startup ──────────────────────────────────────────────────────────────────
 initAuth();
+

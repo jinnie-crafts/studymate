@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel | StudyMate AI</title>
+  <meta name="robots" content="noindex, nofollow" />
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎓</text></svg>">
   
   <!-- Google Fonts -->
@@ -82,6 +83,13 @@
           <polyline points="10 9 9 9 8 9"></polyline>
         </svg>
         Changelog
+      </button>
+      <button class="admin-tab-btn" data-tab="tab-knowledge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+        </svg>
+        Knowledge Base
       </button>
     </div>
 
@@ -300,6 +308,99 @@
         </div>
       </div>
     </div> <!-- End Changelog Tab -->
+
+    <div class="admin-tab-content" id="tab-knowledge">
+      <header class="admin-header">
+        <h1>Knowledge Base Management</h1>
+        <p>Manage the official StudyMate AI Knowledge Base. Edits here update the RAG system instantly.</p>
+      </header>
+
+      <div class="admin-grid">
+        <!-- Left: Form -->
+        <section class="glass-card" style="max-height: 80vh; overflow-y: auto; padding-right: 15px;">
+          <form id="adminKbForm" novalidate>
+            <div class="admin-row" style="display: flex; gap: 16px;">
+              <div class="admin-form-group" style="flex: 1;">
+                <label for="kbCategory" class="admin-label">Category File</label>
+                <select id="kbCategory" class="admin-select" required>
+                  <option value="faq.json">FAQ</option>
+                  <option value="company.json">Company</option>
+                  <option value="features.json">Features</option>
+                  <option value="privacy.json">Privacy</option>
+                  <option value="technology.json">Technology</option>
+                  <option value="support.json">Support</option>
+                  <option value="study_modes.json">Study Modes</option>
+                  <option value="pricing.json">Pricing</option>
+                  <option value="security.json">Security</option>
+                  <option value="policies.json">Policies</option>
+                  <option value="announcements.json">Announcements</option>
+                  <option value="roadmap.json">Roadmap</option>
+                  <option value="notifications.json">Notifications</option>
+                  <option value="authentication.json">Authentication</option>
+                  <option value="integrations.json">Integrations</option>
+                </select>
+              </div>
+              <div class="admin-form-group" style="flex: 1;">
+                <label for="kbEntryId" class="admin-label">Entry ID (e.g., faq_1)</label>
+                <input type="text" id="kbEntryId" class="admin-input" placeholder="Unique ID" required>
+              </div>
+            </div>
+
+            <div class="admin-form-group">
+              <label for="kbQuestion" class="admin-label">Question / Topic</label>
+              <input type="text" id="kbQuestion" class="admin-input" placeholder="e.g. What is StudyMate AI?" required>
+            </div>
+
+            <div class="admin-form-group">
+              <label for="kbAnswer" class="admin-label">Answer (Official Response)</label>
+              <textarea id="kbAnswer" class="admin-textarea" style="height: 120px;" placeholder="The exact answer the AI should give..." required></textarea>
+            </div>
+
+            <div class="admin-form-group">
+              <label for="kbKeywords" class="admin-label">Keywords (comma separated)</label>
+              <input type="text" id="kbKeywords" class="admin-input" placeholder="e.g. about, what is, definition" required>
+            </div>
+
+            <div style="margin-top: 32px; display: flex; gap: 12px;">
+              <button type="submit" id="saveKbBtn" class="admin-send-btn">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                  <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                  <polyline points="7 3 7 8 15 8"></polyline>
+                </svg>
+                <span>Save Entry</span>
+              </button>
+              <button type="button" id="clearKbBtn" class="admin-send-btn" style="background: rgba(255,255,255,0.1); color: var(--text-main);">
+                Clear Form
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Right: Entries List & Sync -->
+        <div class="admin-right-column" style="display: flex; flex-direction: column; gap: 24px; max-height: 80vh;">
+          <aside class="history-panel" style="flex: 1; overflow-y: auto; background: var(--bg-surface-glass); border-radius: 16px; border: 1px solid var(--border-color); padding: 20px;">
+            <div class="preview-label" style="justify-content: space-between; display: flex; width: 100%;">
+              <span style="display: flex; align-items: center; gap: 8px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+                Existing Entries
+              </span>
+              <button id="syncKbBtn" class="admin-send-btn" style="padding: 4px 12px; font-size: 0.8rem; background: var(--primary);">Sync to Firestore</button>
+            </div>
+            <div id="kbEntriesList" style="margin-top: 16px; display: flex; flex-direction: column; gap: 12px;">
+              <div style="text-align:center; color: var(--text-soft); font-size: 0.9rem;">Loading entries...</div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div> <!-- End KB Tab -->
 
   </main>
 

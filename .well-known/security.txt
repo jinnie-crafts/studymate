@@ -1,0 +1,4 @@
+Contact: mailto:karshsecurities@gmail.com
+Preferred-Languages: en
+Canonical: https://aadirishi.in/.well-known/security.txt
+Policy: https://aadirishi.in/privacy.html

@@ -1,0 +1,127 @@
+[
+  {
+    "category": "Announcements",
+    "question": "What are the latest announcements?",
+    "answer": "StudyMate AI recently launched Exam Revision Mode and enhanced Coding Mode. Check the dashboard for the latest news."
+  },
+  {
+    "category": "Authentication",
+    "question": "How do I log in?",
+    "answer": "You can log in using Email/Password authentication securely managed by Google Firebase."
+  },
+  {
+    "category": "Company",
+    "question": "What is the company information for StudyMate AI?",
+    "answer": "StudyMate AI is an educational technology organization founded on 31 May 2026 by Rishu Maurya and Komal Sharma. Our official website is https://aadirishi.in."
+  },
+  {
+    "category": "Company",
+    "question": "What is the mission of StudyMate AI?",
+    "answer": "Our mission is to democratize high-quality, AI-driven education globally. We strive to provide learners of all backgrounds with personalized tutoring, powerful revision tools, and an engaging study environment."
+  },
+  {
+    "category": "Company",
+    "question": "How can I contact StudyMate AI?",
+    "answer": "You can contact StudyMate AI for support or inquiries via email at karshsecurities@gmail.com. We currently operate entirely digitally without a physical office location."
+  },
+  {
+    "category": "FAQ",
+    "question": "What is StudyMate AI?",
+    "answer": "StudyMate AI is a comprehensive AI-powered learning platform designed for students, teachers, competitive exam aspirants, and programmers. It provides intelligent assistance, coding environments, exam revision tools, and smart notes to enhance the learning experience."
+  },
+  {
+    "category": "FAQ",
+    "question": "Who created StudyMate AI?",
+    "answer": "StudyMate AI was created by Rishu Maurya and Komal Sharma. It was founded on 31 May 2026."
+  },
+  {
+    "category": "FAQ",
+    "question": "Is StudyMate AI free?",
+    "answer": "StudyMate AI offers a free tier with essential features. We also have premium plans for advanced AI models, unlimited queries, and exclusive features like advanced coding mode and deep exam analysis."
+  },
+  {
+    "category": "FAQ",
+    "question": "Is my data secure?",
+    "answer": "Yes, your data is highly secure. StudyMate AI uses Firebase for secure authentication and encrypted data storage. We do not sell your personal data or study notes to third parties."
+  },
+  {
+    "category": "Features",
+    "question": "Does StudyMate AI have notes?",
+    "answer": "Yes, StudyMate AI features Smart Notes, allowing you to save AI-generated responses directly to your digital notebook."
+  },
+  {
+    "category": "Features",
+    "question": "Can I chat with the AI?",
+    "answer": "Absolutely. StudyMate AI includes a conversational AI Assistant capable of resolving complex doubts, tutoring, and providing instant feedback."
+  },
+  {
+    "category": "Integrations",
+    "question": "What does StudyMate AI integrate with?",
+    "answer": "StudyMate AI integrates with OpenRouter for AI models, DuckDuckGo for real-time web search, and Firebase for backend services."
+  },
+  {
+    "category": "Notifications",
+    "question": "How do notifications work?",
+    "answer": "StudyMate AI provides in-app toast notifications for important system updates, Easter eggs, and study milestones."
+  },
+  {
+    "category": "Policies",
+    "question": "Where are the terms of service?",
+    "answer": "You can find our full Terms of Service and Privacy Policy linked in the footer of our website."
+  },
+  {
+    "category": "Pricing",
+    "question": "What are the pricing tiers?",
+    "answer": "StudyMate AI offers a Free tier for basic use and a Premium tier for advanced models and unlimited chat history."
+  },
+  {
+    "category": "Privacy",
+    "question": "How is my privacy handled?",
+    "answer": "StudyMate AI adheres to strict privacy standards. We do not sell your personal data. Authentication is handled by Firebase."
+  },
+  {
+    "category": "Roadmap",
+    "question": "What are the future features of StudyMate AI?",
+    "answer": "Our roadmap includes Voice Tutoring, Collaborative Study Rooms, and an integrated Pomodoro timer."
+  },
+  {
+    "category": "Security",
+    "question": "Is StudyMate secure?",
+    "answer": "We use HTTPS, Firebase Auth, and secure Firestore rules to ensure all user data and study materials are protected."
+  },
+  {
+    "category": "Study Modes",
+    "question": "What is Coding Mode in StudyMate AI?",
+    "answer": "Coding Mode is a specialized workspace optimized for programmers. When enabled, the AI strictly outputs clean, highlighted code snippets, debugs syntax, and provides technical explanations. It automatically switches to specialized coding models."
+  },
+  {
+    "category": "Study Modes",
+    "question": "What is Exam Revision Mode?",
+    "answer": "Exam Revision Mode optimizes the AI to act as a strict examiner and revision assistant. It helps generate flashcards, practice quizzes, and enforces memory-recall techniques rather than just giving direct answers."
+  },
+  {
+    "category": "Study Modes",
+    "question": "What is General Mode?",
+    "answer": "General Mode is the default state of StudyMate AI. It acts as a friendly, comprehensive tutor capable of handling a wide variety of subjects, summarizing text, answering doubts, and fetching real-time information."
+  },
+  {
+    "category": "Support",
+    "question": "How do I get help or support?",
+    "answer": "You can email us at karshsecurities@gmail.com for technical support, billing inquiries, or general assistance."
+  },
+  {
+    "category": "Technology",
+    "question": "What technology stack does StudyMate AI use?",
+    "answer": "StudyMate AI is built using vanilla HTML, CSS, and JavaScript for a blazing-fast frontend. The backend is powered by Node.js and Express. Database and authentication are handled securely by Google Firebase Firestore and Auth."
+  },
+  {
+    "category": "Technology",
+    "question": "What AI models does StudyMate AI use?",
+    "answer": "StudyMate AI routes queries through OpenRouter. Depending on the intent, it utilizes models like Llama 3, DeepSeek, Gemma, Minimax, and OpenChat to ensure the best response quality for reasoning, coding, or general chat."
+  },
+  {
+    "category": "Technology",
+    "question": "Does StudyMate AI use RAG?",
+    "answer": "Yes, StudyMate AI uses an advanced Retrieval-Augmented Generation (RAG) system. It can fetch real-time news, perform DuckDuckGo web searches, and query its own internal Knowledge Base to provide highly accurate, up-to-date answers."
+  }
+]

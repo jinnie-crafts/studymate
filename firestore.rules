@@ -178,6 +178,27 @@ service cloud.firestore {
     }
 
     // -------------------------
+    // 📚 KNOWLEDGE COLLECTION
+    // -------------------------
+
+    match /knowledge/{document=**} {
+      // READ: Publicly allowed (for client-side fallback if needed)
+      allow read: if true;
+
+      // CREATE / UPDATE / DELETE: Only admin
+      allow create, update, delete: if isAdmin();
+    }
+
+    // -------------------------
+    // 📊 ANALYTICS COLLECTION
+    // -------------------------
+
+    match /analytics/{document=**} {
+      // READ / WRITE: Only admin (backend service uses admin SDK anyway)
+      allow read, write: if isAdmin();
+    }
+
+    // -------------------------
     // 🚫 DEFAULT DENY
     // -------------------------
 

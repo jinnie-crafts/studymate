@@ -1,0 +1,42 @@
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /login.html
+Allow: /signup.html
+Allow: /privacy.html
+Allow: /terms.html
+
+# Disallow private and system pages
+Disallow: /admin.html
+Disallow: /settings.html
+Disallow: /recover.html
+Disallow: /reset.html
+Disallow: /verify.html
+Disallow: /404.html
+Disallow: /graphify-out/
+Disallow: /scratch/
+Disallow: /config/
+Disallow: /server/
+
+# Block AI scrapers from hitting private endpoints, but allow public knowledge endpoints
+User-agent: GPTBot
+Allow: /
+Allow: /llms.txt
+Allow: /ai.txt
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: Claude-Web
+Allow: /
+
+User-agent: anthropic-ai
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+Sitemap: https://aadirishi.in/sitemap.xml

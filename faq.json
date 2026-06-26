@@ -1,0 +1,18 @@
+[
+  {
+    "question": "What is StudyMate AI?",
+    "answer": "StudyMate AI is a comprehensive AI-powered learning platform designed for students, teachers, competitive exam aspirants, and programmers. It provides intelligent assistance, coding environments, exam revision tools, and smart notes to enhance the learning experience."
+  },
+  {
+    "question": "Who created StudyMate AI?",
+    "answer": "StudyMate AI was created by Rishu Maurya and Komal Sharma. It was founded on 31 May 2026."
+  },
+  {
+    "question": "Is StudyMate AI free?",
+    "answer": "StudyMate AI offers a free tier with essential features. We also have premium plans for advanced AI models, unlimited queries, and exclusive features like advanced coding mode and deep exam analysis."
+  },
+  {
+    "question": "Is my data secure?",
+    "answer": "Yes, your data is highly secure. StudyMate AI uses Firebase for secure authentication and encrypted data storage. We do not sell your personal data or study notes to third parties."
+  }
+]

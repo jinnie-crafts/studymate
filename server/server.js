@@ -14,6 +14,7 @@ const PORT = process.env.PORT || 3001;
 const AgentRunner = require("./agents");
 const ragRunner = require("./rag/ragRunner");  // RAG Pipeline Integration
 const memoryRunner = require("./memory/memoryRunner"); // Memory System Integration
+const kbRoutes = require("./routes/kb"); // Knowledge Base Admin API
 
 if (!process.env.OPENROUTER_API_KEY) {
   console.error("❌ CRITICAL: Missing OPENROUTER_API_KEY in environment.");
@@ -98,6 +99,8 @@ Only return the final structured answer.
 
 app.use(cors());
 app.use(express.json({ limit: "100kb" }));
+
+app.use("/api/kb", kbRoutes);
 
 // ---------------------------------------------------------------------------
 // Health check
@@ -229,7 +232,7 @@ app.post("/api/chat", async (req, res) => {
       intent, mode: normalizedMode, message: latestUserMessage
     });
 
-    const systemPrompt = `${buildAgentPrompt(latestUserMessage, intent, normalizedMode, currentQuestion, autoQuestionEnabled)}${promptDecoration}\n[User Intent: ${intent}]${ragContext ? "\n" + ragContext : ""}${memoryContext ? "\n" + memoryContext : ""}`;
+    const systemPrompt = `${buildAgentPrompt(latestUserMessage, intent, normalizedMode, currentQuestion, autoQuestionEnabled, ragResult.kbExactMatch)}${promptDecoration}\n[User Intent: ${intent}]${ragContext ? "\n" + ragContext : ""}${memoryContext ? "\n" + memoryContext : ""}`;
 
     const finalMessages = [
       { role: "system", content: systemPrompt }
@@ -494,7 +497,7 @@ function shouldSuggestQuiz(text, intent) {
   return false;
 }
 
-function buildAgentPrompt(message, intent, mode, currentQuestion, autoQuestionEnabled = true) {
+function buildAgentPrompt(message, intent, mode, currentQuestion, autoQuestionEnabled = true, kbExactMatch = false) {
   if (intent === "quiz") {
     return currentQuestion ? PROMPT_TEMPLATES.QUIZ_EVAL : PROMPT_TEMPLATES.QUIZ_GEN;
   }
@@ -505,6 +508,11 @@ function buildAgentPrompt(message, intent, mode, currentQuestion, autoQuestionEn
   // Enforce code blocks for coding queries
   if (CODE_QUERY_REGEX.test(lowerMsg) || mode === "coding") {
     chatPrompt += "\n[CRITICAL: User is asking for code. You MUST provide a complete, working code block with proper syntax highlighting. Do NOT just give theory.]";
+  }
+
+  // KB Strict Rules
+  if (kbExactMatch) {
+    chatPrompt += "\n[CRITICAL KNOWLEDGE BASE RULES: You have been provided with an official [STUDYMATE AI KNOWLEDGE BASE RESULT]. You MUST answer the user's question USING ONLY the provided Knowledge Base Answer. Do NOT invent, hallucinate, or guess any product features. If the KB answer does not fully address the question, say: 'I don't have official information about that feature yet.']";
   }
 
   // Encourage Mermaid for diagrams

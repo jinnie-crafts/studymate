@@ -5,9 +5,10 @@
  * Single entry point for the entire RAG system.
  */
 
-const { classify } = require("./classifier");
+const { classify, CATEGORIES } = require("./classifier");
 const { retrieve } = require("./retriever");
 const { formatContext } = require("./formatter");
+const knowledgeService = require("../services/knowledgeService");
 
 // ---------------------------------------------------------------------------
 // Cache
@@ -55,6 +56,39 @@ async function execute(query) {
     console.log(`[RAG Pipeline] Classifier: needsRetrieval=${classification.needsRetrieval}, ` +
       `category=${classification.category}, confidence=${classification.confidence}, ` +
       `signals=[${classification.signals.join(", ")}]`);
+
+    // --- 1.5 Knowledge Base Interception (Always Check First) ---
+    const kbStart = Date.now();
+    const kbResult = knowledgeService.search(query);
+    
+    console.log(`[RAG Pipeline] KB Search: match=${kbResult.bestMatch ? 'yes' : 'no'}, confidence=${kbResult.confidence}`);
+    
+    // Check if we have a strong KB match
+    if (kbResult.bestMatch && kbResult.confidence >= 0.60) {
+      debug.kb = {
+        timeMs: Date.now() - kbStart,
+        confidence: kbResult.confidence,
+        entryId: kbResult.bestMatch.id
+      };
+      debug.totalTimeMs = Date.now() - pipelineStart;
+      
+      const formattedKB = `[STUDYMATE AI KNOWLEDGE BASE RESULT]\nQuestion: ${kbResult.bestMatch.question}\nAnswer: ${kbResult.bestMatch.answer}`;
+      
+      return {
+        enhanced: true,
+        promptContext: formattedKB,
+        sources: [{ title: kbResult.bestMatch.source, url: "#" }],
+        debug,
+        kbExactMatch: true
+      };
+    } else if (classification.category === CATEGORIES.STUDYMATE_KB) {
+      console.log(`[RAG Pipeline] KB Match too weak (${kbResult.confidence}). Falling back to standard RAG...`);
+      // We will log this miss to analytics in Phase 10
+      try {
+        const kbAnalytics = require("../analytics/kbAnalytics");
+        kbAnalytics.logMissedQuery(query, classification.category, kbResult.confidence);
+      } catch(e) {} // Analytics might not be ready yet
+    }
 
     // Fast exit if no retrieval needed
     if (!classification.needsRetrieval) {

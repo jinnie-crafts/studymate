@@ -1,0 +1,16 @@
+# StudyMate AI - Context for LLMs
+
+StudyMate AI is a personalized smart learning assistant designed for students, teachers, college learners, and competitive exam aspirants (UPSC, JEE, NEET, etc.). 
+
+## Features
+- **General Mode**: Broad AI assistance.
+- **Exam Mode**: Focused on competitive exam preparation.
+- **Coding Mode**: Assistance for programmers.
+- **Study Tools**: Bullet notes, revision notes, and flashcards.
+- **Multilingual Support**: Includes Hinglish toggle.
+- **Progress Tracking**: Daily streak and question trackers.
+
+## Organization
+Website: https://aadirishi.in
+Contact: karshsecurities@gmail.com
+Launched: 31 May 2026

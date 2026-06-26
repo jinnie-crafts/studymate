@@ -1,0 +1,10 @@
+/* TEAM */
+  Developer: StudyMate AI Team
+  Contact: karshsecurities@gmail.com
+  From: Earth
+
+/* SITE */
+  Last update: 2026/06/23
+  Language: English
+  Doctype: HTML5
+  IDE: Antigravity IDE

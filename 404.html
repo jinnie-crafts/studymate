@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>404 - Page Not Found | StudyMate AI</title>
+    <meta name="robots" content="noindex" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@500;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="404.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Animated Background -->
+    <div class="bg-mesh">
+        <div class="orb orb-1"></div>
+        <div class="orb orb-2"></div>
+        <div class="orb orb-3"></div>
+    </div>
+    <canvas id="particles-canvas"></canvas>
+
+    <div class="glass-container">
+        <!-- Easter Egg Notification -->
+        <div id="easter-egg-toast" class="toast">
+            <i class="fa-solid fa-gift"></i>
+            <span>Congratulations! You found a secret study bonus. +50 XP!</span>
+        </div>
+
+        <div class="content-wrapper">
+            <!-- Illustration Area -->
+            <div class="illustration-container">
+                <div class="robot-scene">
+                    <div class="floating-item book-1"><i class="fa-solid fa-book"></i></div>
+                    <div class="floating-item note-1"><i class="fa-solid fa-file-lines"></i></div>
+                    <div class="floating-item formula-1">E = mc²</div>
+                    <div class="floating-item cap-1"><i class="fa-solid fa-graduation-cap"></i></div>
+                    <div class="floating-item formula-2">∫x dx</div>
+                    <div class="floating-item broken-link"><i class="fa-solid fa-link-slash"></i></div>
+                    
+                    <div class="robot">
+                        <div class="robot-head">
+                            <div class="robot-eye left"></div>
+                            <div class="robot-eye right"></div>
+                            <div class="robot-antenna">
+                                <div class="antenna-ball"></div>
+                            </div>
+                        </div>
+                        <div class="robot-body">
+                            <div class="robot-screen">
+                                <div class="screen-pulse"></div>
+                            </div>
+                        </div>
+                        <div class="robot-shadow"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Content -->
+            <div class="text-content">
+                <h1 id="error-code" class="error-code">404</h1>
+                <h2 class="error-subheading">Oops! This page seems to be missing from the syllabus.</h2>
+                <p class="error-description">The page you're looking for may have been moved, deleted, or never existed. Let's get you back to learning.</p>
+                
+                <!-- Educational Tip Widget -->
+                <div class="edu-tip-widget">
+                    <div class="tip-icon"><i class="fa-solid fa-lightbulb"></i></div>
+                    <div class="tip-text" id="edu-tip">Loading study tip...</div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="action-buttons">
+                    <a href="index.html" class="btn btn-primary">
+                        <i class="fa-solid fa-house"></i> Return Home
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="404.js"></script>
+</body>
+</html>

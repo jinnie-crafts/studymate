@@ -1,13 +1,12 @@
-const admin = require("firebase-admin");
-
-// Initialize Firebase Admin gracefully
+let admin = null;
 let db = null;
+let FieldValue = null;
+
 try {
-  // If FIREBASE_SERVICE_ACCOUNT is present or default ADC is available
-  if (admin.apps.length === 0) {
-    admin.initializeApp();
-  }
-  db = admin.firestore();
+  const firebaseAdmin = require("../services/firebaseAdmin");
+  admin = firebaseAdmin.admin;
+  db = firebaseAdmin.db;
+  FieldValue = firebaseAdmin.FieldValue;
   console.log("[KB Analytics] Successfully connected to Firestore.");
 } catch (error) {
   console.warn("[KB Analytics] Warning: Firebase Admin not configured correctly. Analytics will be simulated in memory. Ensure GOOGLE_APPLICATION_CREDENTIALS is set.");
@@ -54,7 +53,7 @@ class KBAnalytics {
         const doc = await ref.get();
         if (doc.exists) {
           await ref.update({
-            frequency: admin.firestore.FieldValue.increment(1),
+            frequency: FieldValue.increment(1),
             lastAsked: new Date().toISOString()
           });
         } else {

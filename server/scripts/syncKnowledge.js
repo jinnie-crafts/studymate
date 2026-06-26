@@ -1,20 +1,20 @@
 const fs = require('fs');
 const path = require('path');
-const admin = require('firebase-admin');
-
+let db;
+let FieldValue;
 // Ensure you have FIREBASE_SERVICE_ACCOUNT or GOOGLE_APPLICATION_CREDENTIALS
 try {
-  admin.initializeApp();
+  const firebaseAdmin = require('../services/firebaseAdmin');
+  db = firebaseAdmin.db;
+  FieldValue = firebaseAdmin.FieldValue;
 } catch (e) {
-  console.error("❌ CRITICAL: Failed to initialize Firebase Admin. Set GOOGLE_APPLICATION_CREDENTIALS.");
+  console.error("❌ CRITICAL: Failed to initialize Firebase Admin. Set GOOGLE_APPLICATION_CREDENTIALS.", e);
   process.exit(1);
 }
-
-const db = admin.firestore();
 const kbDir = path.join(__dirname, '../knowledge');
 
 async function syncKnowledge() {
-  console.log("Starting Knowledge Base Sync to Firestore...");
+  console.log("Knowledge sync started");
   
   if (!fs.existsSync(kbDir)) {
     console.error("❌ Knowledge directory not found.");
@@ -41,7 +41,7 @@ async function syncKnowledge() {
           ...entry,
           category,
           sourceFile: file,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          updatedAt: FieldValue.serverTimestamp()
         }, { merge: true });
         totalEntries++;
       }
@@ -49,11 +49,12 @@ async function syncKnowledge() {
       await batch.commit();
       console.log(`✅ Synced ${data.entries.length} entries from ${file}`);
     } catch(err) {
+      console.error("Knowledge sync failed");
       console.error(`❌ Failed to process ${file}:`, err.message);
     }
   }
 
-  console.log(`\n🎉 Successfully synced ${totalEntries} knowledge base entries to Firestore.`);
+  console.log("Knowledge sync completed");
   process.exit(0);
 }
 

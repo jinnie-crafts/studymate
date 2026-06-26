@@ -93,20 +93,10 @@ router.delete('/entry', (req, res) => {
 
 // Sync to Firestore
 router.post('/sync', async (req, res) => {
+  console.log("Knowledge sync started");
   try {
     console.log("Payload:", req.body);
-    const admin = require('firebase-admin');
-    
-    // Defensive check for admin.apps (handles Firebase Admin v12+)
-    const getApps = admin.apps || (admin.app ? [admin.app()] : []);
-    if (!Array.isArray(getApps) || getApps.length === 0) {
-      try {
-        admin.initializeApp();
-      } catch(e) {
-        return res.status(500).json({ error: 'Firebase Admin SDK failed to initialize: ' + e.message });
-      }
-    }
-    const db = admin.firestore();
+    const { db, FieldValue } = require('../services/firebaseAdmin');
 
     if (!fs.existsSync(kbDir)) {
       return res.status(404).json({ error: 'Knowledge directory not found' });
@@ -142,7 +132,7 @@ router.post('/sync', async (req, res) => {
           ...entry,
           category,
           sourceFile: file,
-          updatedAt: admin.firestore.FieldValue.serverTimestamp()
+          updatedAt: FieldValue.serverTimestamp()
         }, { merge: true });
         totalEntries++;
       }
@@ -152,8 +142,10 @@ router.post('/sync', async (req, res) => {
     
     console.log("Categories:", allCategories);
 
+    console.log("Knowledge sync completed");
     res.json({ success: true, count: totalEntries });
   } catch (err) {
+    console.error("Knowledge sync failed");
     console.error("Firestore Sync Error:", err);
     res.status(500).json({ error: 'Firestore sync failed: ' + err.message });
   }

@@ -45,6 +45,7 @@ class KnowledgeService {
         console.error(`[KnowledgeService] Failed to load ${file}:`, e.message);
       }
     }
+    console.log("Knowledge Base loaded");
     console.log(`[KnowledgeService] Loaded ${this.entries.length} knowledge entries into memory.`);
   }
 

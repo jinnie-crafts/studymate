@@ -1,11 +1,5 @@
 const functions = require("firebase-functions");
-const admin = require("firebase-admin");
-
-// Initialize Firebase Admin SDK
-admin.initializeApp();
-
-// Export the db instance for easy access in your functions
-const db = admin.firestore();
+const { admin, db, FieldValue } = require("./firebaseAdmin");
 
 /**
  * Securely send or broadcast a notification.
@@ -73,7 +67,7 @@ exports.sendNotification = functions
       message,
       type: rawType,
       isRead: false,
-      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      createdAt: FieldValue.serverTimestamp(),
     };
 
     if (targetUid) {

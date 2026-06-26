@@ -18,7 +18,7 @@
  * node scripts/setAdmin.js abc123def456
  */
 
-const admin = require("firebase-admin");
+// Delay requiring admin until credential is set
 const path = require("path");
 const fs = require("fs");
 
@@ -38,12 +38,8 @@ if (!fs.existsSync(serviceAccountPath)) {
   process.exit(1);
 }
 
-// Initialize Admin SDK
-const serviceAccount = require(serviceAccountPath);
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
+process.env.GOOGLE_APPLICATION_CREDENTIALS = serviceAccountPath;
+const { admin, auth } = require("../firebaseAdmin");
 
 /**
  * Assigns the admin custom claim to the provided UID.
@@ -51,11 +47,11 @@ admin.initializeApp({
 async function setAdminRole(targetUid) {
   try {
     console.log(`Setting admin claim for UID: ${targetUid}...`);
-    await admin.auth().setCustomUserClaims(targetUid, { admin: true });
+    await auth.setCustomUserClaims(targetUid, { admin: true });
     console.log("\x1b[32m%s\x1b[0m", `✅ Successfully added admin privileges to ${targetUid}.`);
     
     // Fetch the user to verify
-    const userRecord = await admin.auth().getUser(targetUid);
+    const userRecord = await auth.getUser(targetUid);
     console.log("Verification checks out. Current Claims:", userRecord.customClaims);
     
     process.exit(0);
